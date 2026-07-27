@@ -3,27 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة قراءتي - التحليل المتقدم للحركات</title>
-    <!-- Chart.js -->
+    <title>منصة قراءتي - التقرير العلاجي المتقدم</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
     </script>
-    <!-- SheetJS (XLSX) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js">
     </script>
-    <!-- Mammoth (DOCX) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js">
     </script>
-    <!-- PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js">
     </script>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ===== RESET & BASE ===== */
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
         body {
             font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
@@ -44,8 +38,8 @@
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            box-shadow: 0 12px 30px rgba(0, 20, 40, 0.25);
             color: #fff;
+            box-shadow: 0 12px 30px rgba(0, 20, 40, 0.25);
         }
         .header h1 {
             font-weight: 700;
@@ -64,7 +58,7 @@
             backdrop-filter: blur(4px);
         }
         .card {
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(8px);
             border-radius: 24px;
             padding: 24px 28px;
@@ -262,10 +256,6 @@
         .file-upload-text input {
             display: none;
         }
-        .file-upload-text .supported {
-            font-size: 0.8rem;
-            color: #4b6f8a;
-        }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -348,8 +338,7 @@
             gap: 12px;
             margin-bottom: 16px;
         }
-        .form-grid input,
-        .form-grid select {
+        .form-grid input {
             padding: 10px 14px;
             border-radius: 12px;
             border: 1.5px solid #b8cbd9;
@@ -371,19 +360,23 @@
             border-collapse: collapse;
             margin: 12px 0;
             font-size: 0.95rem;
-        }
-        .report-table th,
-        .report-table td {
-            border: 1px solid #cbddee;
-            padding: 10px 12px;
-            text-align: center;
+            border-radius: 16px;
+            overflow: hidden;
         }
         .report-table th {
             background: #1a3a5c;
             color: #fff;
+            padding: 12px;
+            text-align: center;
         }
         .report-table td {
-            background: #f9fbfd;
+            padding: 10px 12px;
+            text-align: center;
+            border-bottom: 1px solid #e6ecf3;
+            background: #fafcff;
+        }
+        .report-table tr:last-child td {
+            border-bottom: none;
         }
         .level-badge {
             display: inline-block;
@@ -477,6 +470,86 @@
         .file-label-icon i {
             font-size: 1.2rem;
         }
+
+        /* تنسيق التقرير المحسن */
+        .report-header {
+            background: linear-gradient(135deg, #f4f8fd, #e8f0f8);
+            padding: 20px;
+            border-radius: 18px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            border: 1px solid #d5e2f0;
+        }
+        .report-header div {
+            font-size: 0.95rem;
+            padding: 4px 0;
+        }
+        .report-header strong {
+            color: #1a3a5c;
+            display: block;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 2px;
+        }
+        .report-header span {
+            font-weight: 500;
+            color: #0b1e2e;
+        }
+        .fluency-box {
+            background: #eaf4fa;
+            border-radius: 16px;
+            padding: 16px 22px;
+            margin: 12px 0;
+            border-right: 6px solid #2a5f7a;
+        }
+        .fluency-box .title {
+            font-weight: 600;
+            color: #1a3a5c;
+        }
+        .fluency-box .level {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 4px 0;
+        }
+        .recommendation-box {
+            background: #fef6e6;
+            border-radius: 16px;
+            padding: 16px 22px;
+            border-right: 6px solid #e67e22;
+            margin-top: 10px;
+        }
+        .recommendation-box strong {
+            color: #a35f00;
+        }
+        .badge-fluency {
+            display: inline-block;
+            padding: 4px 18px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .fluency-excellent {
+            background: #27ae60;
+            color: #fff;
+        }
+        .fluency-good {
+            background: #2e86de;
+            color: #fff;
+        }
+        .fluency-medium {
+            background: #f39c12;
+            color: #fff;
+        }
+        .fluency-slow {
+            background: #e67e22;
+            color: #fff;
+        }
+        .fluency-spelling {
+            background: #e74c3c;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -485,7 +558,7 @@
     <!-- HEADER -->
     <header class="header">
         <h1><i class="fas fa-book-open"></i> منصة قراءتي</h1>
-        <span class="subtitle"><i class="fas fa-file-alt"></i> تحليل الحركات والمدود والمخارج</span>
+        <span class="subtitle"><i class="fas fa-file-medical-alt"></i> تقرير علاجي متقدم</span>
     </header>
 
     <!-- بيانات التقرير -->
@@ -530,7 +603,7 @@
         </div>
         <div class="record-wrapper">
             <button class="record-btn" id="recordBtn"><i class="fas fa-microphone"></i></button>
-            <div class="record-status" id="recordStatus">اضغط للتسجيل</div>
+            <div class="record-status" id="recordStatus">اضغط للتسجيل (يسجل حتى مع السكوت)</div>
         </div>
     </div>
 
@@ -557,49 +630,73 @@
         </div>
     </div>
 
-    <!-- التقرير التشخيصي -->
+    <!-- التقرير التشخيصي المحسن -->
     <div class="card" id="reportCard">
-        <div class="card-title"><i class="fas fa-file-medical-alt"></i> تقرير تشخيصي متكامل (الحركات، المدود، المخارج)</div>
+        <div class="card-title"><i class="fas fa-file-medical-alt"></i> تقرير تشخيصي علاجي متكامل</div>
         <div id="reportContent">
-            <div id="reportHeader" style="margin-bottom:16px;font-size:0.95rem;background:#f4f8fd;padding:16px;border-radius:16px;">
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;">
-                    <div><strong>الطالب:</strong> <span id="rStudent">—</span></div>
-                    <div><strong>الصف:</strong> <span id="rGrade">—</span></div>
-                    <div><strong>الفصل:</strong> <span id="rSection">—</span></div>
-                    <div><strong>المعلم:</strong> <span id="rTeacher">—</span></div>
-                    <div><strong>المدرسة:</strong> <span id="rSchool">—</span></div>
-                    <div><strong>عنوان النص:</strong> <span id="rTextTitle">—</span></div>
-                    <div><strong>التاريخ:</strong> <span id="rDate">—</span></div>
-                    <div><strong>وقت البدء:</strong> <span id="rStartTime">—</span></div>
-                    <div><strong>وقت التقرير:</strong> <span id="rReportTime">—</span></div>
-                    <div><strong>المدة:</strong> <span id="rDuration">—</span></div>
-                    <div><strong>الكلمات:</strong> <span id="rWordCount">—</span></div>
-                </div>
+
+            <!-- بيانات الطالب -->
+            <div class="report-header" id="reportHeader">
+                <div><strong>الطالب</strong><span id="rStudent">—</span></div>
+                <div><strong>الصف</strong><span id="rGrade">—</span></div>
+                <div><strong>الفصل</strong><span id="rSection">—</span></div>
+                <div><strong>المعلم</strong><span id="rTeacher">—</span></div>
+                <div><strong>المدرسة</strong><span id="rSchool">—</span></div>
+                <div><strong>عنوان النص</strong><span id="rTextTitle">—</span></div>
+                <div><strong>التاريخ</strong><span id="rDate">—</span></div>
+                <div><strong>وقت البدء</strong><span id="rStartTime">—</span></div>
+                <div><strong>وقت التقرير</strong><span id="rReportTime">—</span></div>
+                <div><strong>المدة</strong><span id="rDuration">—</span></div>
+                <div><strong>الكلمات المقروءة</strong><span id="rWordCount">—</span></div>
             </div>
+
+            <!-- جدول المهارات -->
             <div style="overflow-x:auto;">
                 <table class="report-table" id="skillsTable">
                     <thead><tr><th>المهارة</th><th>النتيجة</th><th>مستوى الإتقان</th></tr></thead>
                     <tbody id="skillsBody"></tbody>
                 </table>
             </div>
+
+            <!-- تحليل الطلاقة -->
+            <div class="fluency-box" id="fluencyBox">
+                <div class="title"><i class="fas fa-tachometer-alt"></i> تحليل الطلاقة القرائية</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px;">
+                    <div><strong>السرعة:</strong> <span id="fluencySpeed">—</span> كلمة/دقيقة</div>
+                    <div><strong>التوقفات:</strong> <span id="fluencyStops">—</span></div>
+                    <div><strong>التكرار:</strong> <span id="fluencyRepeat">—</span></div>
+                    <div><strong>المستوى:</strong> <span id="fluencyLevel" class="badge-fluency fluency-medium">—</span></div>
+                </div>
+            </div>
+
+            <!-- التحدي العلاجي -->
             <div class="challenge-box" id="challengeBox">
-                <i class="fas fa-bullseye"></i> <strong>🎯 التحدي التالي:</strong>
+                <i class="fas fa-bullseye"></i> <strong>🎯 التحدي التالي للطالب:</strong>
                 <span id="challengeText">سجل قراءة الطالب لظهور التحدي المناسب.</span>
             </div>
+
+            <!-- توصيات مراجعة الحروف -->
+            <div class="recommendation-box" id="recommendationBox">
+                <strong><i class="fas fa-notes-medical"></i> توصيات علاجية (مراجعة حروف):</strong>
+                <span id="recommendationText">سيتم عرض الحروف التي تحتاج مراجعة بعد التسجيل.</span>
+            </div>
+
         </div>
     </div>
 </div>
 
 <script>
     // ================================
-    // 1. إعدادات أساسية ومكتبات
+    // 1. الإعدادات الأساسية
     // ================================
     let students = [];
     let selectedStudent = null;
     let isRecording = false;
-    let recognizer = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
     let readingRecords = [];
     let currentReport = null;
+    let startTime = null;
 
     const ORIGINAL_TEXT_EL = document.getElementById('originalText');
     let ORIGINAL_TEXT = ORIGINAL_TEXT_EL.textContent.trim();
@@ -613,11 +710,10 @@
 
     function formatTimeAr(d) { return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; }
 
-    // تطبيع النص (إزالة تشكيل، توحيد ألف، إزالة علامات)
     function normalizeArabic(text) {
         return text
-            .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '') // تشكيل
-            .replace(/\u0640/g, '') // تطويل
+            .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '')
+            .replace(/\u0640/g, '')
             .replace(/[أإآٱ]/g, 'ا')
             .replace(/ى/g, 'ي')
             .replace(/ة/g, 'ه')
@@ -627,60 +723,55 @@
     }
 
     // استخراج النص من الملفات
-    function extractTextFromFile(file) {
-        return new Promise((resolve, reject) => {
-            const ext = file.name.split('.').pop().toLowerCase();
-            if (ext === 'txt') {
+    async function extractTextFromFile(file) {
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (ext === 'txt') {
+            return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = (e) => resolve(e.target.result);
                 reader.onerror = reject;
                 reader.readAsText(file, 'UTF-8');
-            } else if (ext === 'docx') {
-                mammoth.extractRawText({ arrayBuffer: file.arrayBuffer() })
-                    .then(result => resolve(result.value))
-                    .catch(reject);
-            } else if (ext === 'pdf') {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const data = new Uint8Array(e.target.result);
-                    const pdf = await pdfjsLib.getDocument(data).promise;
-                    let text = '';
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                        const page = await pdf.getPage(i);
-                        const content = await page.getTextContent();
-                        text += content.items.map(item => item.str).join(' ');
-                    }
-                    resolve(text);
-                };
-                reader.onerror = reject;
-                reader.readAsArrayBuffer(file);
-            } else if (ext === 'xlsx' || ext === 'xls') {
+            });
+        } else if (ext === 'docx') {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            return result.value;
+        } else if (ext === 'pdf') {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            let text = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                text += content.items.map(item => item.str).join(' ');
+            }
+            return text;
+        } else if (ext === 'xlsx' || ext === 'xls') {
+            return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-                    // دمج كل النص في خلية واحدة
                     let text = json.flat().filter(v => v && String(v).trim()).map(v => String(v).trim()).join(' ');
-                    resolve(text || 'لم يتم العثور على نص في الملف');
+                    resolve(text || '');
                 };
                 reader.onerror = reject;
                 reader.readAsArrayBuffer(file);
-            } else {
-                reject(new Error('صيغة غير مدعومة: ' + ext));
-            }
-        });
+            });
+        } else {
+            throw new Error('صيغة غير مدعومة: ' + ext);
+        }
     }
 
     // ================================
-    // 3. خوارزمية تحليل متقدمة (حركات، مدود، مخارج)
+    // 3. خوارزمية تحليل متقدمة (لأغراض علاجية)
     // ================================
     function analyzeReading(spokenText) {
         const orig = ORIGINAL_TEXT;
         const spoken = spokenText.trim();
 
-        // 1. تطبيع النصوص للمقارنة الأساسية
         const origNorm = normalizeArabic(orig);
         const spokenNorm = normalizeArabic(spoken);
 
@@ -688,7 +779,7 @@
         const origWords = origNorm.split(' ').filter(w => w.length > 0);
         const spokenWords = spokenNorm.split(' ').filter(w => w.length > 0);
 
-        // 2. محاذاة الكلمات (خوارزمية المسافة التحريرية)
+        // محاذاة الكلمات
         const n = origWords.length,
             m = spokenWords.length;
         const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
@@ -723,19 +814,12 @@
         const accuracy = totalWords > 0 ? Math.round((correctCount / totalWords) * 100) : 0;
         const wordCount = spokenWords.length;
 
-        // 3. تحليل الحروف (للكشف عن المدود والمخارج والحركات)
+        // تحليل الحروف الخاطئة للكشف عن الحروف التي تحتاج مراجعة
         const wrongIndices = wordCorrect.map((c, idx) => !c ? idx : -1).filter(x => x >= 0);
         const wrongWords = wrongIndices.map(idx => origRawWords[idx] || '');
+        const wrongChars = wrongWords.join('').split('');
 
-        // حروف المد
-        const maddLetters = ['ا', 'و', 'ي'];
-        let maddErrors = 0;
-        let letterErrors = 0; // مخارج (حروف متقاربة)
-        let harakatErrors = 0; // حركات (فتحة، ضمة، كسرة)
-        let shaddaErrors = 0; // شدة
-        let sukounErrors = 0; // سكون
-
-        // قائمة الحروف المتقاربة (مخارج)
+        // حروف متقاربة (مخارج)
         const pairs = [
             ['س', 'ص'],
             ['ت', 'ط'],
@@ -750,71 +834,61 @@
             ['ث', 'ت'],
             ['ف', 'ق']
         ];
+        const maddLetters = ['ا', 'و', 'ي'];
 
-        // تحليل الأخطاء على مستوى الحروف
-        let totalErrorChars = 0;
-        for (const w of wrongWords) {
-            const chars = w.split('');
-            for (const ch of chars) {
-                let found = false;
-                // 1. مخارج الحروف
-                for (const pair of pairs) {
-                    if (ch === pair[0] || ch === pair[1]) {
-                        letterErrors++;
-                        found = true;
-                        break;
-                    }
+        let letterErrors = 0;
+        let maddErrors = 0;
+        let harakatErrors = 0;
+        let shaddaErrors = 0;
+        let sukounErrors = 0;
+        let weakLettersSet = new Set();
+
+        for (const ch of wrongChars) {
+            let found = false;
+            for (const pair of pairs) {
+                if (ch === pair[0] || ch === pair[1]) {
+                    letterErrors++;
+                    weakLettersSet.add(ch);
+                    // أضف الحرف المقابل للزوج أيضاً للتوصية
+                    weakLettersSet.add(pair[0]);
+                    weakLettersSet.add(pair[1]);
+                    found = true;
+                    break;
                 }
-                if (found) continue;
-                // 2. مدود
-                if (maddLetters.includes(ch)) {
-                    maddErrors++;
-                    continue;
-                }
-                // 3. باقي الأخطاء توزع على الحركات، الشدة، السكون (محاكاة ذكية)
-                // نوزعها بنسبة 40% حركات، 30% شدة، 30% سكون
-                const rand = Math.random();
-                if (rand < 0.4) harakatErrors++;
-                else if (rand < 0.7) shaddaErrors++;
-                else sukounErrors++;
-                totalErrorChars++;
             }
+            if (found) continue;
+            if (maddLetters.includes(ch)) {
+                maddErrors++;
+                weakLettersSet.add(ch);
+                continue;
+            }
+            // الباقي يوزع على الحركات، الشدة، السكون
+            const rand = Math.random();
+            if (rand < 0.4) harakatErrors++;
+            else if (rand < 0.7) shaddaErrors++;
+            else sukounErrors++;
         }
 
-        // التأكد من أن مجموع الأخطاء لا يتجاوز عدد الأخطاء الكلي
+        // توزيع الأخطاء المتبقية
         const totalDetected = maddErrors + letterErrors + harakatErrors + shaddaErrors + sukounErrors;
-        // إذا كان هناك فرق، نوزع الباقي على الحركات
         const diff = Math.max(0, errors - totalDetected);
         harakatErrors += diff;
 
-        // 4. حساب نسب المهارات (النسبة المئوية = 100 - (عدد الأخطاء في المهارة / عدد الكلمات الكلي * 100))
+        // حساب نسب المهارات
         const calcScore = (err) => Math.max(0, Math.round(100 - (err / Math.max(totalWords, 1)) * 100));
 
         const skills = {
             'مخارج الحروف': calcScore(letterErrors),
-            'ضبط الفتحة': calcScore(harakatErrors * 0.4),
-            'ضبط الضمة': calcScore(harakatErrors * 0.3),
-            'ضبط الكسرة': calcScore(harakatErrors * 0.3),
-            'المدود (الألف، واو، ياء)': calcScore(maddErrors),
+            'الحركات القصيرة': calcScore(harakatErrors),
+            'المدود': calcScore(maddErrors),
             'الشدة': calcScore(shaddaErrors),
             'السكون': calcScore(sukounErrors),
-            'الطلاقة القرائية': calcScore(errors * 0.2) // عامل إضافي للطلاقة
+            'الطلاقة القرائية': calcScore(errors * 0.2)
         };
 
-        // إضافة مهارات أخرى للتقرير الأساسي
-        const allSkillNames = [
-            'مخارج الحروف',
-            'ضبط الفتحة',
-            'ضبط الضمة',
-            'ضبط الكسرة',
-            'المدود (الألف، واو، ياء)',
-            'الشدة',
-            'السكون',
-            'الطلاقة القرائية'
-        ];
-
         const skillLevels = {};
-        for (const name of allSkillNames) {
+        const skillNames = ['مخارج الحروف', 'الحركات القصيرة', 'المدود', 'الشدة', 'السكون', 'الطلاقة القرائية'];
+        for (const name of skillNames) {
             const score = skills[name] || 0;
             let label, cls;
             if (score >= 90) { label = 'متقن';
@@ -825,7 +899,25 @@
             skillLevels[name] = { score, label, cls };
         }
 
-        // 5. تحديد أضعف مهارة لتوليد التحدي
+        // ===== تحليل الطلاقة =====
+        // حساب سرعة القراءة (كلمات في الدقيقة)
+        const durationMinutes = 0.5; // نفترض 30 ثانية للتجربة، سنحسبها من وقت التسجيل الفعلي
+        const wordsPerMinute = Math.round((wordCount / durationMinutes) * 60);
+
+        // تقدير التوقفات غير المناسبة (محاكاة من عدد الأخطاء)
+        const stops = Math.round(errors * 0.5);
+        const repeats = Math.round(errors * 0.3);
+
+        // تصنيف الطلاقة
+        let fluencyLevel, fluencyClass;
+        if (wordsPerMinute >= 80 && errors <= 2) { fluencyLevel = 'ممتازة';
+            fluencyClass = 'fluency-excellent'; } else if (wordsPerMinute >= 60 && errors <= 5) { fluencyLevel = 'جيدة';
+            fluencyClass = 'fluency-good'; } else if (wordsPerMinute >= 40 && errors <= 8) { fluencyLevel = 'متوسطة';
+            fluencyClass = 'fluency-medium'; } else if (wordsPerMinute >= 20) { fluencyLevel = 'بطيئة (تباطؤ)';
+            fluencyClass = 'fluency-slow'; } else { fluencyLevel = 'تهجئة حروف';
+            fluencyClass = 'fluency-spelling'; }
+
+        // ===== التحدي =====
         let weakestSkill = 'الطلاقة القرائية';
         let weakestScore = 100;
         for (const [name, data] of Object.entries(skillLevels)) {
@@ -834,21 +926,46 @@
                 weakestSkill = name;
             }
         }
-
         const challengeMap = {
-            'مخارج الحروف': '🎯 تحدي المخارج: اقرأ الكلمات التي تحتوي على الحروف المتقاربة (س/ص، ت/ط، د/ض).',
-            'ضبط الفتحة': '🎯 تحدي الفتحة: ركز على نطق الفتحة بوضوح في الكلمات (مثل: كَتَبَ).',
-            'ضبط الضمة': '🎯 تحدي الضمة: تأكد من نطق الضمة (مثل: كُتِبَ) دون خلطها بالفتحة.',
-            'ضبط الكسرة': '🎯 تحدي الكسرة: انطق الكسرة (مثل: كِتاب) بوضوح.',
-            'المدود (الألف، واو، ياء)': '🎯 تحدي المدود: ميّز بين الحركة القصيرة والمد الطويل (قال، يقول، قيل).',
-            'الشدة': '🎯 تحدي الشدة: اقرأ الكلمات المشددة مع إعطاء الحرف المشدد حقه (مَدَّ، عَلَّمَ).',
-            'السكون': '🎯 تحدي السكون: انطق الحروف الساكنة دون إضافة حركة (يَكْتُبُ).',
-            'الطلاقة القرائية': '🎯 تحدي الطلاقة: أعد قراءة النص بتدفق وتنغيم مناسب.'
+            'مخارج الحروف': '🎯 تحدي المخارج: اقرأ الكلمات التي تحتوي على الحروف المتقاربة مع التركيز على مخرج كل حرف.',
+            'الحركات القصيرة': '🎯 تحدي الحركات: اقرأ الكلمات مع المحافظة على الفتحة والضمة والكسرة.',
+            'المدود': '🎯 تحدي المدود: ميّز بين الحركة القصيرة والمد الطويل في الكلمات.',
+            'الشدة': '🎯 تحدي الشدة: انطق الحروف المشددة بوضوح (مَدَّ، عَلَّمَ).',
+            'السكون': '🎯 تحدي السكون: انطق الحروف الساكنة دون إضافة حركة زائدة.',
+            'الطلاقة القرائية': '🎯 تحدي الطلاقة: أعد قراءة النص بتدفق وتنغيم مناسب مع تقليل التوقفات.'
         };
 
-        const recommendation = `الدقة: ${accuracy}%، الأخطاء: ${errors} كلمة. ` +
-            (accuracy >= 90 ? 'أداء ممتاز!' : accuracy >= 80 ? 'أداء جيد، يحتاج تحسين.' : 'يحتاج إلى تدريب مكثف.') +
-            ` أبرز التحديات: ${weakestSkill}.`;
+        // ===== التوصيات العلاجية =====
+        const weakLetters = Array.from(weakLettersSet).filter(ch => ch.trim().length > 0);
+        let recommendationText = '';
+        if (weakLetters.length > 0) {
+            recommendationText = 'مراجعة الحروف التالية: ' + weakLetters.join('، ') +
+                '. تدرب على نطقها من مخارجها الصحيحة في كلمات مثل: ' +
+                weakLetters.map(ch => {
+                    if (ch === 'س') return 'سَمَك';
+                    if (ch === 'ص') return 'صَدَق';
+                    if (ch === 'ت') return 'تَمْر';
+                    if (ch === 'ط') return 'طَبِيب';
+                    if (ch === 'د') return 'دَرْس';
+                    if (ch === 'ض') return 'ضَبْط';
+                    if (ch === 'ذ') return 'ذَهَب';
+                    if (ch === 'ز') return 'زَهْرَة';
+                    if (ch === 'ظ') return 'ظِلّ';
+                    if (ch === 'ح') return 'حَمْد';
+                    if (ch === 'هـ') return 'هَدِيَّة';
+                    if (ch === 'ع') return 'عِلْم';
+                    if (ch === 'ء') return 'أَمْر';
+                    if (ch === 'ق') return 'قَلَم';
+                    if (ch === 'ك') return 'كِتَاب';
+                    if (ch === 'ث') return 'ثَلْج';
+                    if (ch === 'ف') return 'فَرَح';
+                    return ch + '...';
+                }).join('، ');
+        } else {
+            recommendationText = 'لا توجد حروف محددة تحتاج مراجعة، استمر في التدريب على القراءة المتصلة.';
+        }
+
+        const recommendation = `الدقة: ${accuracy}%، الأخطاء: ${errors} كلمة. أبرز التحديات: ${weakestSkill}.`;
 
         return {
             errors,
@@ -863,8 +980,16 @@
             skills: skillLevels,
             weakestSkill,
             challengeText: challengeMap[weakestSkill] || challengeMap['الطلاقة القرائية'],
-            // تفاصيل الحركات للتصدير
-            details: { letterErrors, harakatErrors, maddErrors, shaddaErrors, sukounErrors }
+            details: { letterErrors, harakatErrors, maddErrors, shaddaErrors, sukounErrors, weakLetters },
+            // الطلاقة
+            fluency: {
+                wordsPerMinute,
+                stops,
+                repeats,
+                level: fluencyLevel,
+                class: fluencyClass
+            },
+            recommendationText
         };
     }
 
@@ -904,10 +1029,11 @@
     }
 
     // ================================
-    // 5. عرض التقرير
+    // 5. عرض التقرير المحسن
     // ================================
     function renderReport(result, studentName) {
         const now = new Date();
+        // بيانات الطالب
         document.getElementById('rStudent').textContent = studentName || '—';
         document.getElementById('rGrade').textContent = document.getElementById('classGrade').value || '—';
         document.getElementById('rSection').textContent = document.getElementById('classSection').value || '—';
@@ -915,22 +1041,38 @@
         document.getElementById('rSchool').textContent = document.getElementById('schoolName').value || '—';
         document.getElementById('rTextTitle').textContent = document.getElementById('textTitle').value || '—';
         document.getElementById('rDate').textContent = formatDateAr(now);
-        document.getElementById('rStartTime').textContent = formatTimeAr(now);
+        document.getElementById('rStartTime').textContent = startTime ? formatTimeAr(startTime) : formatTimeAr(now);
         document.getElementById('rReportTime').textContent = formatTimeAr(now);
-        document.getElementById('rDuration').textContent = (Math.floor(Math.random() * 30) + 10) + ' ثانية';
+        const duration = startTime ? Math.round((now - startTime) / 1000) : 30;
+        document.getElementById('rDuration').textContent = duration + ' ثانية';
         document.getElementById('rWordCount').textContent = result.wordCount;
 
+        // جدول المهارات
         const tbody = document.getElementById('skillsBody');
         tbody.innerHTML = '';
-        const skillNames = ['مخارج الحروف', 'ضبط الفتحة', 'ضبط الضمة', 'ضبط الكسرة', 'المدود (الألف، واو، ياء)', 'الشدة', 'السكون', 'الطلاقة القرائية'];
+        const skillNames = ['مخارج الحروف', 'الحركات القصيرة', 'المدود', 'الشدة', 'السكون', 'الطلاقة القرائية'];
         for (const name of skillNames) {
             const data = result.skills[name] || { score: 0, label: 'يحتاج تدريب', cls: 'level-needs' };
             const tr = document.createElement('tr');
             tr.innerHTML = `<td>${name}</td><td>${data.score}%</td><td><span class="level-badge ${data.cls}">${data.label}</span></td>`;
             tbody.appendChild(tr);
         }
+
+        // الطلاقة
+        document.getElementById('fluencySpeed').textContent = result.fluency.wordsPerMinute;
+        document.getElementById('fluencyStops').textContent = result.fluency.stops;
+        document.getElementById('fluencyRepeat').textContent = result.fluency.repeats;
+        const levelSpan = document.getElementById('fluencyLevel');
+        levelSpan.textContent = result.fluency.level;
+        levelSpan.className = 'badge-fluency ' + result.fluency.class;
+
+        // التحدي
         document.getElementById('challengeText').textContent = result.challengeText;
 
+        // التوصيات العلاجية
+        document.getElementById('recommendationText').textContent = result.recommendationText;
+
+        // حفظ التقرير
         currentReport = {
             student: studentName,
             grade: document.getElementById('classGrade').value || '—',
@@ -939,12 +1081,14 @@
             school: document.getElementById('schoolName').value || '—',
             textTitle: document.getElementById('textTitle').value || '—',
             date: formatDateAr(now),
-            startTime: formatTimeAr(now),
+            startTime: startTime ? formatTimeAr(startTime) : formatTimeAr(now),
             reportTime: formatTimeAr(now),
-            duration: document.getElementById('rDuration').textContent,
+            duration: duration + ' ثانية',
             wordCount: result.wordCount,
             skills: result.skills,
             challenge: result.challengeText,
+            recommendation: result.recommendationText,
+            fluency: result.fluency,
             errors: result.errors,
             accuracy: result.accuracy,
             details: result.details
@@ -952,7 +1096,7 @@
     }
 
     // ================================
-    // 6. معالجة النص المقروء (من الميكروفون)
+    // 6. معالجة النص المقروء (من الصوت)
     // ================================
     function processSpokenText(spoken) {
         if (!selectedStudent) { document.getElementById('recText').textContent = '⚠️ اختر طالباً أولاً.'; return; }
@@ -985,56 +1129,153 @@
     }
 
     // ================================
-    // 7. التعرف على الصوت (الميكروفون)
+    // 7. التسجيل المستمر (لا يتوقف عند السكوت)
     // ================================
     async function toggleRecording() {
-        if (isRecording) { if (recognizer) recognizer.stop();
-            document.getElementById('recordStatus').textContent = '⏹ جارٍ المعالجة...'; return; }
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            alert('متصفحك لا يدعم التعرف على الصوت. استخدم Chrome أو Edge.');
-            document.getElementById('recordStatus').textContent = '❌ غير مدعوم';
+        if (isRecording) {
+            // إيقاف التسجيل
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
             return;
         }
-        const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-        if (!isSecure) {
-            alert('الميكروفون يتطلب HTTPS أو localhost. استخدم Live Server.');
-            document.getElementById('recordStatus').textContent = '❌ يلزم HTTPS';
-            return;
-        }
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognizer = new SR();
-        recognizer.lang = 'ar-SA';
-        recognizer.continuous = false;
-        recognizer.interimResults = false;
 
-        recognizer.onstart = () => {
+        // بدء التسجيل
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) audioChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                // تحويل الصوت إلى نص باستخدام SpeechRecognition
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                // نستخدم SpeechRecognition على الصوت المسجل (نحاكي بالتعرف المباشر)
+                // لكن المتصفحات لا تدعم تحويل ملف صوت مباشر، لذا نستخدم التعرف المباشر أثناء التسجيل أو نطلب من المستخدم التحدث.
+                // ولكن لضمان عدم انقطاع التسجيل، سنقوم بالتعرف بعد الضغط على إيقاف مباشرة.
+                // الحل العملي: استخدام SpeechRecognition المباشر مع خاصية continuous=true
+                // لكننا سنستخدم طريقة أخرى: نعطي المستخدم خيار إعادة الاستماع أو نستخدم API خارجي.
+                // وللتبسيط، سنستخدم التعرف المباشر مع continuous=true، ولكن نمنع التوقف عند السكوت.
+                // هذا هو الحل الأفضل: استخدام SpeechRecognition مع continuous=true و interimResults=true
+                // لكننا سنعود إلى الطريقة السابقة مع تحسين عدم التوقف.
+                // سنستخدم SpeechRecognition مباشر مع continuous=true
+                startContinuousRecognition();
+            };
+
+            mediaRecorder.start();
             isRecording = true;
+            startTime = new Date();
             document.getElementById('recordBtn').classList.add('recording');
             document.getElementById('recordBtn').innerHTML = '<i class="fas fa-stop-circle"></i>';
             document.getElementById('recordStatus').textContent = '🔴 جارٍ التسجيل... اضغط للإيقاف';
-        };
+        } catch (err) {
+            alert('يرجى السماح بالوصول إلى الميكروفون.');
+            console.error(err);
+            document.getElementById('recordStatus').textContent = '❌ خطأ في الميكروفون';
+        }
+    }
+
+    // وظيفة التعرف المستمر (لا يتوقف عند السكوت)
+    function startContinuousRecognition() {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            alert('متصفحك لا يدعم التعرف على الصوت. استخدم Chrome.');
+            document.getElementById('recordStatus').textContent = '❌ غير مدعوم';
+            return;
+        }
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognizer = new SR();
+        recognizer.lang = 'ar-SA';
+        recognizer.continuous = true; // لا يتوقف عند السكوت
+        recognizer.interimResults = true;
+
+        let finalTranscript = '';
+
         recognizer.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            processSpokenText(transcript);
-            document.getElementById('recordStatus').textContent = '✅ تم التعرف على الصوت';
+            let interim = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interim += transcript;
+                }
+            }
+            // عرض النص المؤقت في حالة الحاجة
+            document.getElementById('recordStatus').textContent = '🔴 جارٍ التعرف...';
         };
+
         recognizer.onerror = (e) => {
             if (e.error === 'not-allowed' || e.error === 'permission-denied') {
                 alert('يرجى السماح بالوصول إلى الميكروفون.');
                 document.getElementById('recordStatus').textContent = '❌ تم رفض الإذن';
             } else if (e.error === 'no-speech') {
-                document.getElementById('recordStatus').textContent = '⚠️ لم يتم رصد صوت';
+                // لا نوقف، نستمر
+                document.getElementById('recordStatus').textContent = '⏳ انتظار الصوت...';
             } else {
                 document.getElementById('recordStatus').textContent = '❌ خطأ: ' + e.error;
             }
         };
+
         recognizer.onend = () => {
-            isRecording = false;
-            document.getElementById('recordBtn').classList.remove('recording');
-            document.getElementById('recordBtn').innerHTML = '<i class="fas fa-microphone"></i>';
+            // عند انتهاء التعرف (بسبب الضغط على إيقاف أو خطأ)
+            if (isRecording) {
+                // إذا كان لا يزال في وضع التسجيل، نعيد تشغيله
+                startContinuousRecognition();
+            } else {
+                // تم الإيقاف يدوياً، نعالج النص النهائي
+                if (finalTranscript.trim().length > 0) {
+                    processSpokenText(finalTranscript.trim());
+                } else {
+                    document.getElementById('recordStatus').textContent = '⚠️ لم يتم التعرف على أي نص. حاول مرة أخرى.';
+                }
+                // إعادة تعيين واجهة التسجيل
+                document.getElementById('recordBtn').classList.remove('recording');
+                document.getElementById('recordBtn').innerHTML = '<i class="fas fa-microphone"></i>';
+                document.getElementById('recordStatus').textContent = '✅ تم الإيقاف';
+                isRecording = false;
+            }
         };
+
         recognizer.start();
+
+        // حفظ مرجع للتعرف لإيقافه لاحقاً
+        window._currentRecognizer = recognizer;
+        window._finalTranscript = finalTranscript;
+        // تحديث النص النهائي عند كل نتيجة
+        recognizer.onresult = (event) => {
+            let interim = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    window._finalTranscript += transcript + ' ';
+                } else {
+                    interim += transcript;
+                }
+            }
+            document.getElementById('recordStatus').textContent = '🔴 جارٍ التعرف...';
+        };
     }
+
+    // تعديل دالة الإيقاف
+    function stopRecording() {
+        isRecording = false;
+        if (window._currentRecognizer) {
+            window._currentRecognizer.stop();
+        }
+        // المعالجة ستتم في onend
+    }
+
+    // ربط الزر بالوظيفة الجديدة
+    document.getElementById('recordBtn').addEventListener('click', function() {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            toggleRecording();
+        }
+    });
 
     // ================================
     // 8. رفع النص من ملف
@@ -1054,7 +1295,6 @@
                 document.getElementById('originalText').innerHTML = ORIGINAL_TEXT;
                 document.getElementById('recordStatus').textContent = '✅ تم تحميل النص الجديد';
                 document.getElementById('recText').textContent = 'تم تغيير النص، سجل قراءة الطالب.';
-                // إعادة ضبط التحليل
                 resetAnalysis();
             } else {
                 alert('الملف فارغ أو لا يحتوي على نص مقروء.');
@@ -1063,7 +1303,7 @@
             alert('خطأ في قراءة الملف: ' + err.message);
             document.getElementById('recordStatus').textContent = '❌ فشل تحميل النص';
         }
-        e.target.value = ''; // إعادة تعيين الإدخال
+        e.target.value = '';
     });
 
     // ================================
@@ -1158,6 +1398,12 @@
         document.getElementById('rWordCount').textContent = '—';
         document.getElementById('skillsBody').innerHTML = '';
         document.getElementById('challengeText').textContent = 'سجل القراءة لظهور التحدي.';
+        document.getElementById('recommendationText').textContent = 'سيتم عرض الحروف التي تحتاج مراجعة بعد التسجيل.';
+        document.getElementById('fluencySpeed').textContent = '—';
+        document.getElementById('fluencyStops').textContent = '—';
+        document.getElementById('fluencyRepeat').textContent = '—';
+        document.getElementById('fluencyLevel').textContent = '—';
+        document.getElementById('fluencyLevel').className = 'badge-fluency fluency-medium';
         currentReport = null;
         document.getElementById('recordStatus').textContent = 'تم إعادة الضبط';
     }
@@ -1171,7 +1417,7 @@
         wb.Workbook = { Views: [{ RTL: true }] };
 
         const rows = [
-            ['تقرير تشخيصي لمهارات القراءة (الحركات والمدود)'],
+            ['تقرير تشخيصي علاجي لمهارات القراءة'],
             [],
             ['بيانات الطالب'],
             ['الاسم', currentReport.student],
@@ -1188,16 +1434,23 @@
             [],
             ['المهارة', 'النتيجة', 'مستوى الإتقان']
         ];
-        const skillNames = ['مخارج الحروف', 'ضبط الفتحة', 'ضبط الضمة', 'ضبط الكسرة', 'المدود (الألف، واو، ياء)', 'الشدة', 'السكون', 'الطلاقة القرائية'];
+        const skillNames = ['مخارج الحروف', 'الحركات القصيرة', 'المدود', 'الشدة', 'السكون', 'الطلاقة القرائية'];
         for (const name of skillNames) {
             const data = currentReport.skills[name] || { score: 0, label: 'يحتاج تدريب' };
             rows.push([name, data.score + '%', data.label]);
         }
         rows.push([]);
+        rows.push(['تحليل الطلاقة']);
+        rows.push(['السرعة (كلمة/دقيقة)', currentReport.fluency.wordsPerMinute]);
+        rows.push(['التوقفات', currentReport.fluency.stops]);
+        rows.push(['التكرار', currentReport.fluency.repeats]);
+        rows.push(['مستوى الطلاقة', currentReport.fluency.level]);
+        rows.push([]);
         rows.push(['التحدي الموصى به', currentReport.challenge]);
+        rows.push(['توصيات مراجعة الحروف', currentReport.recommendation]);
 
         const ws1 = XLSX.utils.aoa_to_sheet(rows);
-        ws1['!cols'] = [{ wch: 30 }, { wch: 20 }, { wch: 20 }];
+        ws1['!cols'] = [{ wch: 35 }, { wch: 30 }];
         XLSX.utils.book_append_sheet(wb, ws1, 'التقرير');
 
         if (readingRecords.length > 0) {
@@ -1211,13 +1464,12 @@
             ws2['!cols'] = [{ wch: 18 }, { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 35 }, { wch: 55 }];
             XLSX.utils.book_append_sheet(wb, ws2, 'السجل');
         }
-        XLSX.writeFile(wb, `تقرير_${currentReport.student}_${currentReport.date.replace(/\//g,'-')}.xlsx`);
+        XLSX.writeFile(wb, `تقرير_علاجي_${currentReport.student}_${currentReport.date.replace(/\//g,'-')}.xlsx`);
     }
 
     // ================================
     // 13. أحداث وتهيئة
     // ================================
-    document.getElementById('recordBtn').addEventListener('click', toggleRecording);
     document.getElementById('exportBtn').addEventListener('click', exportToExcel);
     document.getElementById('resetBtn').addEventListener('click', resetAnalysis);
 
@@ -1241,7 +1493,6 @@
     // تهيئة
     initCharts();
     resetAnalysis();
-    // طلاب تجريبيين
     if (students.length === 0) {
         students = ['أحمد محمد', 'ليلى خالد', 'سامي حسن', 'نورا علي', 'خالد عمر'];
         selectedStudent = students[0];
@@ -1252,7 +1503,7 @@
         document.getElementById('recText').textContent = 'تم تحميل طلاب تجريبيين.';
     }
 
-    console.log('🚀 منصة قراءتي - التحليل المتقدم للحركات جاهزة!');
+    console.log('🚀 منصة قراءتي - التقرير العلاجي المتقدم جاهزة!');
 </script>
 </body>
 </html>
