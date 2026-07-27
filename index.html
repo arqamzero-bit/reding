@@ -455,9 +455,48 @@
 
     // ====== UTILITY FUNCTIONS ======
     function normalizeArabic(text) {
-        // تطبيع بسيط: إزالة تشكيل (حركات) اختياري، لكننا نحتفظ بها للتحليل الدقيق
-        // نزيل التنوين والحركات للحصول على نصوص متسقة
-        return text.replace(/[\u064B-\u065F\u0670]/g, '').trim();
+        return text
+            .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '') // إزالة التشكيل
+            .replace(/\u0640/g, '')                              // إزالة التطويل
+            .replace(/[أإآٱ]/g, 'ا')                              // توحيد أشكال الألف
+            .replace(/ى/g, 'ي')                                   // الألف المقصورة → ياء
+            .replace(/ة/g, 'ه')                                   // التاء المربوطة → هاء
+            .replace(/[؟!،.؛:"'\-()«»]/g, '')                    // علامات الترقيم
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    // محاذاة على مستوى الكلمة (خوارزمية المسافة التحريرية) بدل مقارنة حرف-بموضعه
+    // هذا يمنع أن يؤدي فرق بسيط في كلمة إلى اعتبار كل ما بعدها "خطأ"
+    function alignWords(origWords, spokenWords) {
+        const n = origWords.length, m = spokenWords.length;
+        const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+        for (let i = 0; i <= n; i++) dp[i][0] = i;
+        for (let j = 0; j <= m; j++) dp[0][j] = j;
+        for (let i = 1; i <= n; i++) {
+            for (let j = 1; j <= m; j++) {
+                if (origWords[i - 1] === spokenWords[j - 1]) {
+                    dp[i][j] = dp[i - 1][j - 1];
+                } else {
+                    dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+                }
+            }
+        }
+        let i = n, j = m;
+        const wordCorrect = new Array(n).fill(true);
+        while (i > 0 && j > 0) {
+            if (origWords[i - 1] === spokenWords[j - 1]) {
+                wordCorrect[i - 1] = true; i--; j--;
+            } else if (dp[i][j] === dp[i - 1][j - 1] + 1) {
+                wordCorrect[i - 1] = false; i--; j--; // كلمة نُطقت بشكل مختلف
+            } else if (dp[i][j] === dp[i - 1][j] + 1) {
+                wordCorrect[i - 1] = false; i--;      // كلمة لم تُقرأ
+            } else {
+                j--;                                   // كلمة زائدة نُطقت
+            }
+        }
+        while (i > 0) { wordCorrect[i - 1] = false; i--; }
+        return wordCorrect;
     }
 
     // تحليل النص المقروء مقابل النص الأصلي
@@ -465,78 +504,64 @@
         const orig = ORIGINAL_TEXT;
         const spoken = spokenText.trim();
 
-        // تطبيع
         const origNorm = normalizeArabic(orig);
         const spokenNorm = normalizeArabic(spoken);
 
-        // حساب الأخطاء: عدد الحروف التي تختلف (بسيط)
-        const maxLen = Math.max(origNorm.length, spokenNorm.length);
-        let errors = 0;
-        let correct = 0;
-        for (let i = 0; i < maxLen; i++) {
-            const o = origNorm[i] || '';
-            const s = spokenNorm[i] || '';
-            if (o !== s) errors++;
-            else if (o && s) correct++;
-        }
-        const totalChars = origNorm.length;
-        const accuracy = totalChars > 0 ? Math.round(((totalChars - errors) / totalChars) * 100) : 0;
+        const origRawWords = orig.trim().split(/\s+/).filter(w => w.length > 0);
+        const origWords = origNorm.split(' ').filter(w => w.length > 0);
+        const spokenWords = spokenNorm.split(' ').filter(w => w.length > 0);
 
-        // عدد الكلمات المقروءة (تقريباً حسب المسافات)
-        const wordsSpoken = spokenNorm.split(/\s+/).filter(w => w.length > 0);
-        const wordCount = wordsSpoken.length;
+        const wordCorrect = alignWords(origWords, spokenWords);
+        const totalWords = origWords.length;
+        const correctCount = wordCorrect.filter(Boolean).length;
+        const errors = totalWords - correctCount;
+        const accuracy = totalWords > 0 ? Math.round((correctCount / totalWords) * 100) : 0;
 
-        // تحليل الحروف المتكررة (أخطاء حروف)
-        const letterErrors = {};
-        const spokenChars = spokenNorm.split('');
-        const origChars = origNorm.split('');
-        for (let i = 0; i < Math.max(spokenChars.length, origChars.length); i++) {
-            const s = spokenChars[i] || '';
-            const o = origChars[i] || '';
-            if (s && o && s !== o) {
-                letterErrors[o] = (letterErrors[o] || 0) + 1;
-            }
-        }
+        const wrongWords = origRawWords.filter((w, idx) => !wordCorrect[idx]);
+        const wordCount = spokenWords.length;
 
         // مدود: حروف المد (ا و ي) في النص الأصلي
         const maddLetters = ['ا', 'و', 'ي'];
         let maddCount = 0;
-        for (const ch of origChars) {
+        for (const ch of origNorm) {
             if (maddLetters.includes(ch)) maddCount++;
         }
 
-        // تحليل الاحتياجات
-        const weakLetters = Object.keys(letterErrors).slice(0, 5);
-        const needsMadd = maddCount > 0 ? ' يحتاج تدريب على المدود (' + maddCount + ' حرف مد)' : '';
-        const needsLinking = wordCount > 0 && wordCount < 5 ? ' يحتاج تحسين ربط الكلمات' : '';
+        const needsMadd = maddCount > 3 ? ' يُنصح بالتدريب على أحكام المدود.' : '';
+        const needsLinking = wordCount > 0 && wordCount < origWords.length ? ' يحتاج تحسين ربط الكلمات وعدم القفز عن كلمات.' : '';
+
+        // مستوى وصفي (بدل الأرقام) للتقرير
+        let levelText = '';
         let recommendation = '';
-        if (errors === 0 && accuracy === 100) {
-            recommendation = '⭐ قراءة ممتازة! الطالب يتقن النص.';
+        if (errors === 0 && totalWords > 0) {
+            levelText = 'ممتاز ⭐';
+            recommendation = '⭐ قراءة ممتازة! الطالب لفظ جميع كلمات النص بشكل صحيح.';
         } else if (accuracy >= 80) {
-            recommendation = '✅ قراءة جيدة، مع بعض الأخطاء البسيطة.';
+            levelText = 'جيد ✅';
+            recommendation = '✅ قراءة جيدة، مع أخطاء بسيطة في بعض الكلمات: ' + (wrongWords.length ? wrongWords.join('، ') : '—') + '.';
         } else if (accuracy >= 50) {
-            recommendation = '📘 يحتاج الطالب إلى مراجعة الحروف: ' + (weakLetters.length ? weakLetters.join('، ') : 'جميع الحروف') + '.';
+            levelText = 'متوسط 📘';
+            recommendation = '📘 يحتاج الطالب إلى مراجعة الكلمات التالية: ' + (wrongWords.length ? wrongWords.join('، ') : '—') + '.';
         } else {
-            recommendation = '🔴 يحتاج الطالب إلى دعم مكثف في الحروف والكلمات.';
-        }
-        if (weakLetters.length > 0) {
-            recommendation += ' الحروف الضعيفة: ' + weakLetters.join('، ');
+            levelText = 'ضعيف 🔴';
+            recommendation = '🔴 يحتاج الطالب إلى دعم مكثف، خاصة في الكلمات: ' + (wrongWords.length ? wrongWords.join('، ') : '—') + '.';
         }
         if (needsMadd) recommendation += needsMadd;
         if (needsLinking) recommendation += needsLinking;
-        if (!needsMadd && !needsLinking && weakLetters.length === 0 && accuracy < 100) {
-            recommendation += ' تأكد من نطق الحروف بشكل صحيح.';
-        }
+
+        const weakWordsText = wrongWords.length > 0 ? wrongWords.join('، ') : 'لا يوجد';
 
         return {
             errors,
             accuracy,
             wordCount,
             maddCount,
-            letterErrors,
-            weakLetters,
-            recommendation,
-            totalChars
+            totalChars: totalWords, // للرسم البياني
+            wordCorrect,
+            origRawWords,
+            levelText,
+            weakWordsText,
+            recommendation
         };
     }
 
@@ -735,25 +760,15 @@
         // تحديث الرسوم البيانية
         updateCharts(result);
 
-        // إضافة تمييز في النص (محاكاة)
+        // إضافة تمييز في النص على مستوى الكلمة (مبني على نتيجة المحاذاة الصحيحة)
         const textEl = document.getElementById('originalText');
-        // نعرض النص مع تمييز بسيط
-        const orig = ORIGINAL_TEXT;
-        const spokenNorm = normalizeArabic(spoken);
-        let highlighted = '';
-        for (let i = 0; i < orig.length; i++) {
-            const ch = orig[i];
-            const spokenCh = spokenNorm[i] || '';
-            if (ch !== spokenCh && spokenCh) {
-                highlighted += `<mark>${ch}</mark>`;
-            } else {
-                highlighted += ch;
-            }
-        }
+        const highlighted = result.origRawWords.map((w, idx) => {
+            return result.wordCorrect[idx] ? w : `<mark>${w}</mark>`;
+        }).join(' ');
         textEl.innerHTML = highlighted;
         recordStatus.textContent = '✅ تحليل مكتمل';
 
-        // تسجيل هذه القراءة في السجل الشامل (للتصدير لاحقاً إلى Excel)
+        // تسجيل هذه القراءة في السجل الشامل (للتصدير لاحقاً إلى Excel) — بدون أرقام
         const now = new Date();
         readingRecords.push({
             student: selectedStudent,
@@ -761,10 +776,8 @@
             date: formatDateAr(now),
             day: ARABIC_DAYS[now.getDay()],
             time: formatTimeAr(now),
-            accuracy: result.accuracy + '%',
-            errors: result.errors,
-            wordCount: result.wordCount,
-            maddCount: result.maddCount,
+            level: result.levelText,
+            weakWords: result.weakWordsText,
             recommendation: result.recommendation
         });
     }
@@ -775,9 +788,9 @@
             alert('لا توجد بيانات لتصديرها بعد. قم بتسجيل قراءة واحدة على الأقل.');
             return;
         }
-        const headers = ['اسم الطالب', 'اسم المعلم', 'التاريخ', 'اليوم', 'الساعة', 'نسبة الدقة', 'عدد الأخطاء', 'عدد الكلمات المقروءة', 'عدد المدود', 'التوصيات'];
+        const headers = ['اسم الطالب', 'اسم المعلم', 'التاريخ', 'اليوم', 'الساعة', 'مستوى القراءة', 'الكلمات التي تحتاج تدريب', 'التوصيات'];
         const rows = readingRecords.map(r => [
-            r.student, r.teacher, r.date, r.day, r.time, r.accuracy, r.errors, r.wordCount, r.maddCount, r.recommendation
+            r.student, r.teacher, r.date, r.day, r.time, r.level, r.weakWords, r.recommendation
         ]);
         const wsData = [headers, ...rows];
         const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -789,10 +802,8 @@
             { wch: 12 }, // التاريخ
             { wch: 12 }, // اليوم
             { wch: 10 }, // الساعة
-            { wch: 10 }, // نسبة الدقة
-            { wch: 10 }, // عدد الأخطاء
-            { wch: 16 }, // عدد الكلمات
-            { wch: 10 }, // عدد المدود
+            { wch: 14 }, // مستوى القراءة
+            { wch: 35 }, // الكلمات التي تحتاج تدريب
             { wch: 55 }  // التوصيات
         ];
 
