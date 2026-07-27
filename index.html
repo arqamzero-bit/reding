@@ -692,11 +692,11 @@
     let students = [];
     let selectedStudent = null;
     let isRecording = false;
-    let mediaRecorder = null;
-    let audioChunks = [];
+    let recognizer = null;
+    let finalTranscript = '';
+    let startTime = null;
     let readingRecords = [];
     let currentReport = null;
-    let startTime = null;
 
     const ORIGINAL_TEXT_EL = document.getElementById('originalText');
     let ORIGINAL_TEXT = ORIGINAL_TEXT_EL.textContent.trim();
@@ -849,7 +849,6 @@
                 if (ch === pair[0] || ch === pair[1]) {
                     letterErrors++;
                     weakLettersSet.add(ch);
-                    // أضف الحرف المقابل للزوج أيضاً للتوصية
                     weakLettersSet.add(pair[0]);
                     weakLettersSet.add(pair[1]);
                     found = true;
@@ -862,19 +861,16 @@
                 weakLettersSet.add(ch);
                 continue;
             }
-            // الباقي يوزع على الحركات، الشدة، السكون
             const rand = Math.random();
             if (rand < 0.4) harakatErrors++;
             else if (rand < 0.7) shaddaErrors++;
             else sukounErrors++;
         }
 
-        // توزيع الأخطاء المتبقية
         const totalDetected = maddErrors + letterErrors + harakatErrors + shaddaErrors + sukounErrors;
         const diff = Math.max(0, errors - totalDetected);
         harakatErrors += diff;
 
-        // حساب نسب المهارات
         const calcScore = (err) => Math.max(0, Math.round(100 - (err / Math.max(totalWords, 1)) * 100));
 
         const skills = {
@@ -900,15 +896,11 @@
         }
 
         // ===== تحليل الطلاقة =====
-        // حساب سرعة القراءة (كلمات في الدقيقة)
-        const durationMinutes = 0.5; // نفترض 30 ثانية للتجربة، سنحسبها من وقت التسجيل الفعلي
+        const durationMinutes = 0.5;
         const wordsPerMinute = Math.round((wordCount / durationMinutes) * 60);
-
-        // تقدير التوقفات غير المناسبة (محاكاة من عدد الأخطاء)
         const stops = Math.round(errors * 0.5);
         const repeats = Math.round(errors * 0.3);
 
-        // تصنيف الطلاقة
         let fluencyLevel, fluencyClass;
         if (wordsPerMinute >= 80 && errors <= 2) { fluencyLevel = 'ممتازة';
             fluencyClass = 'fluency-excellent'; } else if (wordsPerMinute >= 60 && errors <= 5) { fluencyLevel = 'جيدة';
@@ -981,7 +973,6 @@
             weakestSkill,
             challengeText: challengeMap[weakestSkill] || challengeMap['الطلاقة القرائية'],
             details: { letterErrors, harakatErrors, maddErrors, shaddaErrors, sukounErrors, weakLetters },
-            // الطلاقة
             fluency: {
                 wordsPerMinute,
                 stops,
@@ -1033,7 +1024,6 @@
     // ================================
     function renderReport(result, studentName) {
         const now = new Date();
-        // بيانات الطالب
         document.getElementById('rStudent').textContent = studentName || '—';
         document.getElementById('rGrade').textContent = document.getElementById('classGrade').value || '—';
         document.getElementById('rSection').textContent = document.getElementById('classSection').value || '—';
@@ -1047,7 +1037,6 @@
         document.getElementById('rDuration').textContent = duration + ' ثانية';
         document.getElementById('rWordCount').textContent = result.wordCount;
 
-        // جدول المهارات
         const tbody = document.getElementById('skillsBody');
         tbody.innerHTML = '';
         const skillNames = ['مخارج الحروف', 'الحركات القصيرة', 'المدود', 'الشدة', 'السكون', 'الطلاقة القرائية'];
@@ -1058,7 +1047,6 @@
             tbody.appendChild(tr);
         }
 
-        // الطلاقة
         document.getElementById('fluencySpeed').textContent = result.fluency.wordsPerMinute;
         document.getElementById('fluencyStops').textContent = result.fluency.stops;
         document.getElementById('fluencyRepeat').textContent = result.fluency.repeats;
@@ -1066,13 +1054,9 @@
         levelSpan.textContent = result.fluency.level;
         levelSpan.className = 'badge-fluency ' + result.fluency.class;
 
-        // التحدي
         document.getElementById('challengeText').textContent = result.challengeText;
-
-        // التوصيات العلاجية
         document.getElementById('recommendationText').textContent = result.recommendationText;
 
-        // حفظ التقرير
         currentReport = {
             student: studentName,
             grade: document.getElementById('classGrade').value || '—',
@@ -1096,7 +1080,7 @@
     }
 
     // ================================
-    // 6. معالجة النص المقروء (من الصوت)
+    // 6. معالجة النص المقروء
     // ================================
     function processSpokenText(spoken) {
         if (!selectedStudent) { document.getElementById('recText').textContent = '⚠️ اختر طالباً أولاً.'; return; }
@@ -1108,12 +1092,10 @@
         document.getElementById('recText').textContent = result.recommendation;
         updateCharts(result);
 
-        // تمييز النص
         const highlighted = result.origRawWords.map((w, idx) => result.wordCorrect[idx] ? w : `<mark>${w}</mark>`).join(' ');
         document.getElementById('originalText').innerHTML = highlighted;
         document.getElementById('recordStatus').textContent = '✅ تحليل مكتمل';
 
-        // تسجيل في السجل
         const now = new Date();
         readingRecords.push({
             student: selectedStudent,
@@ -1129,81 +1111,29 @@
     }
 
     // ================================
-    // 7. التسجيل المستمر (لا يتوقف عند السكوت)
+    // 7. التسجيل المستمر (مع إيقاف صحيح)
     // ================================
-    async function toggleRecording() {
-        if (isRecording) {
-            // إيقاف التسجيل
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
-            return;
-        }
-
-        // بدء التسجيل
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) audioChunks.push(e.data);
-            };
-
-            mediaRecorder.onstop = () => {
-                // تحويل الصوت إلى نص باستخدام SpeechRecognition
-                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                // نستخدم SpeechRecognition على الصوت المسجل (نحاكي بالتعرف المباشر)
-                // لكن المتصفحات لا تدعم تحويل ملف صوت مباشر، لذا نستخدم التعرف المباشر أثناء التسجيل أو نطلب من المستخدم التحدث.
-                // ولكن لضمان عدم انقطاع التسجيل، سنقوم بالتعرف بعد الضغط على إيقاف مباشرة.
-                // الحل العملي: استخدام SpeechRecognition المباشر مع خاصية continuous=true
-                // لكننا سنستخدم طريقة أخرى: نعطي المستخدم خيار إعادة الاستماع أو نستخدم API خارجي.
-                // وللتبسيط، سنستخدم التعرف المباشر مع continuous=true، ولكن نمنع التوقف عند السكوت.
-                // هذا هو الحل الأفضل: استخدام SpeechRecognition مع continuous=true و interimResults=true
-                // لكننا سنعود إلى الطريقة السابقة مع تحسين عدم التوقف.
-                // سنستخدم SpeechRecognition مباشر مع continuous=true
-                startContinuousRecognition();
-            };
-
-            mediaRecorder.start();
-            isRecording = true;
-            startTime = new Date();
-            document.getElementById('recordBtn').classList.add('recording');
-            document.getElementById('recordBtn').innerHTML = '<i class="fas fa-stop-circle"></i>';
-            document.getElementById('recordStatus').textContent = '🔴 جارٍ التسجيل... اضغط للإيقاف';
-        } catch (err) {
-            alert('يرجى السماح بالوصول إلى الميكروفون.');
-            console.error(err);
-            document.getElementById('recordStatus').textContent = '❌ خطأ في الميكروفون';
-        }
-    }
-
-    // وظيفة التعرف المستمر (لا يتوقف عند السكوت)
     function startContinuousRecognition() {
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
             alert('متصفحك لا يدعم التعرف على الصوت. استخدم Chrome.');
             document.getElementById('recordStatus').textContent = '❌ غير مدعوم';
             return;
         }
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognizer = new SR();
-        recognizer.lang = 'ar-SA';
-        recognizer.continuous = true; // لا يتوقف عند السكوت
-        recognizer.interimResults = true;
 
-        let finalTranscript = '';
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognizer = new SR();
+        recognizer.lang = 'ar-SA';
+        recognizer.continuous = true;
+        recognizer.interimResults = true;
+        finalTranscript = '';
 
         recognizer.onresult = (event) => {
-            let interim = '';
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const transcript = event.results[i][0].transcript;
                 if (event.results[i].isFinal) {
                     finalTranscript += transcript + ' ';
-                } else {
-                    interim += transcript;
                 }
             }
-            // عرض النص المؤقت في حالة الحاجة
             document.getElementById('recordStatus').textContent = '🔴 جارٍ التعرف...';
         };
 
@@ -1211,8 +1141,8 @@
             if (e.error === 'not-allowed' || e.error === 'permission-denied') {
                 alert('يرجى السماح بالوصول إلى الميكروفون.');
                 document.getElementById('recordStatus').textContent = '❌ تم رفض الإذن';
+                stopRecording();
             } else if (e.error === 'no-speech') {
-                // لا نوقف، نستمر
                 document.getElementById('recordStatus').textContent = '⏳ انتظار الصوت...';
             } else {
                 document.getElementById('recordStatus').textContent = '❌ خطأ: ' + e.error;
@@ -1220,60 +1150,50 @@
         };
 
         recognizer.onend = () => {
-            // عند انتهاء التعرف (بسبب الضغط على إيقاف أو خطأ)
             if (isRecording) {
-                // إذا كان لا يزال في وضع التسجيل، نعيد تشغيله
+                // إعادة تشغيل تلقائي إذا توقف لأي سبب
                 startContinuousRecognition();
             } else {
-                // تم الإيقاف يدوياً، نعالج النص النهائي
+                // تم الإيقاف يدوياً
                 if (finalTranscript.trim().length > 0) {
                     processSpokenText(finalTranscript.trim());
                 } else {
                     document.getElementById('recordStatus').textContent = '⚠️ لم يتم التعرف على أي نص. حاول مرة أخرى.';
                 }
-                // إعادة تعيين واجهة التسجيل
                 document.getElementById('recordBtn').classList.remove('recording');
                 document.getElementById('recordBtn').innerHTML = '<i class="fas fa-microphone"></i>';
-                document.getElementById('recordStatus').textContent = '✅ تم الإيقاف';
+                document.getElementById('recordStatus').textContent = '⏹️ متوقف';
                 isRecording = false;
             }
         };
 
         recognizer.start();
-
-        // حفظ مرجع للتعرف لإيقافه لاحقاً
-        window._currentRecognizer = recognizer;
-        window._finalTranscript = finalTranscript;
-        // تحديث النص النهائي عند كل نتيجة
-        recognizer.onresult = (event) => {
-            let interim = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    window._finalTranscript += transcript + ' ';
-                } else {
-                    interim += transcript;
-                }
-            }
-            document.getElementById('recordStatus').textContent = '🔴 جارٍ التعرف...';
-        };
+        isRecording = true;
     }
 
-    // تعديل دالة الإيقاف
     function stopRecording() {
-        isRecording = false;
-        if (window._currentRecognizer) {
-            window._currentRecognizer.stop();
+        if (recognizer) {
+            try {
+                recognizer.stop();
+            } catch (e) {}
+            recognizer = null;
         }
-        // المعالجة ستتم في onend
+        isRecording = false;
+        document.getElementById('recordBtn').classList.remove('recording');
+        document.getElementById('recordBtn').innerHTML = '<i class="fas fa-microphone"></i>';
+        document.getElementById('recordStatus').textContent = '⏹️ متوقف';
     }
 
-    // ربط الزر بالوظيفة الجديدة
+    // ربط الزر
     document.getElementById('recordBtn').addEventListener('click', function() {
         if (isRecording) {
             stopRecording();
         } else {
-            toggleRecording();
+            startContinuousRecognition();
+            startTime = new Date();
+            document.getElementById('recordBtn').classList.add('recording');
+            document.getElementById('recordBtn').innerHTML = '<i class="fas fa-stop-circle"></i>';
+            document.getElementById('recordStatus').textContent = '🔴 جارٍ التسجيل... اضغط للإيقاف';
         }
     });
 
@@ -1473,7 +1393,6 @@
     document.getElementById('exportBtn').addEventListener('click', exportToExcel);
     document.getElementById('resetBtn').addEventListener('click', resetAnalysis);
 
-    // سحب وإفلات للطلاب
     const uploadZone = document.getElementById('uploadZone');
     uploadZone.addEventListener('dragover', (e) => { e.preventDefault();
         uploadZone.style.borderColor = '#ffd966';
@@ -1490,7 +1409,6 @@
         }
     });
 
-    // تهيئة
     initCharts();
     resetAnalysis();
     if (students.length === 0) {
