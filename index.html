@@ -861,6 +861,7 @@
                 weakLettersSet.add(ch);
                 continue;
             }
+            // الباقي يوزع على الحركات، الشدة، السكون
             const rand = Math.random();
             if (rand < 0.4) harakatErrors++;
             else if (rand < 0.7) shaddaErrors++;
@@ -871,6 +872,7 @@
         const diff = Math.max(0, errors - totalDetected);
         harakatErrors += diff;
 
+        // حساب نسب المهارات
         const calcScore = (err) => Math.max(0, Math.round(100 - (err / Math.max(totalWords, 1)) * 100));
 
         const skills = {
@@ -896,7 +898,7 @@
         }
 
         // ===== تحليل الطلاقة =====
-        const durationMinutes = 0.5;
+        const durationMinutes = 0.5; // نفترض 30 ثانية للتجربة
         const wordsPerMinute = Math.round((wordCount / durationMinutes) * 60);
         const stops = Math.round(errors * 0.5);
         const repeats = Math.round(errors * 0.3);
@@ -973,13 +975,7 @@
             weakestSkill,
             challengeText: challengeMap[weakestSkill] || challengeMap['الطلاقة القرائية'],
             details: { letterErrors, harakatErrors, maddErrors, shaddaErrors, sukounErrors, weakLetters },
-            fluency: {
-                wordsPerMinute,
-                stops,
-                repeats,
-                level: fluencyLevel,
-                class: fluencyClass
-            },
+            fluency: { wordsPerMinute, stops, repeats, level: fluencyLevel, class: fluencyClass },
             recommendationText
         };
     }
@@ -1080,7 +1076,7 @@
     }
 
     // ================================
-    // 6. معالجة النص المقروء
+    // 6. معالجة النص المقروء (من الصوت)
     // ================================
     function processSpokenText(spoken) {
         if (!selectedStudent) { document.getElementById('recText').textContent = '⚠️ اختر طالباً أولاً.'; return; }
@@ -1111,8 +1107,9 @@
     }
 
     // ================================
-    // 7. التسجيل المستمر (مع إيقاف صحيح)
+    // 7. التسجيل المستمر مع إيقاف فوري
     // ================================
+
     function startContinuousRecognition() {
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
             alert('متصفحك لا يدعم التعرف على الصوت. استخدم Chrome.');
@@ -1123,7 +1120,7 @@
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognizer = new SR();
         recognizer.lang = 'ar-SA';
-        recognizer.continuous = true;
+        recognizer.continuous = true;   // ✅ لا يتوقف عند السكوت
         recognizer.interimResults = true;
         finalTranscript = '';
 
@@ -1151,10 +1148,10 @@
 
         recognizer.onend = () => {
             if (isRecording) {
-                // إعادة تشغيل تلقائي إذا توقف لأي سبب
+                // إعادة تشغيل تلقائي إذا كان لا يزال في وضع التسجيل (لأنه توقف بسبب خطأ)
                 startContinuousRecognition();
             } else {
-                // تم الإيقاف يدوياً
+                // تم الإيقاف يدوياً، نعالج النص النهائي
                 if (finalTranscript.trim().length > 0) {
                     processSpokenText(finalTranscript.trim());
                 } else {
@@ -1175,7 +1172,7 @@
         if (recognizer) {
             try {
                 recognizer.stop();
-            } catch (e) {}
+            } catch (e) { /* تجاهل */ }
             recognizer = null;
         }
         isRecording = false;
@@ -1184,10 +1181,12 @@
         document.getElementById('recordStatus').textContent = '⏹️ متوقف';
     }
 
-    // ربط الزر
+    // ================================
+    // 8. ربط الزر
+    // ================================
     document.getElementById('recordBtn').addEventListener('click', function() {
         if (isRecording) {
-            stopRecording();
+            stopRecording(); // ✅ إيقاف فوري
         } else {
             startContinuousRecognition();
             startTime = new Date();
@@ -1198,7 +1197,7 @@
     });
 
     // ================================
-    // 8. رفع النص من ملف
+    // 9. رفع النص من ملف
     // ================================
     document.getElementById('uploadTextBtn').addEventListener('click', () => {
         document.getElementById('textFileInput').click();
@@ -1227,7 +1226,7 @@
     });
 
     // ================================
-    // 9. رفع الطلاب (Excel)
+    // 10. رفع الطلاب (Excel)
     // ================================
     function handleFile(file) {
         const reader = new FileReader();
@@ -1258,7 +1257,7 @@
     });
 
     // ================================
-    // 10. عرض الطلاب
+    // 11. عرض الطلاب
     // ================================
     function renderStudents() {
         const grid = document.getElementById('studentGrid');
@@ -1295,7 +1294,7 @@
     }
 
     // ================================
-    // 11. إعادة ضبط
+    // 12. إعادة ضبط
     // ================================
     function resetAnalysis() {
         document.getElementById('statErrors').textContent = '0';
@@ -1329,7 +1328,7 @@
     }
 
     // ================================
-    // 12. تصدير إلى Excel
+    // 13. تصدير إلى Excel
     // ================================
     function exportToExcel() {
         if (!currentReport) { alert('لا توجد بيانات تقرير.'); return; }
@@ -1388,7 +1387,7 @@
     }
 
     // ================================
-    // 13. أحداث وتهيئة
+    // 14. أحداث وتهيئة
     // ================================
     document.getElementById('exportBtn').addEventListener('click', exportToExcel);
     document.getElementById('resetBtn').addEventListener('click', resetAnalysis);
