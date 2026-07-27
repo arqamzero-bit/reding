@@ -14,6 +14,7 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* ===== نفس التنسيق السابق مع إضافة زر التصحيح ===== */
         * {
             margin: 0;
             padding: 0;
@@ -471,6 +472,37 @@
             font-size: 1.2rem;
         }
 
+        /* زر التصحيح (القراءة الصحيحة) */
+        .play-correct-btn {
+            background: #27ae60;
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            border: none;
+        }
+        .play-correct-btn:hover {
+            background: #1e8449;
+            transform: scale(1.02);
+        }
+        .play-correct-btn i {
+            font-size: 1.2rem;
+        }
+        .play-correct-btn.playing {
+            background: #e67e22;
+            animation: pulse-audio 1s infinite;
+        }
+        @keyframes pulse-audio {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
         /* تنسيق التقرير المحسن */
         .report-header {
             background: linear-gradient(135deg, #f4f8fd, #e8f0f8);
@@ -595,8 +627,14 @@
     <div class="card">
         <div class="card-title"><i class="fas fa-scroll"></i> النص المقروء
             <span style="margin-right:auto;"></span>
+            <!-- زر رفع النص الجديد -->
             <span class="file-label-icon" id="uploadTextBtn"><i class="fas fa-file-upload"></i> رفع نص جديد</span>
             <input type="file" id="textFileInput" accept=".txt,.docx,.pdf,.xlsx,.xls" style="display:none;">
+
+            <!-- أيقونة تصحيح الأخطاء (القراءة الصحيحة) -->
+            <button class="play-correct-btn" id="playCorrectBtn" title="استمع إلى النص مقروءاً بصحيح">
+                <i class="fas fa-headphones"></i> تصحيح الأخطاء
+            </button>
         </div>
         <div class="text-display" id="textDisplay">
             <span id="originalText">في رحاب المدرسةِ، كانَ الطلابُ يقرؤونَ قصائدَ العربِ، ويحفظونَ حكمَ الأجدادِ. وكانَ المعلمُ يشرحُ لهمْ دروسَ النحوِ والبلاغةِ، ويسألُهمْ عنْ معاني الكلماتِ. فأجابَ خالدٌ: "العلمُ نورٌ"، وقالتْ ليلى: "القراءةُ غذاءُ الروحِ". فرحَ المعلمُ بطلابِهِ، وتمنى لهمْ مستقبلًا زاهرًا.</span>
@@ -697,6 +735,7 @@
     let startTime = null;
     let readingRecords = [];
     let currentReport = null;
+    let speechSynthesisUtterance = null;
 
     const ORIGINAL_TEXT_EL = document.getElementById('originalText');
     let ORIGINAL_TEXT = ORIGINAL_TEXT_EL.textContent.trim();
@@ -1197,7 +1236,64 @@
     });
 
     // ================================
-    // 9. رفع النص من ملف
+    // 9. أيقونة تصحيح الأخطاء (القراءة الصحيحة)
+    // ================================
+    document.getElementById('playCorrectBtn').addEventListener('click', function() {
+        const text = ORIGINAL_TEXT;
+        if (!text || text.trim().length === 0) {
+            alert('لا يوجد نص ليتم قراءته. قم بتحميل نص أولاً.');
+            return;
+        }
+
+        // إيقاف أي قراءة سابقة
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            this.classList.remove('playing');
+            this.innerHTML = '<i class="fas fa-headphones"></i> تصحيح الأخطاء';
+            return;
+        }
+
+        // تشغيل القراءة
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ar-SA';
+        utterance.rate = 0.9; // سرعة مناسبة للفهم
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        // محاولة اختيار صوت عربي فصيح
+        const voices = window.speechSynthesis.getVoices();
+        const arabicVoice = voices.find(v => v.lang.startsWith('ar'));
+        if (arabicVoice) {
+            utterance.voice = arabicVoice;
+        }
+
+        utterance.onstart = () => {
+            this.classList.add('playing');
+            this.innerHTML = '<i class="fas fa-stop-circle"></i> إيقاف القراءة';
+            document.getElementById('recordStatus').textContent = '🔊 جارٍ قراءة النص بصحيح...';
+        };
+
+        utterance.onend = () => {
+            this.classList.remove('playing');
+            this.innerHTML = '<i class="fas fa-headphones"></i> تصحيح الأخطاء';
+            document.getElementById('recordStatus').textContent = '✅ تمت القراءة الصحيحة';
+        };
+
+        utterance.onerror = () => {
+            this.classList.remove('playing');
+            this.innerHTML = '<i class="fas fa-headphones"></i> تصحيح الأخطاء';
+            document.getElementById('recordStatus').textContent = '❌ خطأ في القراءة الصوتية';
+        };
+
+        window.speechSynthesis.speak(utterance);
+        speechSynthesisUtterance = utterance;
+    });
+
+    // تحميل الأصوات عند تحميل الصفحة
+    window.speechSynthesis.getVoices();
+
+    // ================================
+    // 10. رفع النص من ملف
     // ================================
     document.getElementById('uploadTextBtn').addEventListener('click', () => {
         document.getElementById('textFileInput').click();
@@ -1226,7 +1322,7 @@
     });
 
     // ================================
-    // 10. رفع الطلاب (Excel)
+    // 11. رفع الطلاب (Excel)
     // ================================
     function handleFile(file) {
         const reader = new FileReader();
@@ -1257,7 +1353,7 @@
     });
 
     // ================================
-    // 11. عرض الطلاب
+    // 12. عرض الطلاب
     // ================================
     function renderStudents() {
         const grid = document.getElementById('studentGrid');
@@ -1294,7 +1390,7 @@
     }
 
     // ================================
-    // 12. إعادة ضبط
+    // 13. إعادة ضبط
     // ================================
     function resetAnalysis() {
         document.getElementById('statErrors').textContent = '0';
@@ -1328,7 +1424,7 @@
     }
 
     // ================================
-    // 13. تصدير إلى Excel
+    // 14. تصدير إلى Excel
     // ================================
     function exportToExcel() {
         if (!currentReport) { alert('لا توجد بيانات تقرير.'); return; }
@@ -1387,7 +1483,7 @@
     }
 
     // ================================
-    // 14. أحداث وتهيئة
+    // 15. أحداث وتهيئة
     // ================================
     document.getElementById('exportBtn').addEventListener('click', exportToExcel);
     document.getElementById('resetBtn').addEventListener('click', resetAnalysis);
