@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة قراءتي - تحليل القراءة بالفصحى</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <!-- SheetJS (XLSX) -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js">
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+            background: linear-gradient(145deg, #f7f9fc 0%, #eef2f7 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1e2b3c;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        /* ===== HEADER ===== */
+        .header {
+            background: linear-gradient(135deg, #1a3a5c, #2a5f7a);
+            border-radius: 28px;
+            padding: 28px 40px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            box-shadow: 0 12px 30px rgba(0, 20, 40, 0.25);
+            color: #fff;
+        }
+        .header h1 {
+            font-weight: 700;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header h1 i {
+            color: #ffd966;
+            font-size: 2rem;
+        }
+        .header .subtitle {
+            font-size: 1rem;
+            opacity: 0.85;
+            background: rgba(255, 255, 255, 0.12);
+            padding: 6px 18px;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+        }
+        /* ===== CARDS ===== */
+        .card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 24px;
+            padding: 24px 28px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), 0 1px 8px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.2s ease;
+            margin-bottom: 24px;
+        }
+        .card:hover {
+            box-shadow: 0 16px 40px rgba(0, 20, 40, 0.08);
+        }
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1a3a5c;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid rgba(26, 58, 92, 0.08);
+            padding-bottom: 12px;
+        }
+        .card-title i {
+            color: #2a5f7a;
+            width: 28px;
+            text-align: center;
+        }
+        /* ===== UPLOAD ZONE ===== */
+        .upload-zone {
+            border: 2px dashed #b8cbd9;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 18px;
+            padding: 28px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.25s;
+            position: relative;
+        }
+        .upload-zone:hover {
+            border-color: #2a5f7a;
+            background: rgba(42, 95, 122, 0.04);
+        }
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+        .upload-zone i {
+            font-size: 3rem;
+            color: #2a5f7a;
+            margin-bottom: 8px;
+        }
+        .upload-zone p {
+            font-size: 1rem;
+            color: #2a4b66;
+            font-weight: 500;
+        }
+        .upload-zone .hint {
+            font-size: 0.85rem;
+            color: #6f8ba0;
+        }
+        /* ===== STUDENT GRID ===== */
+        .student-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px 2px;
+        }
+        .student-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+        .student-grid::-webkit-scrollbar-thumb {
+            background: #b8cbd9;
+            border-radius: 10px;
+        }
+        .student-tag {
+            background: #eef4f9;
+            padding: 8px 22px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: #1a3a5c;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 2px solid transparent;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+        .student-tag:hover {
+            background: #dce7f0;
+            transform: translateY(-2px);
+        }
+        .student-tag.active {
+            background: #1a3a5c;
+            color: #fff;
+            border-color: #ffd966;
+            box-shadow: 0 6px 14px rgba(26, 58, 92, 0.25);
+        }
+        .student-tag .badge {
+            background: #ffd966;
+            color: #1a3a5c;
+            border-radius: 40px;
+            padding: 0 10px;
+            font-size: 0.7rem;
+            margin-right: 6px;
+            font-weight: 700;
+        }
+        /* ===== RECORD BUTTON ===== */
+        .record-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+        }
+        .record-btn {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #f0f7ff, #cbddee);
+            border: none;
+            box-shadow: 0 8px 24px rgba(26, 58, 92, 0.2), inset 0 -4px 8px rgba(0,0,0,0.04);
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.2rem;
+            color: #1a3a5c;
+            position: relative;
+        }
+        .record-btn::after {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            transition: 0.3s;
+        }
+        .record-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 12px 32px rgba(26, 58, 92, 0.3);
+        }
+        .record-btn.recording {
+            background: radial-gradient(circle at 30% 30%, #ffd9d9, #e04a4a);
+            color: #fff;
+            animation: pulse 1.2s infinite;
+            box-shadow: 0 0 0 8px rgba(224, 74, 74, 0.2);
+        }
+        .record-btn.recording::after {
+            border-color: #e04a4a;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .record-btn i {
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+        .record-status {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #2a5f7a;
+            background: rgba(255,255,255,0.6);
+            padding: 4px 20px;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+        }
+        /* ===== TEXT DISPLAY ===== */
+        .text-display {
+            background: #f4f8fd;
+            border-radius: 18px;
+            padding: 20px 24px;
+            font-size: 1.2rem;
+            line-height: 2.2rem;
+            color: #142433;
+            border-right: 6px solid #2a5f7a;
+            font-weight: 400;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Times New Roman', 'Amiri', serif;
+        }
+        .text-display mark {
+            background: #ffdd99;
+            padding: 0 4px;
+            border-radius: 6px;
+            color: #1a2a3a;
+        }
+        /* ===== STATS & CHARTS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin: 16px 0 20px;
+        }
+        .stat-item {
+            background: #f4f8fd;
+            border-radius: 16px;
+            padding: 14px 12px;
+            text-align: center;
+            border: 1px solid rgba(42, 95, 122, 0.08);
+        }
+        .stat-item .num {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a3a5c;
+        }
+        .stat-item .label {
+            font-size: 0.8rem;
+            color: #4b6f8a;
+            font-weight: 500;
+        }
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 760px) {
+            .chart-row { grid-template-columns: 1fr; }
+            .header { flex-direction: column; align-items: flex-start; gap: 12px; }
+        }
+        .chart-box {
+            background: #ffffffcc;
+            border-radius: 18px;
+            padding: 16px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .chart-box canvas {
+            max-height: 200px;
+            max-width: 100%;
+        }
+        /* ===== RECOMMENDATION ===== */
+        .rec-box {
+            background: #e6f0fa;
+            border-radius: 18px;
+            padding: 16px 22px;
+            border-right: 6px solid #ffd966;
+            margin-top: 12px;
+            font-size: 1rem;
+            line-height: 1.8;
+        }
+        .rec-box strong {
+            color: #1a3a5c;
+        }
+        .rec-box .tag {
+            display: inline-block;
+            background: #1a3a5c;
+            color: #fff;
+            border-radius: 30px;
+            padding: 0 16px;
+            font-size: 0.8rem;
+            margin: 2px 4px 2px 0;
+        }
+        /* ===== UTILS ===== */
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .mt-2 { margin-top: 12px; }
+        .mb-1 { margin-bottom: 8px; }
+        .text-muted { color: #5f7d94; }
+        .gap-2 { gap: 12px; }
+        .hidden { display: none; }
+        .w-100 { width: 100%; }
+
+        /* Scroll */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #e6ecf3; border-radius: 12px; }
+        ::-webkit-scrollbar-thumb { background: #b0c7da; border-radius: 12px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8aa9c2; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- HEADER -->
+    <header class="header">
+        <h1><i class="fas fa-book-open"></i> منصة قراءتي</h1>
+        <span class="subtitle"><i class="fas fa-microphone-alt"></i> تحليل القراءة بالفصحى</span>
+    </header>
+
+    <!-- UPLOAD + STUDENTS -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-users"></i> الطلاب</div>
+        <div class="upload-zone" id="uploadZone">
+            <i class="fas fa-file-excel"></i>
+            <p>ارفع ملف Excel بأسماء الطلاب</p>
+            <span class="hint">.xlsx أو .xls — العمود الأول هو الأسماء</span>
+            <input type="file" id="fileInput" accept=".xlsx,.xls">
+        </div>
+        <div id="studentListContainer" class="mt-2">
+            <div class="student-grid" id="studentGrid">
+                <span class="text-muted" style="padding:8px 0;">لم يتم رفع ملف بعد</span>
+            </div>
+        </div>
+        <div class="flex-between mt-2">
+            <span id="selectedStudentDisplay" class="text-muted">لم يتم اختيار طالب</span>
+            <button id="resetBtn" class="student-tag" style="background:#e8edf4;border:none;"><i class="fas fa-undo-alt"></i> إعادة ضبط</button>
+        </div>
+    </div>
+
+    <!-- MAIN: TEXT + RECORD -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-scroll"></i> النص المقروء</div>
+        <div class="text-display" id="textDisplay">
+            <span id="originalText">في رحاب المدرسةِ، كانَ الطلابُ يقرؤونَ قصائدَ العربِ، ويحفظونَ حكمَ الأجدادِ. وكانَ المعلمُ يشرحُ لهمْ دروسَ النحوِ والبلاغةِ، ويسألُهمْ عنْ معاني الكلماتِ. فأجابَ خالدٌ: "العلمُ نورٌ"، وقالتْ ليلى: "القراءةُ غذاءُ الروحِ". فرحَ المعلمُ بطلابِهِ، وتمنى لهمْ مستقبلًا زاهرًا.</span>
+        </div>
+        <div class="record-wrapper">
+            <button class="record-btn" id="recordBtn"><i class="fas fa-microphone"></i></button>
+            <div class="record-status" id="recordStatus">اضغط للتسجيل</div>
+        </div>
+    </div>
+
+    <!-- STATS + CHARTS -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-chart-bar"></i> تحليل القراءة</div>
+        <div id="statsContainer">
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-item"><div class="num" id="statErrors">0</div><div class="label">أخطاء</div></div>
+                <div class="stat-item"><div class="num" id="statAccuracy">0%</div><div class="label">دقة</div></div>
+                <div class="stat-item"><div class="num" id="statWords">0</div><div class="label">كلمات مقروءة</div></div>
+                <div class="stat-item"><div class="num" id="statMadd">0</div><div class="label">مدود</div></div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-box"><canvas id="chartErrors"></canvas></div>
+                <div class="chart-box"><canvas id="chartLetters"></canvas></div>
+            </div>
+            <div class="rec-box" id="recBox">
+                <strong><i class="fas fa-lightbulb"></i> التوصيات:</strong> <span id="recText">قم بتسجيل قراءة الطالب لتحليلها.</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ====== GLOBALS ======
+    let students = [];
+    let selectedStudent = null;
+    let isRecording = false;
+
+    // النص الأصلي (من الـ HTML)
+    const originalTextEl = document.getElementById('originalText');
+    const ORIGINAL_TEXT = originalTextEl.textContent.trim();
+
+    // Chart instances
+    let chartErrors = null;
+    let chartLetters = null;
+
+    // ====== DOM REFS ======
+    const fileInput = document.getElementById('fileInput');
+    const studentGrid = document.getElementById('studentGrid');
+    const selectedStudentDisplay = document.getElementById('selectedStudentDisplay');
+    const recordBtn = document.getElementById('recordBtn');
+    const recordStatus = document.getElementById('recordStatus');
+    const statErrors = document.getElementById('statErrors');
+    const statAccuracy = document.getElementById('statAccuracy');
+    const statWords = document.getElementById('statWords');
+    const statMadd = document.getElementById('statMadd');
+    const recText = document.getElementById('recText');
+    const resetBtn = document.getElementById('resetBtn');
+
+    // ====== UTILITY FUNCTIONS ======
+    function normalizeArabic(text) {
+        // تطبيع بسيط: إزالة تشكيل (حركات) اختياري، لكننا نحتفظ بها للتحليل الدقيق
+        // نزيل التنوين والحركات للحصول على نصوص متسقة
+        return text.replace(/[\u064B-\u065F\u0670]/g, '').trim();
+    }
+
+    // تحليل النص المقروء مقابل النص الأصلي
+    function analyzeReading(spokenText) {
+        const orig = ORIGINAL_TEXT;
+        const spoken = spokenText.trim();
+
+        // تطبيع
+        const origNorm = normalizeArabic(orig);
+        const spokenNorm = normalizeArabic(spoken);
+
+        // حساب الأخطاء: عدد الحروف التي تختلف (بسيط)
+        const maxLen = Math.max(origNorm.length, spokenNorm.length);
+        let errors = 0;
+        let correct = 0;
+        for (let i = 0; i < maxLen; i++) {
+            const o = origNorm[i] || '';
+            const s = spokenNorm[i] || '';
+            if (o !== s) errors++;
+            else if (o && s) correct++;
+        }
+        const totalChars = origNorm.length;
+        const accuracy = totalChars > 0 ? Math.round(((totalChars - errors) / totalChars) * 100) : 0;
+
+        // عدد الكلمات المقروءة (تقريباً حسب المسافات)
+        const wordsSpoken = spokenNorm.split(/\s+/).filter(w => w.length > 0);
+        const wordCount = wordsSpoken.length;
+
+        // تحليل الحروف المتكررة (أخطاء حروف)
+        const letterErrors = {};
+        const spokenChars = spokenNorm.split('');
+        const origChars = origNorm.split('');
+        for (let i = 0; i < Math.max(spokenChars.length, origChars.length); i++) {
+            const s = spokenChars[i] || '';
+            const o = origChars[i] || '';
+            if (s && o && s !== o) {
+                letterErrors[o] = (letterErrors[o] || 0) + 1;
+            }
+        }
+
+        // مدود: حروف المد (ا و ي) في النص الأصلي
+        const maddLetters = ['ا', 'و', 'ي'];
+        let maddCount = 0;
+        for (const ch of origChars) {
+            if (maddLetters.includes(ch)) maddCount++;
+        }
+
+        // تحليل الاحتياجات
+        const weakLetters = Object.keys(letterErrors).slice(0, 5);
+        const needsMadd = maddCount > 0 ? ' يحتاج تدريب على المدود (' + maddCount + ' حرف مد)' : '';
+        const needsLinking = wordCount > 0 && wordCount < 5 ? ' يحتاج تحسين ربط الكلمات' : '';
+        let recommendation = '';
+        if (errors === 0 && accuracy === 100) {
+            recommendation = '⭐ قراءة ممتازة! الطالب يتقن النص.';
+        } else if (accuracy >= 80) {
+            recommendation = '✅ قراءة جيدة، مع بعض الأخطاء البسيطة.';
+        } else if (accuracy >= 50) {
+            recommendation = '📘 يحتاج الطالب إلى مراجعة الحروف: ' + (weakLetters.length ? weakLetters.join('، ') : 'جميع الحروف') + '.';
+        } else {
+            recommendation = '🔴 يحتاج الطالب إلى دعم مكثف في الحروف والكلمات.';
+        }
+        if (weakLetters.length > 0) {
+            recommendation += ' الحروف الضعيفة: ' + weakLetters.join('، ');
+        }
+        if (needsMadd) recommendation += needsMadd;
+        if (needsLinking) recommendation += needsLinking;
+        if (!needsMadd && !needsLinking && weakLetters.length === 0 && accuracy < 100) {
+            recommendation += ' تأكد من نطق الحروف بشكل صحيح.';
+        }
+
+        return {
+            errors,
+            accuracy,
+            wordCount,
+            maddCount,
+            letterErrors,
+            weakLetters,
+            recommendation,
+            totalChars
+        };
+    }
+
+    // ====== RENDER STUDENTS ======
+    function renderStudents() {
+        studentGrid.innerHTML = '';
+        if (!students || students.length === 0) {
+            studentGrid.innerHTML = '<span class="text-muted" style="padding:8px 0;">لا يوجد طلاب، قم برفع ملف Excel</span>';
+            return;
+        }
+        students.forEach((name, idx) => {
+            const tag = document.createElement('span');
+            tag.className = 'student-tag' + (selectedStudent === name ? ' active' : '');
+            tag.textContent = name;
+            if (selectedStudent === name) {
+                const badge = document.createElement('span');
+                badge.className = 'badge';
+                badge.textContent = '✓';
+                tag.appendChild(badge);
+            }
+            tag.addEventListener('click', () => {
+                selectedStudent = name;
+                selectedStudentDisplay.textContent = '👤 ' + name;
+                renderStudents();
+                resetAnalysis();
+                // إظهار رسالة ترحيب
+                recText.textContent = 'تم اختيار ' + name + '، قم بتسجيل القراءة.';
+            });
+            studentGrid.appendChild(tag);
+        });
+        if (selectedStudent) {
+            selectedStudentDisplay.textContent = '👤 ' + selectedStudent;
+        } else {
+            selectedStudentDisplay.textContent = 'لم يتم اختيار طالب';
+        }
+    }
+
+    // ====== RESET ANALYSIS ======
+    function resetAnalysis() {
+        statErrors.textContent = '0';
+        statAccuracy.textContent = '0%';
+        statWords.textContent = '0';
+        statMadd.textContent = '0';
+        recText.textContent = 'قم بتسجيل قراءة الطالب لتحليلها.';
+        // reset charts
+        updateCharts({ errors: 0, accuracy: 0, wordCount: 0, maddCount: 0, letterErrors: {} });
+    }
+
+    // ====== CHARTS ======
+    function initCharts() {
+        const ctx1 = document.getElementById('chartErrors').getContext('2d');
+        const ctx2 = document.getElementById('chartLetters').getContext('2d');
+
+        chartErrors = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['الأخطاء', 'الصواب'],
+                datasets: [{
+                    label: 'عدد الحروف',
+                    data: [0, 0],
+                    backgroundColor: ['#e04a4a', '#2a7a5a'],
+                    borderRadius: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } } }
+            }
+        });
+
+        chartLetters = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: ['مدود', 'ربط', 'حروف أخرى'],
+                datasets: [{
+                    label: 'التحليل',
+                    data: [0, 0, 0],
+                    backgroundColor: ['#f1c40f', '#3498db', '#95a5a6'],
+                    borderRadius: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } } }
+            }
+        });
+    }
+
+    function updateCharts(result) {
+        if (!chartErrors || !chartLetters) return;
+        const errors = result.errors || 0;
+        const total = result.totalChars || 1;
+        const correct = Math.max(0, total - errors);
+
+        chartErrors.data.datasets[0].data = [errors, correct];
+        chartErrors.update();
+
+        // letters chart: مدود, ربط (كلمات), حروف أخرى
+        const madd = result.maddCount || 0;
+        const words = result.wordCount || 0;
+        const other = Math.max(0, total - madd - words);
+        chartLetters.data.datasets[0].data = [madd, words, other];
+        chartLetters.update();
+    }
+
+    // ====== HANDLE RECORDING ======
+    let recognizer = null;
+
+    async function toggleRecording() {
+        // STOP (if already recording, clicking again stops it)
+        if (isRecording) {
+            if (recognizer) recognizer.stop();
+            recordStatus.textContent = '⏹ جارٍ المعالجة...';
+            return;
+        }
+
+        // التحقق من دعم المتصفح للتعرف على الصوت
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            alert('متصفحك لا يدعم التعرف على الصوت. الرجاء استخدام Google Chrome أو Edge.');
+            recordStatus.textContent = '❌ المتصفح لا يدعم الميكروفون';
+            return;
+        }
+
+        // التحقق من أن الصفحة تعمل عبر HTTPS أو localhost
+        // (المتصفحات تمنع الوصول للميكروفون على file:// أو http:// عادي)
+        const isSecure = location.protocol === 'https:' ||
+                          location.hostname === 'localhost' ||
+                          location.hostname === '127.0.0.1';
+        if (!isSecure) {
+            alert('الوصول للميكروفون يتطلب فتح الصفحة عبر HTTPS أو من خادم محلي (localhost)، وليس كملف مباشر.');
+            recordStatus.textContent = '❌ يلزم تشغيل الصفحة عبر HTTPS/localhost';
+            return;
+        }
+
+        // START — تشغيل التعرف على الصوت مباشرة (بدون خطوة تسجيل وسيطة)
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognizer = new SR();
+        recognizer.lang = 'ar-SA';
+        recognizer.continuous = false;
+        recognizer.interimResults = false;
+
+        recognizer.onstart = () => {
+            isRecording = true;
+            recordBtn.classList.add('recording');
+            recordBtn.innerHTML = '<i class="fas fa-stop-circle"></i>';
+            recordStatus.textContent = '🔴 جارٍ التسجيل... اضغط للإيقاف';
+        };
+
+        recognizer.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            processSpokenText(transcript);
+            recordStatus.textContent = '✅ تم التعرف على الصوت';
+        };
+
+        recognizer.onerror = (e) => {
+            console.error(e);
+            if (e.error === 'not-allowed' || e.error === 'permission-denied') {
+                alert('يرجى السماح بالوصول إلى الميكروفون من إعدادات المتصفح.');
+                recordStatus.textContent = '❌ تم رفض إذن الميكروفون';
+            } else if (e.error === 'no-speech') {
+                recordStatus.textContent = '⚠️ لم يتم رصد أي صوت، حاول مرة أخرى';
+            } else {
+                recordStatus.textContent = '❌ خطأ في التعرف: ' + e.error;
+            }
+        };
+
+        recognizer.onend = () => {
+            isRecording = false;
+            recordBtn.classList.remove('recording');
+            recordBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        };
+
+        recognizer.start();
+    }
+
+    // ====== PROCESS SPOKEN TEXT ======
+    function processSpokenText(spoken) {
+        if (!selectedStudent) {
+            recText.textContent = '⚠️ يرجى اختيار طالب أولاً.';
+            return;
+        }
+        const result = analyzeReading(spoken);
+        // تحديث الإحصائيات
+        statErrors.textContent = result.errors;
+        statAccuracy.textContent = result.accuracy + '%';
+        statWords.textContent = result.wordCount;
+        statMadd.textContent = result.maddCount;
+
+        // تحديث التوصيات
+        recText.textContent = result.recommendation;
+
+        // تحديث الرسوم البيانية
+        updateCharts(result);
+
+        // إضافة تمييز في النص (محاكاة)
+        const textEl = document.getElementById('originalText');
+        // نعرض النص مع تمييز بسيط
+        const orig = ORIGINAL_TEXT;
+        const spokenNorm = normalizeArabic(spoken);
+        let highlighted = '';
+        for (let i = 0; i < orig.length; i++) {
+            const ch = orig[i];
+            const spokenCh = spokenNorm[i] || '';
+            if (ch !== spokenCh && spokenCh) {
+                highlighted += `<mark>${ch}</mark>`;
+            } else {
+                highlighted += ch;
+            }
+        }
+        textEl.innerHTML = highlighted;
+        recordStatus.textContent = '✅ تحليل مكتمل';
+    }
+
+    // ====== FILE UPLOAD ======
+    function handleFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                // استخراج الأسماء من العمود الأول
+                const names = json.flat().filter(v => v && String(v).trim().length > 0).map(v => String(v).trim());
+                if (names.length === 0) {
+                    alert('لم يتم العثور على أسماء في الملف.');
+                    return;
+                }
+                students = names;
+                selectedStudent = students[0] || null;
+                renderStudents();
+                resetAnalysis();
+                if (selectedStudent) {
+                    selectedStudentDisplay.textContent = '👤 ' + selectedStudent;
+                    recText.textContent = 'تم تحميل ' + students.length + ' طالب. اختر طالباً وسجل قراءته.';
+                }
+            } catch (err) {
+                alert('خطأ في قراءة الملف: ' + err.message);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // ====== EVENTS ======
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFile(e.target.files[0]);
+        }
+    });
+
+    recordBtn.addEventListener('click', toggleRecording);
+
+    resetBtn.addEventListener('click', () => {
+        resetAnalysis();
+        document.getElementById('originalText').innerHTML = ORIGINAL_TEXT;
+        recordStatus.textContent = 'تم إعادة الضبط';
+        recText.textContent = 'تم إعادة الضبط، سجل قراءة الطالب.';
+    });
+
+    // ====== INIT ======
+    initCharts();
+    resetAnalysis();
+    renderStudents();
+
+    // إضافة بعض الطلاب التجريبيين في حال عدم رفع ملف (للتجربة)
+    window.addEventListener('load', () => {
+        // إذا لم يتم رفع ملف، نضيف طلاب تجريبيين
+        if (students.length === 0) {
+            students = ['أحمد محمد', 'ليلى خالد', 'سامي حسن', 'نورا علي', 'خالد عمر'];
+            selectedStudent = students[0];
+            renderStudents();
+            resetAnalysis();
+            selectedStudentDisplay.textContent = '👤 ' + selectedStudent;
+            recText.textContent = 'تم تحميل طلاب تجريبيين، اختر طالباً وسجل قراءته.';
+        }
+    });
+
+    // سحب وإفلات (Drag & Drop) لتحسين UX
+    const uploadZone = document.getElementById('uploadZone');
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = '#ffd966';
+        uploadZone.style.background = 'rgba(255,217,102,0.08)';
+    });
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.style.borderColor = '#b8cbd9';
+        uploadZone.style.background = 'rgba(255,255,255,0.5)';
+    });
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = '#b8cbd9';
+        uploadZone.style.background = 'rgba(255,255,255,0.5)';
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            handleFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    console.log('📚 منصة قراءتي جاهزة!');
+</script>
+
+</body>
+</html>
