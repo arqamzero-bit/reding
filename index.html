@@ -359,6 +359,10 @@
     <!-- UPLOAD + STUDENTS -->
     <div class="card">
         <div class="card-title"><i class="fas fa-users"></i> الطلاب</div>
+        <div class="mb-1">
+            <label for="teacherName" style="font-size:0.9rem;color:#2a4b66;font-weight:500;display:block;margin-bottom:6px;"><i class="fas fa-chalkboard-teacher"></i> اسم المعلم</label>
+            <input type="text" id="teacherName" placeholder="أدخل اسم المعلم" style="width:100%;padding:10px 14px;border-radius:12px;border:1.5px solid #b8cbd9;font-size:0.95rem;outline:none;font-family:inherit;">
+        </div>
         <div class="upload-zone" id="uploadZone">
             <i class="fas fa-file-excel"></i>
             <p>ارفع ملف Excel بأسماء الطلاب</p>
@@ -390,7 +394,10 @@
 
     <!-- STATS + CHARTS -->
     <div class="card">
-        <div class="card-title"><i class="fas fa-chart-bar"></i> تحليل القراءة</div>
+        <div class="card-title flex-between">
+            <span><i class="fas fa-chart-bar"></i> تحليل القراءة</span>
+            <button id="exportBtn" class="student-tag" style="background:#1a7a4a;color:#fff;border:none;"><i class="fas fa-file-excel"></i> تصدير تقرير Excel</button>
+        </div>
         <div id="statsContainer">
             <div class="stats-grid" id="statsGrid">
                 <div class="stat-item"><div class="num" id="statErrors">0</div><div class="label">أخطاء</div></div>
@@ -415,6 +422,13 @@
     let students = [];
     let selectedStudent = null;
     let isRecording = false;
+    let teacherName = '';
+    let readingRecords = []; // سجل شامل بكل عمليات التحليل (للتصدير إلى Excel)
+
+    const ARABIC_DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function formatDateAr(d) { return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`; }
+    function formatTimeAr(d) { return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; }
 
     // النص الأصلي (من الـ HTML)
     const originalTextEl = document.getElementById('originalText');
@@ -436,6 +450,8 @@
     const statMadd = document.getElementById('statMadd');
     const recText = document.getElementById('recText');
     const resetBtn = document.getElementById('resetBtn');
+    const teacherNameInput = document.getElementById('teacherName');
+    const exportBtn = document.getElementById('exportBtn');
 
     // ====== UTILITY FUNCTIONS ======
     function normalizeArabic(text) {
@@ -736,6 +752,56 @@
         }
         textEl.innerHTML = highlighted;
         recordStatus.textContent = '✅ تحليل مكتمل';
+
+        // تسجيل هذه القراءة في السجل الشامل (للتصدير لاحقاً إلى Excel)
+        const now = new Date();
+        readingRecords.push({
+            student: selectedStudent,
+            teacher: teacherName.trim() || '—',
+            date: formatDateAr(now),
+            day: ARABIC_DAYS[now.getDay()],
+            time: formatTimeAr(now),
+            accuracy: result.accuracy + '%',
+            errors: result.errors,
+            wordCount: result.wordCount,
+            maddCount: result.maddCount,
+            recommendation: result.recommendation
+        });
+    }
+
+    // ====== EXPORT TO EXCEL ======
+    function exportToExcel() {
+        if (readingRecords.length === 0) {
+            alert('لا توجد بيانات لتصديرها بعد. قم بتسجيل قراءة واحدة على الأقل.');
+            return;
+        }
+        const headers = ['اسم الطالب', 'اسم المعلم', 'التاريخ', 'اليوم', 'الساعة', 'نسبة الدقة', 'عدد الأخطاء', 'عدد الكلمات المقروءة', 'عدد المدود', 'التوصيات'];
+        const rows = readingRecords.map(r => [
+            r.student, r.teacher, r.date, r.day, r.time, r.accuracy, r.errors, r.wordCount, r.maddCount, r.recommendation
+        ]);
+        const wsData = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // ضبط عرض الأعمدة
+        ws['!cols'] = [
+            { wch: 18 }, // اسم الطالب
+            { wch: 18 }, // اسم المعلم
+            { wch: 12 }, // التاريخ
+            { wch: 12 }, // اليوم
+            { wch: 10 }, // الساعة
+            { wch: 10 }, // نسبة الدقة
+            { wch: 10 }, // عدد الأخطاء
+            { wch: 16 }, // عدد الكلمات
+            { wch: 10 }, // عدد المدود
+            { wch: 55 }  // التوصيات
+        ];
+
+        const wb = XLSX.utils.book_new();
+        wb.Workbook = { Views: [{ RTL: true }] }; // عرض الملف من اليمين لليسار في Excel
+        XLSX.utils.book_append_sheet(wb, ws, 'تقرير القراءة');
+
+        const fileName = 'تقرير_القراءة_' + formatDateAr(new Date()).replace(/\//g, '-') + '.xlsx';
+        XLSX.writeFile(wb, fileName);
     }
 
     // ====== FILE UPLOAD ======
@@ -776,6 +842,12 @@
     });
 
     recordBtn.addEventListener('click', toggleRecording);
+
+    teacherNameInput.addEventListener('input', (e) => {
+        teacherName = e.target.value;
+    });
+
+    exportBtn.addEventListener('click', exportToExcel);
 
     resetBtn.addEventListener('click', () => {
         resetAnalysis();
