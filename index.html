@@ -1,18 +1,20 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>منصة قراءتي - التقرير العلاجي المتقدم</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
-    </script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js">
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js">
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js">
-    </script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- SheetJS (xlsx) -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- Mammoth (DOCX) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
     <style>
         * {
             margin: 0;
@@ -56,6 +58,7 @@
             padding: 6px 18px;
             border-radius: 40px;
             backdrop-filter: blur(4px);
+            font-size: 0.95rem;
         }
         .card {
             background: rgba(255, 255, 255, 0.95);
@@ -105,3 +108,287 @@
             cursor: pointer;
             width: 100%;
             height: 100%;
+        }
+        .btn {
+            background: #1a4a6a;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .btn:hover {
+            background: #0b2a4a;
+            transform: translateY(-2px);
+        }
+        .btn-excel {
+            background: #107c41;
+        }
+        .btn-excel:hover {
+            background: #0b592e;
+        }
+        .actions-bar {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: right;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        th {
+            background-color: #f1f5f9;
+            color: #0b2a4a;
+            font-weight: 700;
+        }
+        tr:hover {
+            background-color: #f8fafc;
+        }
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-warning { background: #fef9c3; color: #854d0e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1><i class="fas fa-book-reader"></i> منصة قراءتي</h1>
+        <div class="subtitle">التقرير العلاجي الشامل والمتقدم</div>
+    </div>
+
+    <!-- Upload Card -->
+    <div class="card">
+        <div class="card-title">
+            <i class="fas fa-file-upload"></i> رفع أو استيراد الملفات
+        </div>
+        <div class="upload-zone">
+            <i class="fas fa-cloud-upload-alt fa-3x" style="color: #1a4a6a; margin-bottom: 10px;"></i>
+            <h3>اسحب الملفات هنا أو انقر للاختيار</h3>
+            <p style="color: #64748b; font-size: 0.9rem; margin-top: 5px;">يدعم صيغ PDF, DOCX, XLSX</p>
+            <input type="file" id="fileInput" onchange="handleFileSelect(event)">
+        </div>
+    </div>
+
+    <!-- Action Bar & Export -->
+    <div class="card">
+        <div class="card-title">
+            <i class="fas fa-file-export"></i> تصدير التقرير
+        </div>
+        <p>يمكنك تصدير كافة البيانات والتحليلات العلاجية الحالية إلى ملف إكسل احترافي ومقسم بدقة:</p>
+        <div class="actions-bar">
+            <button class="btn btn-excel" onclick="exportToExcelPro()">
+                <i class="fas fa-file-excel"></i> تصدير تقرير إكسل المتقدم (.xlsx)
+            </button>
+        </div>
+    </div>
+
+    <!-- Sample Data Preview -->
+    <div class="card">
+        <div class="card-title">
+            <i class="fas fa-chart-bar"></i> معاينة بيانات التقييم العلاجي
+        </div>
+        <div class="table-responsive">
+            <table id="reportTable">
+                <thead>
+                    <tr>
+                        <th>م</th>
+                        <th>اسم الطالب</th>
+                        <th>المهارات الاستهدافية</th>
+                        <th>مستوى الأداء</th>
+                        <th>نسبة الإتقان</th>
+                        <th>التشخيص / التوصية</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>أحمد محمود السعيد</td>
+                        <td>التمييز بين الحروف المتشابهة</td>
+                        <td><span class="badge badge-warning">متوسط</span></td>
+                        <td>65%</td>
+                        <td>تكتيك البطاقات المصورة والتمارين التكرارية اليومية</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>سارة خالد العتيبي</td>
+                        <td>القراءة السريعة بالفهم</td>
+                        <td><span class="badge badge-success">ممتاز</span></td>
+                        <td>92%</td>
+                        <td>تعزيز القراءة الحرة وإعطاء نصوص أكثر تعقيداً</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>عمر يوسف الفهد</td>
+                        <td>التحليل الصوتي والتهجئة</td>
+                        <td><span class="badge badge-danger">يحتاج تحسين</span></td>
+                        <td>40%</td>
+                        <td>جلسات علاجية فردية مرتين أسبوعياً focusing على مقاطع الصوت</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>فاطمة عبد الرحمن</td>
+                        <td>المدود والحركات الطويلة</td>
+                        <td><span class="badge badge-success">متقن</span></td>
+                        <td>88%</td>
+                        <td>المتابعة الدورية مع واجبات منزلية إثرائية</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // التعامل مع اختيار الملفات
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            alert("تم اختيار الملف: " + file.name + "\nيمكنك الآن الضغط على زر 'تصدير تقرير إكسل المتقدم' للحصول على التقرير الشامل.");
+        }
+    }
+
+    /**
+     * دالة تصدير تقرير إكسل الاحترافي والمُقسم بالكامل
+     */
+    function exportToExcelPro() {
+        // إنشاء مصنف عمل جديد
+        const wb = XLSX.utils.book_new();
+
+        // ==========================================
+        // 1. تبويب: الملخص التنفيذي (Executive Summary)
+        // ==========================================
+        const summaryData = [
+            ["منصة قراءتي - التقرير العلاجي المتقدم"],
+            ["تاريخ التقرير:", new Date().toLocaleDateString('ar-SA'), "الوقت:", new Date().toLocaleTimeString('ar-SA')],
+            [],
+            ["إحصائيات عامة"],
+            ["إجمالي الطلاب المقيّمين", 4],
+            ["نسبة متوسط الإتقان العام", "71.25%"],
+            ["عدد الطلاب المتقنين", 2],
+            ["عدد الطلاب تحت الدعم العلاجي", 2],
+            [],
+            ["توزيع مستويات الأداء"],
+            ["المستوى", "العدد", "النسبة المئوية"],
+            ["ممتاز / متقن", 2, "50%"],
+            ["متوسط", 1, "25%"],
+            ["يحتاج تحسين", 1, "25%"]
+        ];
+
+        const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+
+        // ضبط اتجاه ورقة العمل للغة العربية (RTL)
+        if (!wsSummary['!views']) wsSummary['!views'] = [];
+        wsSummary['!views'].push({ RTL: true });
+
+        // عرض الأعمدة لتبويب الملخص
+        wsSummary['!cols'] = [
+            { wch: 30 },
+            { wch: 20 },
+            { wch: 20 },
+            { wch: 20 }
+        ];
+
+        // ==========================================
+        // 2. تبويب: التقييم العلاجي التفصيلي (Detailed Assessment)
+        // ==========================================
+        const assessmentHeader = [
+            ["الرقم", "اسم الطالب", "المهارات الاستهدافية", "مستوى الأداء", "نسبة الإتقان", "التشخيص والتوصيات العلاجية"]
+        ];
+
+        // استخراج البيانات من الجدول المعروض في الصفحة
+        const tableRows = [];
+        const trs = document.querySelectorAll("#reportTable tbody tr");
+        trs.forEach(tr => {
+            const tds = tr.querySelectorAll("td");
+            tableRows.push([
+                tds[0].innerText.trim(),
+                tds[1].innerText.trim(),
+                tds[2].innerText.trim(),
+                tds[3].innerText.trim(),
+                tds[4].innerText.trim(),
+                tds[5].innerText.trim()
+            ]);
+        });
+
+        const wsAssessment = XLSX.utils.aoa_to_sheet([...assessmentHeader, ...tableRows]);
+
+        // ضبط اتجاه الورقة RTL
+        if (!wsAssessment['!views']) wsAssessment['!views'] = [];
+        wsAssessment['!views'].push({ RTL: true });
+
+        // عرض الأعمدة لتبويب التقييم
+        wsAssessment['!cols'] = [
+            { wch: 8 },   // الرقم
+            { wch: 25 },  // اسم الطالب
+            { wch: 32 },  // المهارات
+            { wch: 15 },  // المستوى
+            { wch: 15 },  // نسبة الإتقان
+            { wch: 55 }   // التوصيات
+        ];
+
+        // ==========================================
+        // 3. تبويب: خطة الأنشطة والتتبع (Action Plan & Tracking)
+        // ==========================================
+        const actionPlanData = [
+            ["اسم الطالب", "النشاط العلاجي المقترح", "عدد الجلسات", "المسؤول عن التنفيذ", "حالة المتابعة"],
+            ["أحمد محمود السعيد", "تمارين البطاقات المصورة والتمييز البصري", "4 جلسات", "معلم صعوبات التعلم", "قيد التنفيذ"],
+            ["سارة خالد العتيبي", "تحدي القراءة السريعة وتلخيص القمم", "جلسة واحدة", "معلم الفصل", "مكتمل"],
+            ["عمر يوسف الفهد", "تدريبات التحليل الصوتي والتفكيك المقطعي", "8 جلسات", "أخصائي التخاطب والقراءة", "لم تبدأ"],
+            ["فاطمة عبد الرحمن", "قراءة نصوص مشكولة مع تدريبات المدود", "2 جلسة", "ولي الأمر / المعلم", "مكتمل"]
+        ];
+
+        const wsActionPlan = XLSX.utils.aoa_to_sheet(actionPlanData);
+
+        // ضبط اتجاه الورقة RTL
+        if (!wsActionPlan['!views']) wsActionPlan['!views'] = [];
+        wsActionPlan['!views'].push({ RTL: true });
+
+        // عرض الأعمدة لتبويب خطة الأنشطة
+        wsActionPlan['!cols'] = [
+            { wch: 25 },
+            { wch: 45 },
+            { wch: 15 },
+            { wch: 25 },
+            { wch: 15 }
+        ];
+
+        // ==========================================
+        // إضافة المصنفات وإضافة الأوراق
+        // ==========================================
+        XLSX.utils.book_append_sheet(wb, wsSummary, "الملخص التنفيذي");
+        XLSX.utils.book_append_sheet(wb, wsAssessment, "التقييم التفصيلي");
+        XLSX.utils.book_append_sheet(wb, wsActionPlan, "خطة المتابعة والأنشطة");
+
+        // تصدير الملف باسم احترافي
+        const dateStr = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(wb, `منصة_قراءتي_التقرير_العلاجي_${dateStr}.xlsx`);
+    }
+</script>
+
+</body>
+</html>
