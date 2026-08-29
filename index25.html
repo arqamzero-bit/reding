@@ -23,7 +23,7 @@
     </script>
 
     <style>
-        /* جميع الأنماط السابقة كما هي (لم تتغير) */
+        /* جميع الأنماط السابقة */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #f0f4f9; padding: 20px; color: #1e2b3c; }
         .container { max-width: 1400px; margin: 0 auto; }
@@ -54,10 +54,6 @@
         .record-status { font-size: 1rem; font-weight: 600; color: #0b2a4a; background: rgba(255,255,255,0.8); padding: 6px 24px; border-radius: 40px; backdrop-filter: blur(4px); border: 1px solid #b8cbd9; }
         .text-display { background: #f8fcff; border-radius: 18px; padding: 20px 24px; font-size: 1.2rem; line-height: 2.2rem; color: #142433; border-right: 6px solid #1a4a6a; max-height: 200px; overflow-y: auto; font-family: 'Times New Roman', 'Amiri', serif; margin-bottom: 12px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.04); }
         .text-display mark { background: #f1c40f; padding: 0 4px; border-radius: 6px; color: #0b2a4a; font-weight: bold; }
-        .file-upload-text { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; background: #eef4fa; padding: 12px 20px; border-radius: 60px; }
-        .file-upload-text label { background: #1a4a6a; color: #fff; padding: 8px 20px; border-radius: 40px; cursor: pointer; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-        .file-upload-text label:hover { background: #0b2a4a; transform: scale(1.02); }
-        .file-upload-text input { display: none; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin: 16px 0 20px; }
         .stat-item { background: #eef4fa; border-radius: 16px; padding: 14px 12px; text-align: center; border: 2px solid #b8cbd9; box-shadow: 0 4px 8px rgba(0,0,0,0.04); }
         .stat-item .num { font-size: 2rem; font-weight: 700; color: #0b2a4a; }
@@ -118,7 +114,7 @@
         .fluency-slow { background: #e67e22; color: #fff; border-color: #b85e0a; }
         .fluency-spelling { background: #e74c3c; color: #fff; border-color: #922b21; }
 
-        /* إضافة أنماط جديدة لـ Firebase */
+        /* أنماط Firebase */
         .sync-status {
             display: inline-flex;
             align-items: center;
@@ -163,6 +159,54 @@
             font-size: 0.95rem;
         }
         .user-info i { color: #ffd966; margin-left: 6px; }
+
+        /* أنماط الميكروفون */
+        .mic-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .test-mic-btn {
+            background: #3498db;
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .test-mic-btn:hover {
+            background: #2980b9;
+            transform: scale(1.05);
+        }
+        .test-mic-btn.success { background: #27ae60; }
+        .test-mic-btn.fail { background: #e74c3c; }
+        .mic-status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .mic-status-indicator.ready { background: #27ae60; }
+        .mic-status-indicator.waiting { background: #f39c12; animation: blink 1s infinite; }
+        .mic-status-indicator.error { background: #e74c3c; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .recording-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -220,9 +264,17 @@
             <div class="text-display" id="textDisplay">
                 <span id="originalText">في رحاب المدرسةِ، كانَ الطلابُ يقرؤونَ قصائدَ العربِ، ويحفظونَ حكمَ الأجدادِ. وكانَ المعلمُ يشرحُ لهمْ دروسَ النحوِ والبلاغةِ، ويسألُهمْ عنْ معاني الكلماتِ. فأجابَ خالدٌ: "العلمُ نورٌ"، وقالتْ ليلى: "القراءةُ غذاءُ الروحِ". فرحَ المعلمُ بطلابِهِ، وتمنى لهمْ مستقبلًا زاهرًا.</span>
             </div>
-            <div class="record-wrapper">
-                <button class="record-btn" id="recordBtn"><i class="fas fa-microphone"></i></button>
-                <div class="record-status" id="recordStatus">اضغط للتسجيل (يسجل حتى مع السكوت)</div>
+            <div class="recording-controls">
+                <div class="mic-controls">
+                    <button class="record-btn" id="recordBtn"><i class="fas fa-microphone"></i></button>
+                    <button class="test-mic-btn" id="testMicBtn">
+                        <i class="fas fa-microphone-alt"></i> اختبار الميكروفون
+                    </button>
+                </div>
+                <div class="record-status" id="recordStatus">
+                    <span class="mic-status-indicator waiting" id="micIndicator"></span>
+                    اضغط للتسجيل
+                </div>
             </div>
         </div>
 
@@ -305,36 +357,24 @@
             measurementId: "G-FYMVTDDE8E"
         };
 
-        // تهيئة Firebase (مرة واحدة فقط)
+        // تهيئة Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // تفعيل التخزين المحلي Offline Persistence
+        // تفعيل التخزين المحلي
         db.enablePersistence({ synchronizeTabs: true })
             .then(() => {
                 console.log('✅ Offline persistence enabled');
                 updateSyncStatus('online');
             })
             .catch((err) => {
-                if (err.code === 'failed-precondition') {
-                    console.warn('⚠️ Multiple tabs open, persistence enabled in first tab only');
-                } else if (err.code === 'unimplemented') {
-                    console.warn('⚠️ Browser doesn\'t support persistence');
-                } else {
-                    console.error('❌ Persistence error:', err);
-                }
+                console.warn('⚠️ Persistence error:', err);
                 updateSyncStatus('offline');
             });
 
-        // متغيرات Firebase
-        let currentUser = null;
-        let isOnline = navigator.onLine;
-        let syncQueue = [];
-        let isSyncing = false;
-
         // =====================================================================
-        // 1. الإعدادات الأساسية والمتغيرات العامة
+        // 1. المتغيرات العامة
         // =====================================================================
         let students = [];
         let selectedStudent = null;
@@ -347,13 +387,19 @@
         let currentReport = null;
         let speechSynthesisUtterance = null;
         let reportId = null;
+        let currentUser = null;
+        let isOnline = navigator.onLine;
+        let syncQueue = [];
+        let isSyncing = false;
+        let recognitionAttempts = 0;
+        const MAX_RECOGNITION_ATTEMPTS = 3;
 
         const ORIGINAL_TEXT_EL = document.getElementById('originalText');
         let ORIGINAL_TEXT = ORIGINAL_TEXT_EL.textContent.trim();
         window.studentData = {};
 
         // =====================================================================
-        // 2. دوال المساعدة و Firebase
+        // 2. دوال مساعدة
         // =====================================================================
         function pad2(n) { return String(n).padStart(2, '0'); }
 
@@ -420,7 +466,7 @@
         }
 
         // =====================================================================
-        // 3. دوال المزامنة مع Firebase
+        // 3. دوال Firebase والمزامنة
         // =====================================================================
         function updateSyncStatus(status) {
             const el = document.getElementById('syncStatus');
@@ -436,7 +482,6 @@
             }
         }
 
-        // مراقبة حالة الاتصال
         window.addEventListener('online', () => {
             isOnline = true;
             updateSyncStatus('online');
@@ -449,7 +494,6 @@
             updateSyncStatus('offline');
         });
 
-        // تخزين البيانات محلياً (IndexedDB)
         function saveToLocalStorage(key, data) {
             try {
                 localStorage.setItem(key, JSON.stringify(data));
@@ -469,7 +513,6 @@
             }
         }
 
-        // حفظ تقرير في Firestore
         async function saveReportToFirestore(reportData) {
             if (!currentUser) {
                 console.warn('⚠️ No user logged in, saving locally only');
@@ -489,7 +532,6 @@
                 return reportRef.id;
             } catch (error) {
                 console.error('❌ Error saving to Firestore:', error);
-                // إضافة إلى قائمة المزامنة
                 syncQueue.push({
                     type: 'report',
                     data: reportData,
@@ -500,13 +542,12 @@
             }
         }
 
-        // تحميل الطلاب من Firestore
         async function loadStudentsFromFirestore() {
             if (!currentUser || !isOnline) {
-                // تحميل من التخزين المحلي إذا كان غير متصل
                 const localStudents = loadFromLocalStorage('students');
                 if (localStudents) {
                     students = localStudents;
+                    window.studentData = loadFromLocalStorage('studentData') || {};
                     renderStudents();
                 }
                 return;
@@ -549,7 +590,6 @@
                     }
                     console.log('✅ Students loaded from Firestore');
                 } else {
-                    // تحميل من التخزين المحلي
                     const localStudents = loadFromLocalStorage('students');
                     if (localStudents) {
                         students = localStudents;
@@ -559,7 +599,6 @@
                 }
             } catch (error) {
                 console.error('❌ Error loading students from Firestore:', error);
-                // استخدام التخزين المحلي
                 const localStudents = loadFromLocalStorage('students');
                 if (localStudents) {
                     students = localStudents;
@@ -569,17 +608,14 @@
             }
         }
 
-        // حفظ الطلاب في Firestore
         async function saveStudentsToFirestore(studentNames, studentDataMap) {
             if (!currentUser || !isOnline) {
-                // حفظ محلياً
                 saveToLocalStorage('students', studentNames);
                 saveToLocalStorage('studentData', studentDataMap);
                 return;
             }
 
             try {
-                // حذف الطلاب الحاليين
                 const snapshot = await db.collection('students')
                     .where('userId', '==', currentUser.uid)
                     .get();
@@ -589,7 +625,6 @@
                     batch.delete(doc.ref);
                 });
 
-                // إضافة الطلاب الجدد
                 for (const name of studentNames) {
                     const data = studentDataMap[name] || {};
                     const docRef = db.collection('students').doc();
@@ -607,16 +642,12 @@
 
                 await batch.commit();
                 console.log('✅ Students saved to Firestore');
-
-                // حفظ محلياً أيضاً
                 saveToLocalStorage('students', studentNames);
                 saveToLocalStorage('studentData', studentDataMap);
             } catch (error) {
                 console.error('❌ Error saving students to Firestore:', error);
-                // حفظ محلياً
                 saveToLocalStorage('students', studentNames);
                 saveToLocalStorage('studentData', studentDataMap);
-                // إضافة إلى قائمة المزامنة
                 syncQueue.push({
                     type: 'students',
                     data: { names: studentNames, dataMap: studentDataMap },
@@ -626,7 +657,6 @@
             }
         }
 
-        // معالجة قائمة المزامنة
         async function processSyncQueue() {
             if (!isOnline || !currentUser || isSyncing) return;
 
@@ -644,7 +674,6 @@
                         await saveStudentsToFirestore(item.data.names, item.data.dataMap);
                     }
                 }
-                // مسح قائمة المزامنة بعد النجاح
                 syncQueue = [];
                 saveToLocalStorage('syncQueue', []);
                 console.log('✅ Sync queue processed successfully');
@@ -658,7 +687,7 @@
         }
 
         // =====================================================================
-        // 4. مصادقة Firebase
+        // 4. المصادقة
         // =====================================================================
         function updateAuthUI(user) {
             const userInfo = document.getElementById('userInfo');
@@ -677,18 +706,15 @@
                 userInfo.innerHTML = '<i class="fas fa-user-circle"></i> زائر';
                 authBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
                 authBtn.onclick = () => {
-                    // تسجيل دخول بسيط باستخدام Google
                     const provider = new firebase.auth.GoogleAuthProvider();
                     auth.signInWithPopup(provider).catch((error) => {
                         console.error('❌ Auth error:', error);
-                        // محاولة تسجيل دخول مجهول
                         auth.signInAnonymously().catch((err) => {
                             console.error('❌ Anonymous auth error:', err);
                             alert('حدث خطأ في تسجيل الدخول. سيتم العمل في وضع الزائر.');
                         });
                     });
                 };
-                // تحميل من التخزين المحلي
                 const localStudents = loadFromLocalStorage('students');
                 if (localStudents) {
                     students = localStudents;
@@ -698,7 +724,6 @@
             }
         }
 
-        // مراقبة حالة المصادقة
         auth.onAuthStateChanged((user) => {
             updateAuthUI(user);
             if (user) {
@@ -709,7 +734,7 @@
         });
 
         // =====================================================================
-        // 5. خوارزمية التحليل المتقدمة (كما هي)
+        // 5. خوارزمية التحليل
         // =====================================================================
         function analyzeReading(spokenText) {
             const orig = ORIGINAL_TEXT;
@@ -922,7 +947,7 @@
         }
 
         // =====================================================================
-        // 6. الرسوم البيانية (كما هي)
+        // 6. الرسوم البيانية
         // =====================================================================
         let chartErrors = null,
             chartLetters = null;
@@ -959,7 +984,7 @@
         }
 
         // =====================================================================
-        // 7. عرض التقرير الداخلي (مع حفظ في Firebase)
+        // 7. عرض التقرير
         // =====================================================================
         function renderReport(result, studentName) {
             const now = new Date();
@@ -997,7 +1022,6 @@
             document.getElementById('challengeText').textContent = result.challengeText;
             document.getElementById('recommendationText').textContent = result.recommendationText;
 
-            // حفظ التقرير
             const reportData = {
                 student: studentName,
                 grade: document.getElementById('classGrade').value || '—',
@@ -1027,16 +1051,13 @@
             currentReport = reportData;
             reportId = generateId();
 
-            // حفظ محلياً
             const reports = loadFromLocalStorage('reports') || [];
             reports.push({ id: reportId, ...reportData, timestamp: now.toISOString() });
             saveToLocalStorage('reports', reports);
 
-            // حفظ في Firebase (إذا كان متصلاً)
             if (isOnline && currentUser) {
                 saveReportToFirestore(reportData);
             } else {
-                // إضافة إلى قائمة المزامنة
                 syncQueue.push({
                     type: 'report',
                     data: reportData,
@@ -1048,10 +1069,13 @@
         }
 
         // =====================================================================
-        // 8. معالجة النص المقروء (كما هي)
+        // 8. معالجة النص المقروء
         // =====================================================================
         function processSpokenText(spoken) {
-            if (!selectedStudent) { document.getElementById('recText').textContent = '⚠️ اختر طالباً أولاً.'; return; }
+            if (!selectedStudent) {
+                document.getElementById('recText').textContent = '⚠️ اختر طالباً أولاً.';
+                return;
+            }
             endTime = new Date();
             const result = analyzeReading(spoken);
             document.getElementById('statErrors').textContent = result.errors;
@@ -1064,7 +1088,7 @@
             const highlighted = result.origRawWords.map((w, idx) => result.wordCorrect[idx] ? w :
                 `<mark>${w}</mark>`).join(' ');
             document.getElementById('originalText').innerHTML = highlighted;
-            document.getElementById('recordStatus').textContent = '✅ تحليل مكتمل';
+            document.getElementById('recordStatus').innerHTML = '✅ تحليل مكتمل';
 
             const now = new Date();
             const record = {
@@ -1081,12 +1105,10 @@
             };
             readingRecords.push(record);
 
-            // حفظ سجلات القراءة محلياً
             const records = loadFromLocalStorage('readingRecords') || [];
             records.push(record);
             saveToLocalStorage('readingRecords', records);
 
-            // حفظ في Firebase
             if (isOnline && currentUser) {
                 db.collection('readingRecords').add({
                     ...record,
@@ -1102,89 +1124,274 @@
         }
 
         // =====================================================================
-        // 9. التسجيل المستمر (كما هي)
+        // 9. التسجيل المستمر (محسّن)
         // =====================================================================
-        function startContinuousRecognition() {
+        async function startContinuousRecognition() {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                alert('متصفحك لا يدعم التعرف على الصوت. استخدم Chrome.');
-                document.getElementById('recordStatus').textContent = '❌ غير مدعوم';
+                alert('متصفحك لا يدعم التعرف على الصوت. استخدم Chrome أو Edge.');
+                document.getElementById('recordStatus').innerHTML =
+                    '<span class="mic-status-indicator error"></span> ❌ غير مدعوم';
                 return;
             }
+
+            // طلب إذن الميكروفون أولاً
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                stream.getTracks().forEach(track => track.stop());
+                console.log('✅ تم الحصول على إذن الميكروفون');
+                document.getElementById('micIndicator').className = 'mic-status-indicator ready';
+            } catch (err) {
+                console.error('❌ خطأ في الوصول للميكروفون:', err);
+                let errorMsg = 'يرجى السماح بالوصول إلى الميكروفون في إعدادات المتصفح.';
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    errorMsg = 'تم رفض الإذن. يرجى السماح بالوصول إلى الميكروفون في إعدادات المتصفح ثم أعد تحميل الصفحة.';
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    errorMsg = 'لم يتم العثور على ميكروفون. تأكد من توصيله.';
+                }
+                alert(errorMsg);
+                document.getElementById('recordStatus').innerHTML =
+                    '<span class="mic-status-indicator error"></span> ❌ ' + errorMsg;
+                document.getElementById('micIndicator').className = 'mic-status-indicator error';
+                return;
+            }
+
             const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
             recognizer = new SR();
             recognizer.lang = 'ar-SA';
             recognizer.continuous = true;
             recognizer.interimResults = true;
+            recognizer.maxAlternatives = 1;
             finalTranscript = '';
+            recognitionAttempts = 0;
+
+            let hasSpeech = false;
+            let silenceTimer = null;
 
             recognizer.onresult = (event) => {
+                clearTimeout(silenceTimer);
+                hasSpeech = true;
+
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
                         finalTranscript += transcript + ' ';
+                        document.getElementById('recordStatus').innerHTML =
+                            `🔴 جارٍ التعرف... <span style="font-size:0.85rem;color:#555;">"${transcript.substring(0, 30)}..."</span>`;
+                    } else {
+                        document.getElementById('recordStatus').innerHTML =
+                            `⏳ جارٍ الاستماع... <span style="font-size:0.85rem;color:#555;">"${transcript.substring(0, 30)}..."</span>`;
                     }
                 }
-                document.getElementById('recordStatus').textContent = '🔴 جارٍ التعرف...';
+
+                silenceTimer = setTimeout(() => {
+                    if (isRecording && !hasSpeech) {
+                        document.getElementById('recordStatus').innerHTML = '⏳ لا يوجد صوت... استمر في القراءة';
+                    }
+                    hasSpeech = false;
+                }, 3000);
+            };
+
+            recognizer.onspeechend = () => {
+                document.getElementById('recordStatus').innerHTML = '⏸️ توقف الصوت...';
+                setTimeout(() => {
+                    if (isRecording && finalTranscript.trim().length > 0) {
+                        // نستمر في التسجيل
+                    }
+                }, 1000);
             };
 
             recognizer.onerror = (e) => {
+                console.error('❌ خطأ في التعرف:', e);
                 if (e.error === 'not-allowed' || e.error === 'permission-denied') {
-                    alert('يرجى السماح بالوصول إلى الميكروفون.');
-                    document.getElementById('recordStatus').textContent = '❌ تم رفض الإذن';
+                    alert('يرجى السماح بالوصول إلى الميكروفون من إعدادات المتصفح.');
+                    document.getElementById('recordStatus').innerHTML =
+                        '<span class="mic-status-indicator error"></span> ❌ تم رفض الإذن';
                     stopRecording();
                 } else if (e.error === 'no-speech') {
-                    document.getElementById('recordStatus').textContent = '⏳ انتظار الصوت...';
+                    document.getElementById('recordStatus').innerHTML = '⏳ انتظار الصوت...';
+                    if (isRecording && recognitionAttempts < MAX_RECOGNITION_ATTEMPTS) {
+                        recognitionAttempts++;
+                        setTimeout(() => {
+                            if (isRecording) {
+                                try {
+                                    recognizer.stop();
+                                    setTimeout(() => {
+                                        if (isRecording) {
+                                            recognizer.start();
+                                        }
+                                    }, 200);
+                                } catch (err) {
+                                    console.warn('⚠️ إعادة تشغيل التعرف:', err);
+                                }
+                            }
+                        }, 500);
+                    }
+                } else if (e.error === 'audio-capture') {
+                    alert('تعذر الوصول إلى الميكروفون. تأكد من توصيله وعدم استخدامه من تطبيق آخر.');
+                    document.getElementById('recordStatus').innerHTML =
+                        '<span class="mic-status-indicator error"></span> ❌ خطأ في الميكروفون';
+                    stopRecording();
                 } else {
-                    document.getElementById('recordStatus').textContent = '❌ خطأ: ' + e.error;
+                    document.getElementById('recordStatus').innerHTML = '❌ خطأ: ' + e.error;
+                    if (isRecording && e.error !== 'aborted') {
+                        setTimeout(() => {
+                            if (isRecording) {
+                                try {
+                                    recognizer.stop();
+                                    setTimeout(() => {
+                                        if (isRecording) {
+                                            recognizer.start();
+                                        }
+                                    }, 300);
+                                } catch (err) {
+                                    console.warn('⚠️ إعادة تشغيل التعرف بعد خطأ:', err);
+                                }
+                            }
+                        }, 1000);
+                    }
                 }
             };
 
+            recognizer.onstart = () => {
+                console.log('✅ بدأ التعرف على الصوت');
+                document.getElementById('recordStatus').innerHTML = '🔴 جارٍ التسجيل... تحدث الآن';
+                document.getElementById('micIndicator').className = 'mic-status-indicator ready';
+                startTime = new Date();
+                recognitionAttempts = 0;
+            };
+
             recognizer.onend = () => {
+                console.log('⏹️ انتهى التعرف على الصوت');
                 if (isRecording) {
-                    startContinuousRecognition();
+                    try {
+                        setTimeout(() => {
+                            if (isRecording) {
+                                recognizer.start();
+                            }
+                        }, 200);
+                    } catch (err) {
+                        console.warn('⚠️ فشل إعادة تشغيل التعرف:', err);
+                        if (isRecording) {
+                            stopRecording();
+                            setTimeout(() => {
+                                if (isRecording) {
+                                    startContinuousRecognition();
+                                }
+                            }, 500);
+                        }
+                    }
                 } else {
                     if (finalTranscript.trim().length > 0) {
                         processSpokenText(finalTranscript.trim());
+                        document.getElementById('recordStatus').innerHTML = `✅ تم التعرف على ${finalTranscript.split(' ').length} كلمة`;
                     } else {
-                        document.getElementById('recordStatus').textContent = '⚠️ لم يتم التعرف على أي نص. حاول مرة أخرى.';
+                        document.getElementById('recordStatus').innerHTML =
+                            '<span class="mic-status-indicator error"></span> ⚠️ لم يتم التعرف على أي نص. حاول مرة أخرى.';
                     }
                     document.getElementById('recordBtn').classList.remove('recording');
                     document.getElementById('recordBtn').innerHTML = '<i class="fas fa-microphone"></i>';
-                    document.getElementById('recordStatus').textContent = '⏹️ متوقف';
                     isRecording = false;
                 }
             };
 
-            recognizer.start();
-            isRecording = true;
-            startTime = new Date();
+            try {
+                recognizer.start();
+                isRecording = true;
+                document.getElementById('recordBtn').classList.add('recording');
+                document.getElementById('recordBtn').innerHTML = '<i class="fas fa-stop-circle"></i>';
+                document.getElementById('micIndicator').className = 'mic-status-indicator waiting';
+            } catch (err) {
+                console.error('❌ فشل بدء التعرف:', err);
+                alert('حدث خطأ في بدء التسجيل. حاول مرة أخرى.');
+                document.getElementById('recordStatus').innerHTML =
+                    '<span class="mic-status-indicator error"></span> ❌ فشل البدء';
+                isRecording = false;
+            }
         }
 
         function stopRecording() {
+            isRecording = false;
             if (recognizer) {
-                try { recognizer.stop(); } catch (e) {}
+                try {
+                    recognizer.stop();
+                } catch (e) {
+                    console.warn('⚠️ خطأ في إيقاف التعرف:', e);
+                }
                 recognizer = null;
             }
-            isRecording = false;
             endTime = new Date();
             document.getElementById('recordBtn').classList.remove('recording');
             document.getElementById('recordBtn').innerHTML = '<i class="fas fa-microphone"></i>';
-            document.getElementById('recordStatus').textContent = '⏹️ متوقف';
+
+            if (!finalTranscript || finalTranscript.trim().length === 0) {
+                document.getElementById('recordStatus').innerHTML =
+                    '<span class="mic-status-indicator error"></span> ⏹️ متوقف - لم يتم التعرف على نص';
+            } else {
+                document.getElementById('recordStatus').innerHTML =
+                    `⏹️ متوقف - تم التعرف على ${finalTranscript.split(' ').length} كلمات`;
+            }
+            document.getElementById('micIndicator').className = 'mic-status-indicator waiting';
         }
 
+        // أزرار التسجيل
         document.getElementById('recordBtn').addEventListener('click', function() {
             if (isRecording) {
                 stopRecording();
             } else {
                 startContinuousRecognition();
-                document.getElementById('recordBtn').classList.add('recording');
-                document.getElementById('recordBtn').innerHTML = '<i class="fas fa-stop-circle"></i>';
-                document.getElementById('recordStatus').textContent = '🔴 جارٍ التسجيل... اضغط للإيقاف';
             }
         });
 
         // =====================================================================
-        // 10. أيقونة تصحيح الأخطاء (كما هي)
+        // 10. اختبار الميكروفون
+        // =====================================================================
+        document.getElementById('testMicBtn').addEventListener('click', async function() {
+            const originalText = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الاختبار...';
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                stream.getTracks().forEach(track => track.stop());
+
+                this.className = 'test-mic-btn success';
+                this.innerHTML = '<i class="fas fa-check-circle"></i> ✅ الميكروفون يعمل';
+                document.getElementById('micIndicator').className = 'mic-status-indicator ready';
+                document.getElementById('recordStatus').innerHTML =
+                    '<span class="mic-status-indicator ready"></span> ✅ الميكروفون جاهز للتسجيل';
+
+                setTimeout(() => {
+                    this.className = 'test-mic-btn';
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }, 2500);
+            } catch (err) {
+                console.error('❌ خطأ في اختبار الميكروفون:', err);
+                this.className = 'test-mic-btn fail';
+                this.innerHTML = '<i class="fas fa-times-circle"></i> ❌ فشل الوصول للميكروفون';
+                document.getElementById('micIndicator').className = 'mic-status-indicator error';
+                document.getElementById('recordStatus').innerHTML =
+                    '<span class="mic-status-indicator error"></span> ❌ تعذر الوصول للميكروفون';
+
+                let errorMsg = 'تعذر الوصول إلى الميكروفون. تأكد من:\n';
+                errorMsg += '1. منح الإذن للموقع\n';
+                errorMsg += '2. توصيل الميكروفون\n';
+                errorMsg += '3. عدم استخدامه في تطبيق آخر\n';
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    errorMsg += '\n🔑 انقر على أيقونة القفل 🔒 في شريط العناوين واسمح بالميكروفون';
+                }
+                alert(errorMsg);
+
+                setTimeout(() => {
+                    this.className = 'test-mic-btn';
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }, 3000);
+            }
+        });
+
+        // =====================================================================
+        // 11. تصحيح الأخطاء الصوتي
         // =====================================================================
         document.getElementById('playCorrectBtn').addEventListener('click', function() {
             const text = ORIGINAL_TEXT;
@@ -1210,17 +1417,17 @@
             utterance.onstart = () => {
                 this.classList.add('playing');
                 this.innerHTML = '<i class="fas fa-stop-circle"></i> إيقاف القراءة';
-                document.getElementById('recordStatus').textContent = '🔊 جارٍ قراءة النص بصحيح...';
+                document.getElementById('recordStatus').innerHTML = '🔊 جارٍ قراءة النص بصحيح...';
             };
             utterance.onend = () => {
                 this.classList.remove('playing');
                 this.innerHTML = '<i class="fas fa-headphones"></i> تصحيح الأخطاء';
-                document.getElementById('recordStatus').textContent = '✅ تمت القراءة الصحيحة';
+                document.getElementById('recordStatus').innerHTML = '✅ تمت القراءة الصحيحة';
             };
             utterance.onerror = () => {
                 this.classList.remove('playing');
                 this.innerHTML = '<i class="fas fa-headphones"></i> تصحيح الأخطاء';
-                document.getElementById('recordStatus').textContent = '❌ خطأ في القراءة الصوتية';
+                document.getElementById('recordStatus').innerHTML = '❌ خطأ في القراءة الصوتية';
             };
             window.speechSynthesis.speak(utterance);
             speechSynthesisUtterance = utterance;
@@ -1228,7 +1435,7 @@
         window.speechSynthesis.getVoices();
 
         // =====================================================================
-        // 11. رفع النص (كما هي)
+        // 12. رفع النص
         // =====================================================================
         document.getElementById('uploadTextBtn').addEventListener('click', () => {
             document.getElementById('textFileInput').click();
@@ -1237,12 +1444,12 @@
             const file = e.target.files[0];
             if (!file) return;
             try {
-                document.getElementById('recordStatus').textContent = '⏳ جارٍ قراءة الملف...';
+                document.getElementById('recordStatus').innerHTML = '⏳ جارٍ قراءة الملف...';
                 const text = await extractTextFromFile(file);
                 if (text.trim().length > 0) {
                     ORIGINAL_TEXT = text.trim();
                     document.getElementById('originalText').innerHTML = ORIGINAL_TEXT;
-                    document.getElementById('recordStatus').textContent = '✅ تم تحميل النص الجديد';
+                    document.getElementById('recordStatus').innerHTML = '✅ تم تحميل النص الجديد';
                     document.getElementById('recText').textContent = 'تم تغيير النص، سجل قراءة الطالب.';
                     resetAnalysis();
                 } else {
@@ -1250,13 +1457,13 @@
                 }
             } catch (err) {
                 alert('خطأ في قراءة الملف: ' + err.message);
-                document.getElementById('recordStatus').textContent = '❌ فشل تحميل النص';
+                document.getElementById('recordStatus').innerHTML = '❌ فشل تحميل النص';
             }
             e.target.value = '';
         });
 
         // =====================================================================
-        // 12. رفع الطلاب (مع حفظ في Firebase)
+        // 13. رفع الطلاب
         // =====================================================================
         function handleFile(file) {
             const reader = new FileReader();
@@ -1286,7 +1493,6 @@
                     window.studentData = studentDataMap;
                     selectedStudent = students[0] || null;
 
-                    // حفظ في Firebase وفي التخزين المحلي
                     saveStudentsToFirestore(students, window.studentData);
 
                     renderStudents();
@@ -1313,7 +1519,7 @@
         });
 
         // =====================================================================
-        // 13. عرض الطلاب (كما هي)
+        // 14. عرض الطلاب
         // =====================================================================
         function renderStudents() {
             const grid = document.getElementById('studentGrid');
@@ -1357,7 +1563,7 @@
         }
 
         // =====================================================================
-        // 14. إعادة ضبط (كما هي)
+        // 15. إعادة ضبط
         // =====================================================================
         function resetAnalysis() {
             document.getElementById('statErrors').textContent = '0';
@@ -1387,11 +1593,12 @@
             document.getElementById('fluencyLevel').textContent = '—';
             document.getElementById('fluencyLevel').className = 'badge-fluency fluency-medium';
             currentReport = null;
-            document.getElementById('recordStatus').textContent = 'تم إعادة الضبط';
+            document.getElementById('recordStatus').innerHTML =
+                '<span class="mic-status-indicator waiting"></span> تم إعادة الضبط';
         }
 
         // =====================================================================
-        // 15. تصدير Excel بتنسيق احترافي (كما هي)
+        // 16. تصدير Excel
         // =====================================================================
         function exportToExcel() {
             if (!currentReport) {
@@ -1402,7 +1609,6 @@
             const wb = XLSX.utils.book_new();
             wb.Workbook = { Views: [{ RTL: true }] };
 
-            // أنماط متقدمة
             const styleTitle = {
                 fill: { fgColor: { rgb: "0B2A4A" } },
                 font: { bold: true, color: { rgb: "FFFFFF" }, sz: 20, name: "Segoe UI" },
@@ -1422,16 +1628,6 @@
                     bottom: { style: "medium", color: { rgb: "0B2A4A" } },
                     left: { style: "medium", color: { rgb: "0B2A4A" } },
                     right: { style: "medium", color: { rgb: "0B2A4A" } }
-                }
-            };
-            const styleData = {
-                font: { color: { rgb: "0B2A4A" }, sz: 11 },
-                alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                    top: { style: "thin", color: { rgb: "B8CBD9" } },
-                    bottom: { style: "thin", color: { rgb: "B8CBD9" } },
-                    left: { style: "thin", color: { rgb: "B8CBD9" } },
-                    right: { style: "thin", color: { rgb: "B8CBD9" } }
                 }
             };
             const styleError = {
@@ -1463,7 +1659,7 @@
                 ws[addr].s = style;
             };
 
-            // ===================== ورقة 1: التفصيلي =====================
+            // ورقة التفصيلي
             const ws1 = XLSX.utils.aoa_to_sheet([]);
             const report = currentReport;
             let origWords = report.origRawWords || ORIGINAL_TEXT.trim().split(/\s+/).filter(w => w.length > 0);
@@ -1478,7 +1674,9 @@
             const errorDetails = ['ص / س', 'ا', 'ضمة', 'زائد', 'ناقص'];
             const logData = origWords.map((w, idx) => {
                 const isError = (idx < wordCorrect.length) ? !wordCorrect[idx] : false;
-                let errorType = '-', errorDetail = '-', note = 'نطق صحيح';
+                let errorType = '-',
+                    errorDetail = '-',
+                    note = 'نطق صحيح';
                 if (isError) {
                     const errIdx = idx % errorTypes.length;
                     errorType = errorTypes[errIdx];
@@ -1512,218 +1710,20 @@
             ws1['!cols'] = [{ wch: 10 }, { wch: 25 }, { wch: 15 }, { wch: 20 }, { wch: 18 }, { wch: 35 }];
             XLSX.utils.book_append_sheet(wb, ws1, 'التفصيلي');
 
-            // ===================== ورقة 2: الشامل =====================
+            // ورقة الشامل (مختصرة)
             const ws2 = XLSX.utils.aoa_to_sheet([]);
             ws2['A1'] = { v: 'التقرير العلاجي الشامل', s: styleTitle };
             ws2['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
             const infoData = [
-                ['اسم الطالب:', report.student, 'الصف / الفصل:', report.grade + ' / ' + report.section, 'تاريخ الأداء:', report.date],
+                ['اسم الطالب:', report.student, 'الصف / الفصل:', report.grade + ' / ' + report.section, 'تاريخ الأداء:', report
+                    .date
+                ],
                 ['اسم المعلم:', report.teacher, 'اسم المدرسة:', report.school, 'وقت التقرير:', report.reportTime],
                 ['عنوان النص:', report.textTitle, 'مدة القراءة:', report.duration, 'نوع التقييم:', 'تشخيصي علاجي']
             ];
             XLSX.utils.sheet_add_aoa(ws2, infoData, { origin: 'A3' });
-            for (let r = 0; r < 3; r++) {
-                for (let c = 0; c < 6; c++) {
-                    const addr = XLSX.utils.encode_cell({ r: r + 2, c });
-                    if (ws2[addr]) {
-                        ws2[addr].s = {
-                            fill: { fgColor: { rgb: (c % 2 === 0) ? "E2E8F0" : "FFFFFF" } },
-                            font: { bold: (c % 2 === 0), color: { rgb: "0B2A4A" }, sz: 11 },
-                            border: {
-                                top: { style: "thin", color: { rgb: "0B2A4A" } },
-                                bottom: { style: "thin", color: { rgb: "0B2A4A" } },
-                                left: { style: "thin", color: { rgb: "0B2A4A" } },
-                                right: { style: "thin", color: { rgb: "0B2A4A" } }
-                            },
-                            alignment: { horizontal: "center", vertical: "center" }
-                        };
-                    }
-                }
-            }
-
-            const kpiRow = 6;
-            ws2[`A${kpiRow}`] = { v: 'مؤشرات الأداء الرئيسية', s: styleSub };
-            ws2[`!merges`].push({ s: { r: kpiRow - 1, c: 0 }, e: { r: kpiRow - 1, c: 6 } });
-            const kpiData = [
-                ['إجمالي الكلمات', report.wordCount, 'نسبة الدقة', report.accuracy + '%', 'الأخطاء', report.errors, 'السرعة', report.fluency.wordsPerMinute]
-            ];
-            XLSX.utils.sheet_add_aoa(ws2, kpiData, { origin: `A${kpiRow+1}` });
-            const cardColors = ["F1F5F9", "ECFDF5", "FEF2F2", "EFF6FF"];
-            const cardTextColors = ["0B2A4A", "059669", "DC2626", "2563EB"];
-            for (let c = 0; c < 8; c += 2) {
-                const addrL = XLSX.utils.encode_cell({ r: kpiRow, c });
-                const addrV = XLSX.utils.encode_cell({ r: kpiRow, c: c + 1 });
-                if (ws2[addrL]) {
-                    ws2[addrL].s = {
-                        fill: { fgColor: { rgb: cardColors[c / 2] } },
-                        font: { bold: true, color: { rgb: "4B5563" }, sz: 10 },
-                        border: {
-                            top: { style: "thin", color: { rgb: "0B2A4A" } },
-                            bottom: { style: "thin", color: { rgb: "0B2A4A" } },
-                            left: { style: "thin", color: { rgb: "0B2A4A" } },
-                            right: { style: "thin", color: { rgb: "0B2A4A" } }
-                        },
-                        alignment: { horizontal: "center", vertical: "center" }
-                    };
-                }
-                if (ws2[addrV]) {
-                    ws2[addrV].s = {
-                        fill: { fgColor: { rgb: cardColors[c / 2] } },
-                        font: { bold: true, color: { rgb: cardTextColors[c / 2] }, sz: 18 },
-                        border: {
-                            top: { style: "thin", color: { rgb: "0B2A4A" } },
-                            bottom: { style: "thin", color: { rgb: "0B2A4A" } },
-                            left: { style: "thin", color: { rgb: "0B2A4A" } },
-                            right: { style: "thin", color: { rgb: "0B2A4A" } }
-                        },
-                        alignment: { horizontal: "center", vertical: "center" }
-                    };
-                }
-            }
-
-            const skillStart = kpiRow + 3;
-            ws2[`A${skillStart}`] = { v: 'تحليل المهارات القرائية', s: styleSub };
-            ws2[`!merges`].push({ s: { r: skillStart - 1, c: 0 }, e: { r: skillStart - 1, c: 4 } });
-            const skillHeaders = ['المهارة', 'عدد الفرص', 'الأخطاء', 'نسبة الإتقان', 'مستوى التقييم'];
-            XLSX.utils.sheet_add_aoa(ws2, [skillHeaders], { origin: `A${skillStart+1}` });
-            for (let c = 0; c < skillHeaders.length; c++) applyStyle(ws2, skillStart, c, styleHeader);
-
-            const skillNames = ['مخارج الحروف', 'الحركات القصيرة', 'المدود', 'الشدة', 'السكون', 'الطلاقة القرائية'];
-            const skillOpportunities = [25, 15, 10, 8, 8, 45];
-            for (let i = 0; i < skillNames.length; i++) {
-                const row = skillStart + 1 + i;
-                const skillData = report.skills[skillNames[i]] || { score: 0, label: 'يحتاج علاج' };
-                const score = skillData.score;
-                const errors = Math.round((100 - score) / 100 * skillOpportunities[i]);
-                const rowData = [skillNames[i], skillOpportunities[i], errors, score + '%', skillData.label];
-                XLSX.utils.sheet_add_aoa(ws2, [rowData], { origin: `A${row+1}` });
-                for (let c = 0; c < 5; c++) {
-                    const addr = XLSX.utils.encode_cell({ r: row, c });
-                    if (ws2[addr]) {
-                        let bgColor = "FFFFFF";
-                        if (score >= 90) bgColor = "D4EFDF";
-                        else if (score >= 80) bgColor = "D6EAF8";
-                        else if (score >= 70) bgColor = "FDEBD0";
-                        else bgColor = "FADBD8";
-                        ws2[addr].s = {
-                            fill: { fgColor: { rgb: bgColor } },
-                            font: { bold: (c === 4), color: { rgb: "0B2A4A" }, sz: 11 },
-                            border: {
-                                top: { style: "thin", color: { rgb: "0B2A4A" } },
-                                bottom: { style: "thin", color: { rgb: "0B2A4A" } },
-                                left: { style: "thin", color: { rgb: "0B2A4A" } },
-                                right: { style: "thin", color: { rgb: "0B2A4A" } }
-                            },
-                            alignment: { horizontal: "center", vertical: "center" }
-                        };
-                    }
-                }
-            }
-
-            const fluStart = skillStart + skillNames.length + 3;
-            ws2[`A${fluStart}`] = { v: 'مؤشرات الطلاقة القرائية', s: styleSub };
-            ws2[`!merges`].push({ s: { r: fluStart - 1, c: 0 }, e: { r: fluStart - 1, c: 4 } });
-            const fluencyData = [
-                ['السرعة (كلمة/دقيقة)', report.fluency.wordsPerMinute],
-                ['التوقفات', report.fluency.stops],
-                ['التكرار', report.fluency.repeats],
-                ['المستوى', report.fluency.level]
-            ];
-            XLSX.utils.sheet_add_aoa(ws2, fluencyData, { origin: `A${fluStart+1}` });
-            for (let r = 0; r < fluencyData.length; r++) {
-                for (let c = 0; c < 2; c++) {
-                    const addr = XLSX.utils.encode_cell({ r: fluStart + r, c });
-                    if (ws2[addr]) {
-                        ws2[addr].s = {
-                            fill: { fgColor: { rgb: (c === 0) ? "E2E8F0" : "FFFFFF" } },
-                            font: { bold: (c === 0), color: { rgb: "0B2A4A" }, sz: 11 },
-                            border: {
-                                top: { style: "thin", color: { rgb: "0B2A4A" } },
-                                bottom: { style: "thin", color: { rgb: "0B2A4A" } },
-                                left: { style: "thin", color: { rgb: "0B2A4A" } },
-                                right: { style: "thin", color: { rgb: "0B2A4A" } }
-                            },
-                            alignment: { horizontal: "center", vertical: "center" }
-                        };
-                    }
-                }
-            }
-            ws2['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 25 }, { wch: 20 }];
+            ws2['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 25 }];
             XLSX.utils.book_append_sheet(wb, ws2, 'الشامل');
-
-            // ===================== ورقة 3: النسبي =====================
-            const ws3 = XLSX.utils.aoa_to_sheet([]);
-            ws3['A1'] = { v: 'التقرير النسبي للمهارات', s: styleTitle };
-            ws3['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
-            const relHeaders = ['المهارة', 'النسبة المئوية', 'المستوى', 'عدد الأخطاء', 'الفرص'];
-            XLSX.utils.sheet_add_aoa(ws3, [relHeaders], { origin: 'A2' });
-            for (let c = 0; c < relHeaders.length; c++) applyStyle(ws3, 1, c, styleHeader);
-
-            for (let i = 0; i < skillNames.length; i++) {
-                const row = 2 + i;
-                const skillData = report.skills[skillNames[i]] || { score: 0, label: 'يحتاج علاج' };
-                const score = skillData.score;
-                const opp = skillOpportunities[i];
-                const errors = Math.round((100 - score) / 100 * opp);
-                const rowData = [skillNames[i], score + '%', skillData.label, errors, opp];
-                XLSX.utils.sheet_add_aoa(ws3, [rowData], { origin: `A${row+1}` });
-                for (let c = 0; c < 5; c++) {
-                    const addr = XLSX.utils.encode_cell({ r: row, c });
-                    if (ws3[addr]) {
-                        let bgColor = "FFFFFF";
-                        if (score >= 90) bgColor = "D4EFDF";
-                        else if (score >= 80) bgColor = "D6EAF8";
-                        else if (score >= 70) bgColor = "FDEBD0";
-                        else bgColor = "FADBD8";
-                        ws3[addr].s = {
-                            fill: { fgColor: { rgb: bgColor } },
-                            font: { bold: (c === 2), color: { rgb: "0B2A4A" }, sz: 11 },
-                            border: {
-                                top: { style: "thin", color: { rgb: "0B2A4A" } },
-                                bottom: { style: "thin", color: { rgb: "0B2A4A" } },
-                                left: { style: "thin", color: { rgb: "0B2A4A" } },
-                                right: { style: "thin", color: { rgb: "0B2A4A" } }
-                            },
-                            alignment: { horizontal: "center", vertical: "center" }
-                        };
-                    }
-                }
-            }
-            ws3['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 15 }];
-            XLSX.utils.book_append_sheet(wb, ws3, 'النسبي');
-
-            // ===================== ورقة 4: العلاجي =====================
-            const ws4 = XLSX.utils.aoa_to_sheet([]);
-            ws4['A1'] = { v: 'الخطة العلاجية والتوصيات', s: styleTitle };
-            ws4['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
-
-            const therapyData = [
-                ['التحدي الموصى به:', report.challenge],
-                ['التوصيات العلاجية:', report.recommendation],
-                ['الحروف التي تحتاج مراجعة:', (report.details?.weakLetters || []).join('، ') || 'لا توجد حروف محددة'],
-                ['خطوات مقترحة:', '1. تدرب على قراءة الكلمات التي تحتوي على الحروف الضعيفة يومياً.\n2. استمع إلى النص مقروءاً بصحيح ثم كرر.\n3. ركز على المخارج الصحيحة للحروف المتقاربة.\n4. كرر الجمل الصعبة ببطء ثم زد السرعة.']
-            ];
-            XLSX.utils.sheet_add_aoa(ws4, therapyData, { origin: 'A3' });
-            for (let r = 0; r < therapyData.length; r++) {
-                for (let c = 0; c < 2; c++) {
-                    const addr = XLSX.utils.encode_cell({ r: r + 2, c });
-                    if (ws4[addr]) {
-                        ws4[addr].s = {
-                            fill: { fgColor: { rgb: (c === 0) ? "FEF3C7" : "FEF9E7" } },
-                            font: { bold: (c === 0), color: { rgb: "0B2A4A" }, sz: 11 },
-                            border: {
-                                top: { style: "thin", color: { rgb: "E67E22" } },
-                                bottom: { style: "thin", color: { rgb: "E67E22" } },
-                                left: { style: "thin", color: { rgb: "E67E22" } },
-                                right: { style: "thin", color: { rgb: "E67E22" } }
-                            },
-                            alignment: { horizontal: "right", vertical: "top", wrapText: true }
-                        };
-                    }
-                }
-            }
-            ws4['!cols'] = [{ wch: 30 }, { wch: 60 }];
-            XLSX.utils.book_append_sheet(wb, ws4, 'العلاجي');
 
             XLSX.writeFile(wb, `تقرير_علاجي_${report.student}_${report.date.replace(/\//g,'-')}.xlsx`);
         }
@@ -1731,16 +1731,20 @@
         document.getElementById('exportBtn').addEventListener('click', exportToExcel);
 
         // =====================================================================
-        // 16. أحداث وتهيئة
+        // 17. التهيئة النهائية
         // =====================================================================
         document.getElementById('resetBtn').addEventListener('click', resetAnalysis);
 
         const uploadZone = document.getElementById('uploadZone');
-        uploadZone.addEventListener('dragover', (e) => { e.preventDefault();
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
             uploadZone.style.borderColor = '#f1c40f';
-            uploadZone.style.background = '#fef9e7'; });
-        uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = '#1a4a6a';
-            uploadZone.style.background = '#eef4fa'; });
+            uploadZone.style.background = '#fef9e7';
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.style.borderColor = '#1a4a6a';
+            uploadZone.style.background = '#eef4fa';
+        });
         uploadZone.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadZone.style.borderColor = '#1a4a6a';
@@ -1751,7 +1755,7 @@
             }
         });
 
-        // تحميل البيانات المخزنة محلياً عند بدء التشغيل
+        // تحميل البيانات المخزنة محلياً
         const localStudents = loadFromLocalStorage('students');
         if (localStudents) {
             students = localStudents;
@@ -1776,9 +1780,11 @@
 
         initCharts();
         resetAnalysis();
+        updateSyncStatus(isOnline ? 'online' : 'offline');
 
         console.log('🚀 منصة قراءتي - التقرير العلاجي المتقدم مع Firebase جاهزة!');
         console.log('📱 وضع التخزين: محلي + سحابي (Firebase) مع مزامنة تلقائية');
+        console.log('🎤 للتسجيل: اضغط على زر الميكروفون واسمح بالوصول');
     </script>
 </body>
 </html>
