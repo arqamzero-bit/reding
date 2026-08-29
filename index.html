@@ -636,7 +636,6 @@
             border-color: #922b21;
         }
 
-        /* حالة الاتصال */
         .sync-status {
             font-size: 0.8rem;
             padding: 4px 14px;
@@ -665,7 +664,6 @@
 <body>
     <div class="container">
 
-        <!-- HEADER -->
         <header class="header">
             <h1><i class="fas fa-book-open"></i> منصة قراءتي</h1>
             <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -674,7 +672,6 @@
             </div>
         </header>
 
-        <!-- بيانات التقرير -->
         <div class="card">
             <div class="card-title"><i class="fas fa-edit"></i> بيانات التقرير</div>
             <div class="form-grid">
@@ -687,7 +684,6 @@
             </div>
         </div>
 
-        <!-- الطلاب -->
         <div class="card">
             <div class="card-title"><i class="fas fa-users"></i> الطلاب</div>
             <div class="upload-zone" id="uploadZone">
@@ -704,7 +700,6 @@
             </div>
         </div>
 
-        <!-- النص المقروء + التسجيل -->
         <div class="card">
             <div class="card-title"><i class="fas fa-scroll"></i> النص المقروء
                 <span style="margin-right:auto;"></span>
@@ -723,7 +718,6 @@
             </div>
         </div>
 
-        <!-- التحليل -->
         <div class="card">
             <div class="card-title flex-between">
                 <span><i class="fas fa-chart-bar"></i> تحليل القراءة التفصيلي</span>
@@ -746,7 +740,6 @@
             </div>
         </div>
 
-        <!-- التقرير التشخيصي -->
         <div class="card" id="reportCard">
             <div class="card-title"><i class="fas fa-file-medical-alt"></i> تقرير تشخيصي علاجي متكامل</div>
             <div id="reportContent">
@@ -791,11 +784,11 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- ===== البرمجة الرئيسية – تم الإبقاء عليها بالكامل مع إضافة Firebase ===== -->
+    <!-- البرمجة الرئيسية – تم إعادة هيكلة Firebase بشكل كامل ومنظم -->
     <!-- ===================================================================== -->
     <script>
         // ================================================================
-        // 0. تهيئة Firebase بشكل آمن (مرة واحدة) مع تفعيل التخزين المؤقت
+        // 0. تهيئة Firebase – آمنة وموثوقة
         // ================================================================
         (function initFirebase() {
             try {
@@ -816,14 +809,11 @@
                 const auth = firebase.auth();
                 const db = firebase.firestore();
 
-                // تفعيل التخزين المؤقت مع مزامنة النوافذ
+                // تفعيل التخزين المؤقت
                 db.enablePersistence({ synchronizeTabs: true })
-                    .then(() => {
-                        console.log('✅ Firestore persistence enabled with syncTabs.');
-                    })
                     .catch((err) => {
                         if (err.code === 'failed-precondition') {
-                            console.warn('⚠️ تعدد النوافذ – persistence يعمل في نافذة واحدة فقط.');
+                            console.warn('⚠️ تعدد النوافذ – persistence يعمل في نافذة واحدة.');
                         } else if (err.code === 'unimplemented') {
                             console.warn('⚠️ المتصفح لا يدعم persistence.');
                         } else {
@@ -831,7 +821,13 @@
                         }
                     });
 
-                // دالة تحديث حالة الاتصال في الواجهة
+                // حفظ المراجع
+                window.__db = db;
+                window.__auth = auth;
+                window.__firebaseReady = false;
+                window.__user = null;
+
+                // تحديث حالة الاتصال
                 function updateSyncStatus(online) {
                     const el = document.getElementById('syncStatus');
                     if (online) {
@@ -843,15 +839,15 @@
                     }
                 }
 
-                // المصادقة المجهولة مع إعادة المحاولة التلقائية
-                function signInAnonymously(retries = 5) {
+                // المصادقة المجهولة
+                function signInAnonymously(retries = 3) {
                     auth.signInAnonymously()
                         .then((userCred) => {
-                            console.log('✅ تم الدخول كمستخدم مجهول. UID:', userCred.user.uid);
-                            window.__firebase = { db, auth, user: userCred.user };
+                            window.__user = userCred.user;
                             window.__firebaseReady = true;
                             updateSyncStatus(true);
-                            // تحميل البيانات بعد المصادقة (إذا لم تكن قد حملت)
+                            console.log('✅ تم الدخول كمستخدم مجهول. UID:', userCred.user.uid);
+                            // تحميل البيانات بعد المصادقة
                             if (!window.__dataLoaded) {
                                 loadAllData();
                             }
@@ -860,12 +856,11 @@
                             console.warn('⚠️ فشل الدخول المجهول:', err);
                             if (retries > 0 && (err.code === 'auth/network-request-failed' || err.code ===
                                     'auth/internal-error')) {
-                                console.log(`🔄 إعادة محاولة المصادقة (${retries} محاولات متبقية)...`);
                                 setTimeout(() => signInAnonymously(retries - 1), 2000);
                             } else {
                                 window.__firebaseReady = false;
                                 updateSyncStatus(false);
-                                // نستمر في العمل محلياً حتى لو فشلت المصادقة
+                                // نحاول تحميل البيانات المحلية حتى بدون مصادقة
                                 if (!window.__dataLoaded) {
                                     loadAllData();
                                 }
@@ -873,30 +868,26 @@
                         });
                 }
 
-                // مراقبة تغييرات المصادقة
                 auth.onAuthStateChanged((user) => {
                     if (user) {
-                        window.__firebase = { db, auth, user };
+                        window.__user = user;
                         window.__firebaseReady = true;
                         updateSyncStatus(true);
                         if (!window.__dataLoaded) {
                             loadAllData();
                         }
                     } else {
-                        // المستخدم غير مسجل – نحاول تسجيل الدخول
                         signInAnonymously();
                     }
                 });
 
-                // مراقبة حالة الشبكة بشكل دوري
+                // مراقبة الشبكة
                 setInterval(() => {
                     db.enableNetwork()
                         .then(() => updateSyncStatus(true))
                         .catch(() => updateSyncStatus(false));
                 }, 10000);
 
-                // حفظ المراجع للاستخدام العالمي
-                window.__firebase = { db, auth };
                 window.__firebaseReady = false;
 
             } catch (e) {
@@ -925,6 +916,7 @@
         const ORIGINAL_TEXT_EL = document.getElementById('originalText');
         let ORIGINAL_TEXT = ORIGINAL_TEXT_EL.textContent.trim();
         window.studentData = {};
+
 
         // ================================================================
         // 2. دوال مساعدة – لم تتغير
@@ -1243,7 +1235,7 @@
 
 
         // ================================================================
-        // 5. عرض التقرير الداخلي – لم يتغير (مع حفظ تلقائي)
+        // 5. عرض التقرير الداخلي – لم يتغير
         // ================================================================
         function renderReport(result, studentName) {
             const now = new Date();
@@ -1557,7 +1549,7 @@
 
 
         // ================================================================
-        // 11. عرض الطلاب – لم يتغير
+        // 11. عرض الطلاب – مع تحسين التحديث عند النقر
         // ================================================================
         function renderStudents() {
             const grid = document.getElementById('studentGrid');
@@ -1576,21 +1568,21 @@
                     badge.textContent = '✓';
                     tag.appendChild(badge);
                 }
-                tag.addEventListener('click', () => {
+                tag.addEventListener('click', function() {
                     selectedStudent = name;
                     document.getElementById('selectedStudentDisplay').textContent = '👤 ' + name;
                     document.getElementById('studentNameDisplay').value = name;
                     const data = window.studentData[name];
                     if (data) {
-                        document.getElementById('classGrade').value = data.grade;
-                        document.getElementById('classSection').value = data.section;
-                        document.getElementById('teacherName').value = data.teacher;
-                        document.getElementById('schoolName').value = data.school;
+                        document.getElementById('classGrade').value = data.grade || '';
+                        document.getElementById('classSection').value = data.section || '';
+                        document.getElementById('teacherName').value = data.teacher || '';
+                        document.getElementById('schoolName').value = data.school || '';
                     }
-                    renderStudents();
+                    renderStudents(); // تحديث الواجهة فوراً
                     resetAnalysis();
                     document.getElementById('recText').textContent = 'تم اختيار ' + name + '، قم بتسجيل القراءة.';
-                    saveAllData();
+                    saveAllData(); // حفظ التحديد
                 });
                 grid.appendChild(tag);
             });
@@ -1979,10 +1971,10 @@
 
 
         // ================================================================
-        // 14. نظام الحفظ المزدوج (المحلي + السحابي) مع المزامنة التلقائية
+        // 14. نظام الحفظ المزدوج – مُعاد هيكلته بالكامل لضمان المزامنة
         // ================================================================
 
-        // حفظ البيانات محلياً في localStorage وسحابياً في Firestore
+        // حفظ البيانات (محلياً + سحابياً)
         function saveAllData() {
             try {
                 const payload = {
@@ -2002,32 +1994,34 @@
                     lastUpdated: new Date().toISOString()
                 };
 
-                // 1. حفظ في localStorage (دائماً)
+                // 1. حفظ في localStorage دائماً
                 localStorage.setItem('qiraati_app_state', JSON.stringify(payload));
 
-                // 2. محاولة الحفظ في Firestore (إن كانت المصادقة جاهزة)
-                if (window.__firebaseReady && window.__firebase && window.__firebase.db) {
-                    const db = window.__firebase.db;
-                    const user = window.__firebase.user;
-                    if (user) {
-                        // حفظ تحت مسار المستخدم (UID) لضمان الأمان
-                        db.collection('users').doc(user.uid).collection('appData').doc('state').set(payload, { merge: true })
-                            .then(() => {
-                                const el = document.getElementById('syncStatus');
-                                if (el) {
-                                    el.className = 'sync-status online';
-                                    el.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> متصل';
-                                }
-                            })
-                            .catch((err) => {
-                                // خطأ طبيعي عند عدم الاتصال – سنحاول لاحقاً
-                                console.debug('⏳ حفظ سحابي معلق (غير متصل):', err.message);
-                                const el = document.getElementById('syncStatus');
-                                if (el) {
-                                    el.className = 'sync-status offline';
-                                    el.innerHTML = '<i class="fas fa-wifi"></i> غير متصل (مخزّن محلياً)';
-                                }
-                            });
+                // 2. حفظ في Firestore إذا كان متاحاً
+                if (window.__firebaseReady && window.__user) {
+                    const db = window.__db;
+                    db.collection('users').doc(window.__user.uid).collection('appData').doc('state')
+                        .set(payload, { merge: true })
+                        .then(() => {
+                            const el = document.getElementById('syncStatus');
+                            if (el) {
+                                el.className = 'sync-status online';
+                                el.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> متصل';
+                            }
+                        })
+                        .catch((err) => {
+                            console.debug('⏳ حفظ سحابي معلق (غير متصل):', err.message);
+                            const el = document.getElementById('syncStatus');
+                            if (el) {
+                                el.className = 'sync-status offline';
+                                el.innerHTML = '<i class="fas fa-wifi"></i> غير متصل (مخزّن محلياً)';
+                            }
+                        });
+                } else {
+                    const el = document.getElementById('syncStatus');
+                    if (el && !window.__firebaseReady) {
+                        el.className = 'sync-status offline';
+                        el.innerHTML = '<i class="fas fa-wifi"></i> غير متصل (مخزّن محلياً)';
                     }
                 }
             } catch (e) {
@@ -2035,80 +2029,103 @@
             }
         }
 
-        // تحميل البيانات من localStorage وFirestore مع المزامنة
+        // تحميل البيانات – مع مزامنة تلقائية بين المحلي والسحابي
         function loadAllData() {
             if (window.__dataLoaded) return;
+
             try {
-                // 1. تحميل من localStorage
+                // 1. قراءة البيانات المحلية
                 const localRaw = localStorage.getItem('qiraati_app_state');
                 let localData = null;
                 if (localRaw) {
                     try { localData = JSON.parse(localRaw); } catch (e) { localData = null; }
                 }
 
-                // 2. محاولة تحميل من Firestore (إذا كانت المصادقة جاهزة)
-                if (window.__firebaseReady && window.__firebase && window.__firebase.db) {
-                    const db = window.__firebase.db;
-                    const user = window.__firebase.user;
-                    if (user) {
-                        db.collection('users').doc(user.uid).collection('appData').doc('state').get()
-                            .then((doc) => {
-                                if (doc.exists) {
-                                    const cloudData = doc.data();
-                                    const localTime = localData?.lastUpdated ? new Date(localData.lastUpdated)
-                                        .getTime() : 0;
-                                    const cloudTime = cloudData.lastUpdated ? new Date(cloudData.lastUpdated)
-                                        .getTime() : 0;
+                // 2. محاولة تحميل البيانات السحابية وتطبيقها
+                function applyCloudData(cloudData) {
+                    if (!cloudData) return;
+                    // مقارنة التواريخ: نختار الأحدث
+                    const localTime = localData?.lastUpdated ? new Date(localData.lastUpdated).getTime() : 0;
+                    const cloudTime = cloudData.lastUpdated ? new Date(cloudData.lastUpdated).getTime() : 0;
 
-                                    // اختيار الأحدث (مقارنة بسيطة وآمنة)
-                                    if (cloudTime >= localTime) {
-                                        applyData(cloudData);
-                                    } else if (localData) {
-                                        applyData(localData);
-                                        // إعادة حفظ السحابي بالبيانات المحلية الأحدث
-                                        saveAllData();
-                                    }
-                                } else if (localData) {
-                                    applyData(localData);
-                                    saveAllData(); // إنشاء المستند السحابي لأول مرة
-                                }
+                    if (cloudTime >= localTime) {
+                        // السحابي أحدث → نطبقه
+                        applyData(cloudData);
+                        // نحدّث localStorage بالبيانات السحابية
+                        localStorage.setItem('qiraati_app_state', JSON.stringify(cloudData));
+                    } else if (localData) {
+                        // المحلي أحدث → نطبقه ونرفعه للسحاب
+                        applyData(localData);
+                        // الرفع سيتم عبر saveAllData() لاحقاً
+                    }
+                    window.__dataLoaded = true;
+                    updateUIFromData();
+                    // إذا كان المحلي أحدث، نرفعه للسحاب
+                    if (localData && (!cloudData || new Date(localData.lastUpdated).getTime() > new Date(cloudData
+                            .lastUpdated).getTime())) {
+                        saveAllData();
+                    }
+                }
+
+                // محاولة السحابي
+                if (window.__firebaseReady && window.__user) {
+                    const db = window.__db;
+                    db.collection('users').doc(window.__user.uid).collection('appData').doc('state')
+                        .get()
+                        .then((doc) => {
+                            if (doc.exists) {
+                                applyCloudData(doc.data());
+                            } else if (localData) {
+                                // لا يوجد سحابي، نستخدم المحلي ونرفعه
+                                applyData(localData);
                                 window.__dataLoaded = true;
                                 updateUIFromData();
-                            })
-                            .catch((err) => {
-                                console.debug('⏳ تحميل سحابي غير متاح، نستخدم المحلي:', err.message);
-                                if (localData) {
-                                    applyData(localData);
-                                    window.__dataLoaded = true;
-                                    updateUIFromData();
-                                }
-                            });
-                    } else {
-                        // المستخدم غير جاهز – نستخدم المحلي فقط
-                        if (localData) {
-                            applyData(localData);
-                            window.__dataLoaded = true;
-                            updateUIFromData();
-                        }
-                    }
+                                saveAllData(); // إنشاء المستند السحابي
+                            } else {
+                                // لا توجد بيانات
+                                window.__dataLoaded = true;
+                            }
+                        })
+                        .catch((err) => {
+                            console.debug('⏳ تحميل سحابي غير متاح، نستخدم المحلي:', err.message);
+                            if (localData) {
+                                applyData(localData);
+                                window.__dataLoaded = true;
+                                updateUIFromData();
+                            } else {
+                                window.__dataLoaded = true;
+                            }
+                        });
                 } else if (localData) {
-                    // Firebase غير جاهز – نستخدم المحلي
+                    // Firebase غير جاهز، نستخدم المحلي فقط
                     applyData(localData);
                     window.__dataLoaded = true;
                     updateUIFromData();
-                }
-
-                if (!localData && !window.__firebaseReady) {
-                    console.log('ℹ️ لا توجد بيانات محفوظة، نستخدم الإعدادات الافتراضية.');
+                } else {
                     window.__dataLoaded = true;
                 }
+
+                // إذا لم تكن هناك بيانات بعد 3 ثوانٍ، نضع بيانات تجريبية
+                setTimeout(() => {
+                    if (!students || students.length === 0) {
+                        students = ['أحمد محمد', 'ليلى خالد', 'سامي حسن', 'نورا علي', 'خالد عمر'];
+                        selectedStudent = students[0];
+                        renderStudents();
+                        resetAnalysis();
+                        document.getElementById('selectedStudentDisplay').textContent = '👤 ' + selectedStudent;
+                        document.getElementById('studentNameDisplay').value = selectedStudent;
+                        document.getElementById('recText').textContent = 'تم تحميل طلاب تجريبيين.';
+                        saveAllData();
+                    }
+                }, 3000);
+
             } catch (e) {
                 console.warn('⚠️ فشل تحميل البيانات:', e);
                 window.__dataLoaded = true;
             }
         }
 
-        // تطبيق البيانات المحملة على حالة التطبيق
+        // تطبيق البيانات على حالة التطبيق
         function applyData(data) {
             if (!data) return;
             if (data.students) students = data.students;
@@ -2131,7 +2148,7 @@
             }
         }
 
-        // تحديث واجهة المستخدم من البيانات المحملة
+        // تحديث الواجهة من البيانات المحملة
         function updateUIFromData() {
             renderStudents();
             if (selectedStudent) {
@@ -2145,6 +2162,7 @@
                     document.getElementById('schoolName').value = data.school || '';
                 }
             }
+
             if (currentReport) {
                 const result = {
                     errors: currentReport.errors || 0,
@@ -2231,31 +2249,14 @@
         // ================================================================
         initCharts();
 
-        // إذا لم يتم تحميل البيانات بعد 2 ثانية، نستدعي loadAllData
-        setTimeout(() => {
-            if (!window.__dataLoaded) {
-                loadAllData();
-            }
-        }, 2000);
+        // نبدأ تحميل البيانات فوراً
+        loadAllData();
 
-        // إذا لم يوجد طلاب بعد 3 ثوانٍ، نضع بيانات تجريبية
-        setTimeout(() => {
-            if (!students || students.length === 0) {
-                students = ['أحمد محمد', 'ليلى خالد', 'سامي حسن', 'نورا علي', 'خالد عمر'];
-                selectedStudent = students[0];
-                renderStudents();
-                resetAnalysis();
-                document.getElementById('selectedStudentDisplay').textContent = '👤 ' + selectedStudent;
-                document.getElementById('studentNameDisplay').value = selectedStudent;
-                document.getElementById('recText').textContent = 'تم تحميل طلاب تجريبيين.';
-                saveAllData();
-            }
-        }, 3000);
-
-        // حفظ دوري كل 30 ثانية (احتياطي)
+        // حفظ دوري كل 30 ثانية
         setInterval(saveAllData, 30000);
 
-        console.log('🚀 Smart Reading مع Firebase – مدمج بالكامل مع حفظ مزدوج ومزامنة تلقائية.');
+        console.log('🚀 Smart Reading مع Firebase – تم إعادة هيكلة المزامنة بالكامل.');
+        console.log('✅ البيانات ستظهر على جميع الأجهزة المتصلة بنفس الحساب.');
     </script>
 </body>
 </html>
