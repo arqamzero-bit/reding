@@ -795,7 +795,7 @@
     <!-- ===================================================================== -->
     <script>
         // ================================================================
-        // 0. تهيئة Firebase بشكل آمن (مرة واحدة)
+        // 0. تهيئة Firebase بشكل آمن (مرة واحدة) مع تفعيل التخزين المؤقت
         // ================================================================
         (function initFirebase() {
             try {
@@ -816,11 +816,14 @@
                 const auth = firebase.auth();
                 const db = firebase.firestore();
 
-                // تفعيل التخزين المؤقت مع التعامل مع الأخطاء
+                // تفعيل التخزين المؤقت مع مزامنة النوافذ
                 db.enablePersistence({ synchronizeTabs: true })
+                    .then(() => {
+                        console.log('✅ Firestore persistence enabled with syncTabs.');
+                    })
                     .catch((err) => {
                         if (err.code === 'failed-precondition') {
-                            console.warn('⚠️ تعدد النوافذ – persistence يعمل في نافذة واحدة.');
+                            console.warn('⚠️ تعدد النوافذ – persistence يعمل في نافذة واحدة فقط.');
                         } else if (err.code === 'unimplemented') {
                             console.warn('⚠️ المتصفح لا يدعم persistence.');
                         } else {
@@ -828,45 +831,7 @@
                         }
                     });
 
-                // المصادقة المجهولة مع إعادة المحاولة
-                function signInAnonymously(retries = 3) {
-                    auth.signInAnonymously()
-                        .then((userCred) => {
-                            console.log('✅ تم الدخول كمستخدم مجهول. UID:', userCred.user.uid);
-                            window.__firebase = { db, auth, user: userCred.user };
-                            window.__firebaseReady = true;
-                            updateSyncStatus(true);
-                            // تحميل البيانات بعد المصادقة
-                            if (!window.__dataLoaded) {
-                                loadAllData();
-                            }
-                        })
-                        .catch((err) => {
-                            console.warn('⚠️ فشل الدخول المجهول:', err);
-                            if (retries > 0 && (err.code === 'auth/network-request-failed' || err.code ===
-                                    'auth/internal-error')) {
-                                setTimeout(() => signInAnonymously(retries - 1), 2000);
-                            } else {
-                                window.__firebaseReady = false;
-                                updateSyncStatus(false);
-                            }
-                        });
-                }
-
-                auth.onAuthStateChanged((user) => {
-                    if (user) {
-                        window.__firebase = { db, auth, user };
-                        window.__firebaseReady = true;
-                        updateSyncStatus(true);
-                        if (!window.__dataLoaded) {
-                            loadAllData();
-                        }
-                    } else {
-                        signInAnonymously();
-                    }
-                });
-
-                // مراقبة الشبكة
+                // دالة تحديث حالة الاتصال في الواجهة
                 function updateSyncStatus(online) {
                     const el = document.getElementById('syncStatus');
                     if (online) {
@@ -878,13 +843,59 @@
                     }
                 }
 
-                // التحقق الدوري من الاتصال
+                // المصادقة المجهولة مع إعادة المحاولة التلقائية
+                function signInAnonymously(retries = 5) {
+                    auth.signInAnonymously()
+                        .then((userCred) => {
+                            console.log('✅ تم الدخول كمستخدم مجهول. UID:', userCred.user.uid);
+                            window.__firebase = { db, auth, user: userCred.user };
+                            window.__firebaseReady = true;
+                            updateSyncStatus(true);
+                            // تحميل البيانات بعد المصادقة (إذا لم تكن قد حملت)
+                            if (!window.__dataLoaded) {
+                                loadAllData();
+                            }
+                        })
+                        .catch((err) => {
+                            console.warn('⚠️ فشل الدخول المجهول:', err);
+                            if (retries > 0 && (err.code === 'auth/network-request-failed' || err.code ===
+                                    'auth/internal-error')) {
+                                console.log(`🔄 إعادة محاولة المصادقة (${retries} محاولات متبقية)...`);
+                                setTimeout(() => signInAnonymously(retries - 1), 2000);
+                            } else {
+                                window.__firebaseReady = false;
+                                updateSyncStatus(false);
+                                // نستمر في العمل محلياً حتى لو فشلت المصادقة
+                                if (!window.__dataLoaded) {
+                                    loadAllData();
+                                }
+                            }
+                        });
+                }
+
+                // مراقبة تغييرات المصادقة
+                auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        window.__firebase = { db, auth, user };
+                        window.__firebaseReady = true;
+                        updateSyncStatus(true);
+                        if (!window.__dataLoaded) {
+                            loadAllData();
+                        }
+                    } else {
+                        // المستخدم غير مسجل – نحاول تسجيل الدخول
+                        signInAnonymously();
+                    }
+                });
+
+                // مراقبة حالة الشبكة بشكل دوري
                 setInterval(() => {
                     db.enableNetwork()
                         .then(() => updateSyncStatus(true))
                         .catch(() => updateSyncStatus(false));
                 }, 10000);
 
+                // حفظ المراجع للاستخدام العالمي
                 window.__firebase = { db, auth };
                 window.__firebaseReady = false;
 
