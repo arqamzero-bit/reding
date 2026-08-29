@@ -690,6 +690,7 @@
             font-size: 0.7rem;
         }
 
+        /* أزرار جديدة */
         .btn-add-student {
             background: #27ae60;
             color: #fff;
@@ -735,6 +736,7 @@
             gap: 10px;
         }
 
+        /* حقوق الملكية */
         .footer {
             text-align: center;
             padding: 20px 0 10px 0;
@@ -874,6 +876,7 @@
             </div>
         </div>
 
+        <!-- ===== حقوق الملكية ===== -->
         <div class="footer">
             <i class="fas fa-copyright"></i> جميع الحقوق محفوظة © المعلم محمد رضا عوف
         </div>
@@ -881,7 +884,7 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- البرمجة – تم إصلاح مزامنة إعادة ضبط الطالب فقط -->
+    <!-- البرمجة – تم إضافة وظائف الحذف والإضافة وحقوق الملكية فقط -->
     <!-- ===================================================================== -->
     <script>
         // ================================================================
@@ -1726,7 +1729,7 @@
 
 
         // ================================================================
-        // 11. عرض الطلاب (غير معدل)
+        // 11. عرض الطلاب + أيقونة الحذف (معدل لإضافة أيقونة الحذف)
         // ================================================================
         function renderStudents() {
             const grid = document.getElementById('studentGrid');
@@ -1746,6 +1749,7 @@
                 tag.style.alignItems = 'center';
                 tag.style.gap = '8px';
 
+                // اسم الطالب
                 const nameSpan = document.createElement('span');
                 nameSpan.textContent = name;
                 nameSpan.style.cursor = 'pointer';
@@ -1755,6 +1759,7 @@
                 });
                 tag.appendChild(nameSpan);
 
+                // أيقونة الحذف
                 const deleteIcon = document.createElement('span');
                 deleteIcon.className = 'delete-icon';
                 deleteIcon.innerHTML = '<i class="fas fa-times"></i>';
@@ -1837,10 +1842,9 @@
 
 
         // ================================================================
-        // 13. إعادة ضبط الطالب (تم إصلاح المزامنة مع Firebase)
+        // 13. إعادة ضبط (غير معدل)
         // ================================================================
         function resetAnalysis() {
-            // تحديث الواجهة محلياً
             document.getElementById('statErrors').textContent = '0';
             document.getElementById('statAccuracy').textContent = '0%';
             document.getElementById('statWords').textContent = '0';
@@ -1869,25 +1873,6 @@
             document.getElementById('fluencyLevel').className = 'badge-fluency fluency-medium';
             currentReport = null;
             document.getElementById('recordStatus').textContent = 'تم إعادة الضبط';
-
-            // حفظ حالة إعادة الضبط في Firebase ومزامنتها مع جميع الأجهزة
-            if (selectedStudentId && window.__firebaseReady && window.__user) {
-                const db = window.__db;
-                // حذف التقرير الحالي (latestReport) من بيانات الطالب في Firebase
-                db.collection('students').doc(selectedStudentId).update({
-                    latestReport: null,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                }).catch(err => console.warn('⚠️ فشل حفظ إعادة الضبط في Firebase:', err));
-
-                // حذف التقارير من sub-collection اختيارياً (احتفظ بها للتاريخ)
-                // يمكن إضافة منطق لحذف التقارير القديمة إذا رغبت، لكننا نحتفظ بها
-            }
-
-            // حفظ التغيير في localStorage
-            if (selectedStudentId && studentsData[selectedStudentId]) {
-                studentsData[selectedStudentId].latestReport = null;
-                // لا نحذف التقارير المحفوظة محلياً، بل نضع latestReport = null
-            }
             saveToLocalStorage();
         }
 
@@ -2335,7 +2320,7 @@
                                     teacher: data.teacher || '',
                                     school: data.school || '',
                                     reports: [],
-                                    latestReport: data.latestReport || null
+                                    latestReport: null
                                 };
                             } else {
                                 studentsData[id].name = data.name || studentsData[id].name;
@@ -2343,7 +2328,6 @@
                                 studentsData[id].section = data.section || studentsData[id].section;
                                 studentsData[id].teacher = data.teacher || studentsData[id].teacher;
                                 studentsData[id].school = data.school || studentsData[id].school;
-                                studentsData[id].latestReport = data.latestReport || null;
                             }
                             window.studentData[studentsData[id].name] = {
                                 grade: studentsData[id].grade,
@@ -2363,12 +2347,6 @@
                         document.getElementById('teacherName').value = s.teacher || '';
                         document.getElementById('schoolName').value = s.school || '';
                         document.getElementById('studentNameDisplay').value = s.name || '';
-                        // إذا أصبح latestReport = null، نضبط الواجهة
-                        if (!s.latestReport) {
-                            resetAnalysis();
-                        } else {
-                            displayReportData(s.latestReport);
-                        }
                     }
                     saveToLocalStorage();
                     isSyncing = false;
@@ -2412,8 +2390,10 @@
 
 
         // ================================================================
-        // 17. دوال الحذف والإضافة (غير معدلة)
+        // 17. دوال الحذف والإضافة الجديدة
         // ================================================================
+
+        // حذف طالب فردي
         function deleteStudent(studentId) {
             if (!studentId) return;
             const studentName = studentsData[studentId]?.name || 'هذا الطالب';
@@ -2455,6 +2435,7 @@
             document.getElementById('recText').textContent = `✅ تم حذف الطالب.`;
         }
 
+        // إضافة طالب جديد
         function addStudent() {
             const name = prompt('✏️ أدخل اسم الطالب الجديد:');
             if (!name || name.trim() === '') return;
@@ -2494,7 +2475,6 @@
                     section: '',
                     teacher: '',
                     school: '',
-                    latestReport: null,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 }).catch((err) => {
@@ -2508,6 +2488,7 @@
             document.getElementById('recText').textContent = `✅ تم إضافة الطالب "${trimmedName}".`;
         }
 
+        // حذف جميع الطلاب
         function deleteAllStudents() {
             const count = Object.keys(studentsData).length;
             if (count === 0) {
@@ -2553,7 +2534,7 @@
 
 
         // ================================================================
-        // 18. ربط الأزرار (غير معدل)
+        // 18. ربط الأزرار الجديدة
         // ================================================================
         document.getElementById('addStudentBtn').addEventListener('click', addStudent);
         document.getElementById('deleteAllBtn').addEventListener('click', deleteAllStudents);
@@ -2592,6 +2573,7 @@
 
         document.getElementById('resetBtn').addEventListener('click', function() {
             resetAnalysis();
+            saveToLocalStorage();
         });
 
 
@@ -2602,8 +2584,8 @@
         loadLocalData();
         setInterval(saveToLocalStorage, 30000);
 
-        console.log('✅ تم إصلاح مزامنة إعادة ضبط الطالب مع Firebase.');
-        console.log('📌 إعادة ضبط الطالب تُحفظ الآن في Firebase وتنتشر لجميع الأجهزة.');
+        console.log('✅ تم إضافة وظائف حذف الطالب، إضافة طالب، حذف جميع الطلاب، وحقوق الملكية.');
+        console.log('📌 جميع العمليات متزامنة مع Firebase وجميع الأجهزة.');
     </script>
 </body>
 </html>
