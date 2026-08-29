@@ -13,6 +13,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js">
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js">
+    </script>
+
     <style>
         /* جميع الأنماط السابقة كما هي (لم تتغير) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -108,6 +117,52 @@
         .fluency-medium { background: #f39c12; color: #fff; border-color: #d68910; }
         .fluency-slow { background: #e67e22; color: #fff; border-color: #b85e0a; }
         .fluency-spelling { background: #e74c3c; color: #fff; border-color: #922b21; }
+
+        /* إضافة أنماط جديدة لـ Firebase */
+        .sync-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(4px);
+        }
+        .sync-status.online { color: #27ae60; }
+        .sync-status.offline { color: #f39c12; }
+        .sync-status.syncing { color: #3498db; animation: pulse-sync 1.2s infinite; }
+        @keyframes pulse-sync { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .sync-status i { font-size: 1.1rem; }
+        .auth-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .auth-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 6px 18px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+            font-size: 0.9rem;
+        }
+        .auth-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+        .auth-btn i { margin-left: 6px; }
+        .user-info {
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .user-info i { color: #ffd966; margin-left: 6px; }
     </style>
 </head>
 <body>
@@ -115,7 +170,14 @@
 
         <header class="header">
             <h1><i class="fas fa-book-open"></i> منصة قراءتي</h1>
-            <span class="subtitle"><i class="fas fa-file-medical-alt"></i> تقرير علاجي متقدم</span>
+            <div style="display:flex;align-items:center;gap:15px;flex-wrap:wrap;">
+                <span class="subtitle"><i class="fas fa-file-medical-alt"></i> تقرير علاجي متقدم</span>
+                <div class="auth-section" id="authSection">
+                    <span class="user-info" id="userInfo"><i class="fas fa-user-circle"></i> زائر</span>
+                    <button class="auth-btn" id="authBtn"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
+                    <span class="sync-status offline" id="syncStatus"><i class="fas fa-wifi"></i> غير متصل</span>
+                </div>
+            </div>
         </header>
 
         <div class="card">
@@ -231,6 +293,47 @@
 
     <script>
         // =====================================================================
+        // 0. إعدادات Firebase والتخزين المحلي
+        // =====================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTWBhTDqPdwfzzOxODFFssmaKvB7R_wP8",
+            authDomain: "smart-reading-by-mohamed.firebaseapp.com",
+            projectId: "smart-reading-by-mohamed",
+            storageBucket: "smart-reading-by-mohamed.firebasestorage.app",
+            messagingSenderId: "668252782415",
+            appId: "1:668252782415:web:b82acef6d99c42a9028f3a",
+            measurementId: "G-FYMVTDDE8E"
+        };
+
+        // تهيئة Firebase (مرة واحدة فقط)
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // تفعيل التخزين المحلي Offline Persistence
+        db.enablePersistence({ synchronizeTabs: true })
+            .then(() => {
+                console.log('✅ Offline persistence enabled');
+                updateSyncStatus('online');
+            })
+            .catch((err) => {
+                if (err.code === 'failed-precondition') {
+                    console.warn('⚠️ Multiple tabs open, persistence enabled in first tab only');
+                } else if (err.code === 'unimplemented') {
+                    console.warn('⚠️ Browser doesn\'t support persistence');
+                } else {
+                    console.error('❌ Persistence error:', err);
+                }
+                updateSyncStatus('offline');
+            });
+
+        // متغيرات Firebase
+        let currentUser = null;
+        let isOnline = navigator.onLine;
+        let syncQueue = [];
+        let isSyncing = false;
+
+        // =====================================================================
         // 1. الإعدادات الأساسية والمتغيرات العامة
         // =====================================================================
         let students = [];
@@ -243,19 +346,24 @@
         let readingRecords = [];
         let currentReport = null;
         let speechSynthesisUtterance = null;
+        let reportId = null;
 
         const ORIGINAL_TEXT_EL = document.getElementById('originalText');
         let ORIGINAL_TEXT = ORIGINAL_TEXT_EL.textContent.trim();
         window.studentData = {};
 
         // =====================================================================
-        // 2. دوال مساعدة
+        // 2. دوال المساعدة و Firebase
         // =====================================================================
         function pad2(n) { return String(n).padStart(2, '0'); }
 
         function formatDateAr(d) { return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`; }
 
         function formatTimeAr(d) { return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        }
 
         function normalizeArabic(text) {
             return text
@@ -312,7 +420,296 @@
         }
 
         // =====================================================================
-        // 3. خوارزمية التحليل المتقدمة (كما هي)
+        // 3. دوال المزامنة مع Firebase
+        // =====================================================================
+        function updateSyncStatus(status) {
+            const el = document.getElementById('syncStatus');
+            if (status === 'online') {
+                el.className = 'sync-status online';
+                el.innerHTML = '<i class="fas fa-wifi"></i> متصل';
+            } else if (status === 'offline') {
+                el.className = 'sync-status offline';
+                el.innerHTML = '<i class="fas fa-wifi"></i> غير متصل';
+            } else if (status === 'syncing') {
+                el.className = 'sync-status syncing';
+                el.innerHTML = '<i class="fas fa-sync fa-spin"></i> جاري المزامنة';
+            }
+        }
+
+        // مراقبة حالة الاتصال
+        window.addEventListener('online', () => {
+            isOnline = true;
+            updateSyncStatus('online');
+            processSyncQueue();
+            loadStudentsFromFirestore();
+        });
+
+        window.addEventListener('offline', () => {
+            isOnline = false;
+            updateSyncStatus('offline');
+        });
+
+        // تخزين البيانات محلياً (IndexedDB)
+        function saveToLocalStorage(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+                console.log(`💾 Saved to localStorage: ${key}`);
+            } catch (e) {
+                console.error('❌ Error saving to localStorage:', e);
+            }
+        }
+
+        function loadFromLocalStorage(key) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : null;
+            } catch (e) {
+                console.error('❌ Error loading from localStorage:', e);
+                return null;
+            }
+        }
+
+        // حفظ تقرير في Firestore
+        async function saveReportToFirestore(reportData) {
+            if (!currentUser) {
+                console.warn('⚠️ No user logged in, saving locally only');
+                return null;
+            }
+
+            try {
+                const reportRef = db.collection('reports').doc();
+                await reportRef.set({
+                    ...reportData,
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    syncedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('✅ Report saved to Firestore:', reportRef.id);
+                return reportRef.id;
+            } catch (error) {
+                console.error('❌ Error saving to Firestore:', error);
+                // إضافة إلى قائمة المزامنة
+                syncQueue.push({
+                    type: 'report',
+                    data: reportData,
+                    timestamp: Date.now()
+                });
+                saveToLocalStorage('syncQueue', syncQueue);
+                return null;
+            }
+        }
+
+        // تحميل الطلاب من Firestore
+        async function loadStudentsFromFirestore() {
+            if (!currentUser || !isOnline) {
+                // تحميل من التخزين المحلي إذا كان غير متصل
+                const localStudents = loadFromLocalStorage('students');
+                if (localStudents) {
+                    students = localStudents;
+                    renderStudents();
+                }
+                return;
+            }
+
+            try {
+                const snapshot = await db.collection('students')
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+
+                if (!snapshot.empty) {
+                    const studentNames = [];
+                    const studentDataMap = {};
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        studentNames.push(data.name);
+                        studentDataMap[data.name] = {
+                            grade: data.grade || '',
+                            section: data.section || '',
+                            teacher: data.teacher || '',
+                            school: data.school || ''
+                        };
+                    });
+                    students = studentNames;
+                    window.studentData = studentDataMap;
+                    saveToLocalStorage('students', students);
+                    saveToLocalStorage('studentData', window.studentData);
+                    renderStudents();
+                    if (students.length > 0 && !selectedStudent) {
+                        selectedStudent = students[0];
+                        document.getElementById('selectedStudentDisplay').textContent = '👤 ' + selectedStudent;
+                        document.getElementById('studentNameDisplay').value = selectedStudent;
+                        const data = window.studentData[selectedStudent];
+                        if (data) {
+                            document.getElementById('classGrade').value = data.grade;
+                            document.getElementById('classSection').value = data.section;
+                            document.getElementById('teacherName').value = data.teacher;
+                            document.getElementById('schoolName').value = data.school;
+                        }
+                    }
+                    console.log('✅ Students loaded from Firestore');
+                } else {
+                    // تحميل من التخزين المحلي
+                    const localStudents = loadFromLocalStorage('students');
+                    if (localStudents) {
+                        students = localStudents;
+                        window.studentData = loadFromLocalStorage('studentData') || {};
+                        renderStudents();
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error loading students from Firestore:', error);
+                // استخدام التخزين المحلي
+                const localStudents = loadFromLocalStorage('students');
+                if (localStudents) {
+                    students = localStudents;
+                    window.studentData = loadFromLocalStorage('studentData') || {};
+                    renderStudents();
+                }
+            }
+        }
+
+        // حفظ الطلاب في Firestore
+        async function saveStudentsToFirestore(studentNames, studentDataMap) {
+            if (!currentUser || !isOnline) {
+                // حفظ محلياً
+                saveToLocalStorage('students', studentNames);
+                saveToLocalStorage('studentData', studentDataMap);
+                return;
+            }
+
+            try {
+                // حذف الطلاب الحاليين
+                const snapshot = await db.collection('students')
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+
+                const batch = db.batch();
+                snapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                // إضافة الطلاب الجدد
+                for (const name of studentNames) {
+                    const data = studentDataMap[name] || {};
+                    const docRef = db.collection('students').doc();
+                    batch.set(docRef, {
+                        name: name,
+                        grade: data.grade || '',
+                        section: data.section || '',
+                        teacher: data.teacher || '',
+                        school: data.school || '',
+                        userId: currentUser.uid,
+                        userEmail: currentUser.email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+
+                await batch.commit();
+                console.log('✅ Students saved to Firestore');
+
+                // حفظ محلياً أيضاً
+                saveToLocalStorage('students', studentNames);
+                saveToLocalStorage('studentData', studentDataMap);
+            } catch (error) {
+                console.error('❌ Error saving students to Firestore:', error);
+                // حفظ محلياً
+                saveToLocalStorage('students', studentNames);
+                saveToLocalStorage('studentData', studentDataMap);
+                // إضافة إلى قائمة المزامنة
+                syncQueue.push({
+                    type: 'students',
+                    data: { names: studentNames, dataMap: studentDataMap },
+                    timestamp: Date.now()
+                });
+                saveToLocalStorage('syncQueue', syncQueue);
+            }
+        }
+
+        // معالجة قائمة المزامنة
+        async function processSyncQueue() {
+            if (!isOnline || !currentUser || isSyncing) return;
+
+            const queue = loadFromLocalStorage('syncQueue') || [];
+            if (queue.length === 0) return;
+
+            isSyncing = true;
+            updateSyncStatus('syncing');
+
+            try {
+                for (const item of queue) {
+                    if (item.type === 'report') {
+                        await saveReportToFirestore(item.data);
+                    } else if (item.type === 'students') {
+                        await saveStudentsToFirestore(item.data.names, item.data.dataMap);
+                    }
+                }
+                // مسح قائمة المزامنة بعد النجاح
+                syncQueue = [];
+                saveToLocalStorage('syncQueue', []);
+                console.log('✅ Sync queue processed successfully');
+                updateSyncStatus('online');
+            } catch (error) {
+                console.error('❌ Error processing sync queue:', error);
+                updateSyncStatus('offline');
+            } finally {
+                isSyncing = false;
+            }
+        }
+
+        // =====================================================================
+        // 4. مصادقة Firebase
+        // =====================================================================
+        function updateAuthUI(user) {
+            const userInfo = document.getElementById('userInfo');
+            const authBtn = document.getElementById('authBtn');
+
+            if (user) {
+                currentUser = user;
+                const displayName = user.displayName || user.email || 'مستخدم';
+                userInfo.innerHTML = `<i class="fas fa-user-circle"></i> ${displayName}`;
+                authBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> تسجيل الخروج';
+                authBtn.onclick = () => auth.signOut();
+                loadStudentsFromFirestore();
+                processSyncQueue();
+            } else {
+                currentUser = null;
+                userInfo.innerHTML = '<i class="fas fa-user-circle"></i> زائر';
+                authBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
+                authBtn.onclick = () => {
+                    // تسجيل دخول بسيط باستخدام Google
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    auth.signInWithPopup(provider).catch((error) => {
+                        console.error('❌ Auth error:', error);
+                        // محاولة تسجيل دخول مجهول
+                        auth.signInAnonymously().catch((err) => {
+                            console.error('❌ Anonymous auth error:', err);
+                            alert('حدث خطأ في تسجيل الدخول. سيتم العمل في وضع الزائر.');
+                        });
+                    });
+                };
+                // تحميل من التخزين المحلي
+                const localStudents = loadFromLocalStorage('students');
+                if (localStudents) {
+                    students = localStudents;
+                    window.studentData = loadFromLocalStorage('studentData') || {};
+                    renderStudents();
+                }
+            }
+        }
+
+        // مراقبة حالة المصادقة
+        auth.onAuthStateChanged((user) => {
+            updateAuthUI(user);
+            if (user) {
+                console.log('✅ User authenticated:', user.uid);
+            } else {
+                console.log('👤 User not authenticated');
+            }
+        });
+
+        // =====================================================================
+        // 5. خوارزمية التحليل المتقدمة (كما هي)
         // =====================================================================
         function analyzeReading(spokenText) {
             const orig = ORIGINAL_TEXT;
@@ -525,7 +922,7 @@
         }
 
         // =====================================================================
-        // 4. الرسوم البيانية (كما هي)
+        // 6. الرسوم البيانية (كما هي)
         // =====================================================================
         let chartErrors = null,
             chartLetters = null;
@@ -562,7 +959,7 @@
         }
 
         // =====================================================================
-        // 5. عرض التقرير الداخلي (كما هي)
+        // 7. عرض التقرير الداخلي (مع حفظ في Firebase)
         // =====================================================================
         function renderReport(result, studentName) {
             const now = new Date();
@@ -600,33 +997,58 @@
             document.getElementById('challengeText').textContent = result.challengeText;
             document.getElementById('recommendationText').textContent = result.recommendationText;
 
-            currentReport = {
+            // حفظ التقرير
+            const reportData = {
                 student: studentName,
                 grade: document.getElementById('classGrade').value || '—',
                 section: document.getElementById('classSection').value || '—',
                 teacher: document.getElementById('teacherName').value || '—',
                 school: document.getElementById('schoolName').value || '—',
                 textTitle: document.getElementById('textTitle').value || '—',
+                originalText: ORIGINAL_TEXT,
                 date: formatDateAr(now),
                 startTime: startTime ? formatTimeAr(startTime) : formatTimeAr(now),
                 reportTime: formatTimeAr(now),
                 duration: duration + ' ثانية',
                 wordCount: result.wordCount,
+                errors: result.errors,
+                accuracy: result.accuracy,
                 skills: result.skills,
                 challenge: result.challengeText,
                 recommendation: result.recommendationText,
                 fluency: result.fluency,
-                errors: result.errors,
-                accuracy: result.accuracy,
                 details: result.details,
                 durationMinutes: result.durationMinutes,
                 wordCorrect: result.wordCorrect,
-                origRawWords: result.origRawWords
+                origRawWords: result.origRawWords,
+                wrongWords: result.wrongWords
             };
+
+            currentReport = reportData;
+            reportId = generateId();
+
+            // حفظ محلياً
+            const reports = loadFromLocalStorage('reports') || [];
+            reports.push({ id: reportId, ...reportData, timestamp: now.toISOString() });
+            saveToLocalStorage('reports', reports);
+
+            // حفظ في Firebase (إذا كان متصلاً)
+            if (isOnline && currentUser) {
+                saveReportToFirestore(reportData);
+            } else {
+                // إضافة إلى قائمة المزامنة
+                syncQueue.push({
+                    type: 'report',
+                    data: reportData,
+                    timestamp: Date.now()
+                });
+                saveToLocalStorage('syncQueue', syncQueue);
+                console.log('📝 Report queued for sync');
+            }
         }
 
         // =====================================================================
-        // 6. معالجة النص المقروء (كما هي)
+        // 8. معالجة النص المقروء (كما هي)
         // =====================================================================
         function processSpokenText(spoken) {
             if (!selectedStudent) { document.getElementById('recText').textContent = '⚠️ اختر طالباً أولاً.'; return; }
@@ -645,7 +1067,7 @@
             document.getElementById('recordStatus').textContent = '✅ تحليل مكتمل';
 
             const now = new Date();
-            readingRecords.push({
+            const record = {
                 student: selectedStudent,
                 teacher: document.getElementById('teacherName').value || '—',
                 date: formatDateAr(now),
@@ -654,13 +1076,33 @@
                 level: result.accuracy >= 90 ? 'ممتاز' : result.accuracy >= 80 ? 'جيد' : result.accuracy >= 60 ?
                     'متوسط' : 'ضعيف',
                 weakWords: result.wrongWords.join('، ') || 'لا يوجد',
-                recommendation: result.recommendation
-            });
+                recommendation: result.recommendation,
+                timestamp: now.toISOString()
+            };
+            readingRecords.push(record);
+
+            // حفظ سجلات القراءة محلياً
+            const records = loadFromLocalStorage('readingRecords') || [];
+            records.push(record);
+            saveToLocalStorage('readingRecords', records);
+
+            // حفظ في Firebase
+            if (isOnline && currentUser) {
+                db.collection('readingRecords').add({
+                    ...record,
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).catch(err => {
+                    console.error('❌ Error saving reading record:', err);
+                });
+            }
+
             renderReport(result, selectedStudent);
         }
 
         // =====================================================================
-        // 7. التسجيل المستمر (كما هي)
+        // 9. التسجيل المستمر (كما هي)
         // =====================================================================
         function startContinuousRecognition() {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -742,7 +1184,7 @@
         });
 
         // =====================================================================
-        // 8. أيقونة تصحيح الأخطاء (كما هي)
+        // 10. أيقونة تصحيح الأخطاء (كما هي)
         // =====================================================================
         document.getElementById('playCorrectBtn').addEventListener('click', function() {
             const text = ORIGINAL_TEXT;
@@ -786,7 +1228,7 @@
         window.speechSynthesis.getVoices();
 
         // =====================================================================
-        // 9. رفع النص (كما هي)
+        // 11. رفع النص (كما هي)
         // =====================================================================
         document.getElementById('uploadTextBtn').addEventListener('click', () => {
             document.getElementById('textFileInput').click();
@@ -814,7 +1256,7 @@
         });
 
         // =====================================================================
-        // 10. رفع الطلاب (كما هي)
+        // 12. رفع الطلاب (مع حفظ في Firebase)
         // =====================================================================
         function handleFile(file) {
             const reader = new FileReader();
@@ -825,22 +1267,28 @@
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
                     const rows = json.slice(1);
-                    students = [];
-                    window.studentData = {};
+                    const studentNames = [];
+                    const studentDataMap = {};
                     for (const row of rows) {
                         if (!row[0]) continue;
                         const name = String(row[0]).trim();
-                        students.push(name);
-                        window.studentData[name] = {
+                        studentNames.push(name);
+                        studentDataMap[name] = {
                             grade: row[1] ? String(row[1]).trim() : '',
                             section: row[2] ? String(row[2]).trim() : '',
                             teacher: row[3] ? String(row[3]).trim() : '',
                             school: row[4] ? String(row[4]).trim() : ''
                         };
                     }
-                    if (students.length === 0) { alert('لم يتم العثور على أسماء.');
+                    if (studentNames.length === 0) { alert('لم يتم العثور على أسماء.');
                         return; }
+                    students = studentNames;
+                    window.studentData = studentDataMap;
                     selectedStudent = students[0] || null;
+
+                    // حفظ في Firebase وفي التخزين المحلي
+                    saveStudentsToFirestore(students, window.studentData);
+
                     renderStudents();
                     resetAnalysis();
                     if (selectedStudent) {
@@ -865,7 +1313,7 @@
         });
 
         // =====================================================================
-        // 11. عرض الطلاب (كما هي)
+        // 13. عرض الطلاب (كما هي)
         // =====================================================================
         function renderStudents() {
             const grid = document.getElementById('studentGrid');
@@ -909,7 +1357,7 @@
         }
 
         // =====================================================================
-        // 12. إعادة ضبط (كما هي)
+        // 14. إعادة ضبط (كما هي)
         // =====================================================================
         function resetAnalysis() {
             document.getElementById('statErrors').textContent = '0';
@@ -943,7 +1391,7 @@
         }
 
         // =====================================================================
-        // 13. تصدير Excel بتنسيق احترافي (أربع أوراق عمل)
+        // 15. تصدير Excel بتنسيق احترافي (كما هي)
         // =====================================================================
         function exportToExcel() {
             if (!currentReport) {
@@ -1008,57 +1456,11 @@
                     right: { style: "thin", color: { rgb: "B8CBD9" } }
                 }
             };
-            const styleGood = {
-                fill: { fgColor: { rgb: "D6EAF8" } },
-                font: { bold: true, color: { rgb: "1A5276" }, sz: 11 },
-                alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                    top: { style: "thin", color: { rgb: "B8CBD9" } },
-                    bottom: { style: "thin", color: { rgb: "B8CBD9" } },
-                    left: { style: "thin", color: { rgb: "B8CBD9" } },
-                    right: { style: "thin", color: { rgb: "B8CBD9" } }
-                }
-            };
-            const styleMedium = {
-                fill: { fgColor: { rgb: "FDEBD0" } },
-                font: { bold: true, color: { rgb: "D68910" }, sz: 11 },
-                alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                    top: { style: "thin", color: { rgb: "B8CBD9" } },
-                    bottom: { style: "thin", color: { rgb: "B8CBD9" } },
-                    left: { style: "thin", color: { rgb: "B8CBD9" } },
-                    right: { style: "thin", color: { rgb: "B8CBD9" } }
-                }
-            };
-            const styleNeeds = {
-                fill: { fgColor: { rgb: "FADBD8" } },
-                font: { bold: true, color: { rgb: "922B21" }, sz: 11 },
-                alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                    top: { style: "thin", color: { rgb: "B8CBD9" } },
-                    bottom: { style: "thin", color: { rgb: "B8CBD9" } },
-                    left: { style: "thin", color: { rgb: "B8CBD9" } },
-                    right: { style: "thin", color: { rgb: "B8CBD9" } }
-                }
-            };
 
             const applyStyle = (ws, r, c, style) => {
                 const addr = XLSX.utils.encode_cell({ r, c });
                 if (!ws[addr]) ws[addr] = { t: 's', v: '' };
                 ws[addr].s = style;
-            };
-
-            const applyBorder = (ws, r, c) => {
-                const addr = XLSX.utils.encode_cell({ r, c });
-                if (!ws[addr]) return;
-                const s = ws[addr].s || {};
-                s.border = {
-                    top: { style: "thin", color: { rgb: "0B2A4A" } },
-                    bottom: { style: "thin", color: { rgb: "0B2A4A" } },
-                    left: { style: "thin", color: { rgb: "0B2A4A" } },
-                    right: { style: "thin", color: { rgb: "0B2A4A" } }
-                };
-                ws[addr].s = s;
             };
 
             // ===================== ورقة 1: التفصيلي =====================
@@ -1086,28 +1488,18 @@
                 return [idx + 1, w, isError ? 'خطأ' : 'صحيح', errorType, errorDetail, note];
             });
 
-            // عنوان
             ws1['A1'] = { v: 'سجل القراءة التفصيلي', s: styleTitle };
             ws1['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
-            // رؤوس
             const headers1 = ['الرقم', 'الكلمة في النص الأصلي', 'حالة النطق', 'نوع الخطأ', 'الحرف المعني', 'ملاحظات'];
             XLSX.utils.sheet_add_aoa(ws1, [headers1], { origin: 'A2' });
             for (let c = 0; c < headers1.length; c++) applyStyle(ws1, 1, c, styleHeader);
-            // البيانات
             XLSX.utils.sheet_add_aoa(ws1, logData, { origin: 'A3' });
             for (let i = 0; i < logData.length; i++) {
                 for (let c = 0; c < 6; c++) {
                     const isError = (logData[i][2] === 'خطأ');
-                    const style = isError ? styleError : styleCorrect;
-                    // نطبق على الخلايا ما عدا العمودين 0 و1 و2 نتركهم مع تنسيق أساسي ثم نعدل
                     const addr = XLSX.utils.encode_cell({ r: i + 2, c });
                     if (ws1[addr]) {
-                        if (isError) {
-                            ws1[addr].s = styleError;
-                        } else {
-                            ws1[addr].s = styleCorrect;
-                        }
-                        // إضافة الحدود
+                        ws1[addr].s = isError ? styleError : styleCorrect;
                         ws1[addr].s.border = {
                             top: { style: "thin", color: { rgb: "B8CBD9" } },
                             bottom: { style: "thin", color: { rgb: "B8CBD9" } },
@@ -1122,10 +1514,8 @@
 
             // ===================== ورقة 2: الشامل =====================
             const ws2 = XLSX.utils.aoa_to_sheet([]);
-            // عنوان رئيسي
             ws2['A1'] = { v: 'التقرير العلاجي الشامل', s: styleTitle };
             ws2['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
-            // بيانات الطالب
             const infoData = [
                 ['اسم الطالب:', report.student, 'الصف / الفصل:', report.grade + ' / ' + report.section, 'تاريخ الأداء:', report.date],
                 ['اسم المعلم:', report.teacher, 'اسم المدرسة:', report.school, 'وقت التقرير:', report.reportTime],
@@ -1151,7 +1541,6 @@
                 }
             }
 
-            // مؤشرات الأداء
             const kpiRow = 6;
             ws2[`A${kpiRow}`] = { v: 'مؤشرات الأداء الرئيسية', s: styleSub };
             ws2[`!merges`].push({ s: { r: kpiRow - 1, c: 0 }, e: { r: kpiRow - 1, c: 6 } });
@@ -1192,7 +1581,6 @@
                 }
             }
 
-            // جدول المهارات
             const skillStart = kpiRow + 3;
             ws2[`A${skillStart}`] = { v: 'تحليل المهارات القرائية', s: styleSub };
             ws2[`!merges`].push({ s: { r: skillStart - 1, c: 0 }, e: { r: skillStart - 1, c: 4 } });
@@ -1232,7 +1620,6 @@
                 }
             }
 
-            // الطلاقة
             const fluStart = skillStart + skillNames.length + 3;
             ws2[`A${fluStart}`] = { v: 'مؤشرات الطلاقة القرائية', s: styleSub };
             ws2[`!merges`].push({ s: { r: fluStart - 1, c: 0 }, e: { r: fluStart - 1, c: 4 } });
@@ -1338,14 +1725,13 @@
             ws4['!cols'] = [{ wch: 30 }, { wch: 60 }];
             XLSX.utils.book_append_sheet(wb, ws4, 'العلاجي');
 
-            // حفظ الملف
             XLSX.writeFile(wb, `تقرير_علاجي_${report.student}_${report.date.replace(/\//g,'-')}.xlsx`);
         }
 
         document.getElementById('exportBtn').addEventListener('click', exportToExcel);
 
         // =====================================================================
-        // 14. أحداث وتهيئة
+        // 16. أحداث وتهيئة
         // =====================================================================
         document.getElementById('resetBtn').addEventListener('click', resetAnalysis);
 
@@ -1365,18 +1751,34 @@
             }
         });
 
+        // تحميل البيانات المخزنة محلياً عند بدء التشغيل
+        const localStudents = loadFromLocalStorage('students');
+        if (localStudents) {
+            students = localStudents;
+            window.studentData = loadFromLocalStorage('studentData') || {};
+            if (students.length > 0) {
+                selectedStudent = students[0];
+                renderStudents();
+                resetAnalysis();
+                if (selectedStudent) {
+                    document.getElementById('selectedStudentDisplay').textContent = '👤 ' + selectedStudent;
+                    document.getElementById('studentNameDisplay').value = selectedStudent;
+                    const data = window.studentData[selectedStudent];
+                    if (data) {
+                        document.getElementById('classGrade').value = data.grade;
+                        document.getElementById('classSection').value = data.section;
+                        document.getElementById('teacherName').value = data.teacher;
+                        document.getElementById('schoolName').value = data.school;
+                    }
+                }
+            }
+        }
+
         initCharts();
         resetAnalysis();
-        if (students.length === 0) {
-            students = ['أحمد محمد', 'ليلى خالد', 'سامي حسن', 'نورا علي', 'خالد عمر'];
-            selectedStudent = students[0];
-            renderStudents();
-            resetAnalysis();
-            document.getElementById('selectedStudentDisplay').textContent = '👤 ' + selectedStudent;
-            document.getElementById('studentNameDisplay').value = selectedStudent;
-            document.getElementById('recText').textContent = 'تم تحميل طلاب تجريبيين.';
-        }
-        console.log('🚀 منصة قراءتي - التقرير العلاجي المتقدم جاهزة!');
+
+        console.log('🚀 منصة قراءتي - التقرير العلاجي المتقدم مع Firebase جاهزة!');
+        console.log('📱 وضع التخزين: محلي + سحابي (Firebase) مع مزامنة تلقائية');
     </script>
 </body>
 </html>
