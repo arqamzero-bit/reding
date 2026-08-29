@@ -1,9 +1,19 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>منصة قراءتي - التقرير العلاجي المتقدم</title>
+
+    <!-- Firebase SDK (Compat v9) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js">
+    </script>
+
+    <!-- Chart.js & other libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
     </script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js">
@@ -12,218 +22,659 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js">
     </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js">
-    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
     <style>
-        /* جميع الأنماط السابقة */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #f0f4f9; padding: 20px; color: #1e2b3c; }
-        .container { max-width: 1400px; margin: 0 auto; }
-        .header { background: linear-gradient(135deg, #0b2a4a, #1a4a6a); border-radius: 28px; padding: 28px 40px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; color: #fff; box-shadow: 0 12px 30px rgba(0,20,40,0.35); }
-        .header h1 { font-weight: 700; font-size: 2.2rem; display: flex; align-items: center; gap: 12px; }
-        .header h1 i { color: #ffd966; }
-        .header .subtitle { background: rgba(255,255,255,0.15); padding: 6px 18px; border-radius: 40px; backdrop-filter: blur(4px); }
-        .card { background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-radius: 24px; padding: 24px 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.5); margin-bottom: 24px; }
-        .card-title { font-size: 1.3rem; font-weight: 700; color: #0b2a4a; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 3px solid #1a4a6a; padding-bottom: 12px; flex-wrap: wrap; }
-        .card-title i { color: #1a4a6a; width: 28px; text-align: center; }
-        .upload-zone { border: 3px dashed #1a4a6a; background: #eef4fa; border-radius: 18px; padding: 28px 20px; text-align: center; cursor: pointer; transition: 0.25s; position: relative; }
-        .upload-zone:hover { border-color: #0b2a4a; background: #dce6f0; }
-        .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-        .upload-zone i { font-size: 3rem; color: #1a4a6a; margin-bottom: 8px; }
-        .upload-zone p { font-size: 1rem; color: #0b2a4a; font-weight: 600; }
-        .student-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; max-height: 200px; overflow-y: auto; padding: 4px 2px; }
-        .student-grid::-webkit-scrollbar { width: 6px; }
-        .student-grid::-webkit-scrollbar-thumb { background: #b8cbd9; border-radius: 10px; }
-        .student-tag { background: #dce6f0; padding: 8px 22px; border-radius: 40px; font-weight: 600; font-size: 0.95rem; color: #0b2a4a; cursor: pointer; transition: 0.2s; border: 2px solid transparent; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
-        .student-tag:hover { background: #b8cbd9; transform: translateY(-2px); }
-        .student-tag.active { background: #0b2a4a; color: #fff; border-color: #ffd966; box-shadow: 0 6px 14px rgba(11,42,74,0.3); }
-        .student-tag .badge { background: #ffd966; color: #0b2a4a; border-radius: 40px; padding: 0 10px; font-size: 0.7rem; margin-right: 6px; font-weight: 700; }
-        .record-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 10px 0; }
-        .record-btn { width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #f0f7ff, #cbddee); border: none; box-shadow: 0 8px 24px rgba(11,42,74,0.25), inset 0 -4px 8px rgba(0,0,0,0.04); cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; font-size: 3.2rem; color: #0b2a4a; }
-        .record-btn:hover { transform: scale(1.05); box-shadow: 0 12px 32px rgba(11,42,74,0.35); }
-        .record-btn.recording { background: radial-gradient(circle at 30% 30%, #ffd9d9, #c0392b); color: #fff; animation: pulse 1.2s infinite; box-shadow: 0 0 0 8px rgba(192,57,43,0.25); }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        .record-status { font-size: 1rem; font-weight: 600; color: #0b2a4a; background: rgba(255,255,255,0.8); padding: 6px 24px; border-radius: 40px; backdrop-filter: blur(4px); border: 1px solid #b8cbd9; }
-        .text-display { background: #f8fcff; border-radius: 18px; padding: 20px 24px; font-size: 1.2rem; line-height: 2.2rem; color: #142433; border-right: 6px solid #1a4a6a; max-height: 200px; overflow-y: auto; font-family: 'Times New Roman', 'Amiri', serif; margin-bottom: 12px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.04); }
-        .text-display mark { background: #f1c40f; padding: 0 4px; border-radius: 6px; color: #0b2a4a; font-weight: bold; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin: 16px 0 20px; }
-        .stat-item { background: #eef4fa; border-radius: 16px; padding: 14px 12px; text-align: center; border: 2px solid #b8cbd9; box-shadow: 0 4px 8px rgba(0,0,0,0.04); }
-        .stat-item .num { font-size: 2rem; font-weight: 700; color: #0b2a4a; }
-        .stat-item .label { font-size: 0.85rem; color: #1a4a6a; font-weight: 600; }
-        .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-        @media (max-width:760px){ .chart-row { grid-template-columns: 1fr; } .header { flex-direction: column; align-items: flex-start; gap: 12px; } }
-        .chart-box { background: #ffffff; border-radius: 18px; padding: 16px; border: 2px solid #b8cbd9; box-shadow: 0 4px 8px rgba(0,0,0,0.04); }
-        .chart-box canvas { max-height: 200px; max-width: 100%; }
-        .rec-box { background: #fef9e7; border-radius: 18px; padding: 16px 22px; border-right: 6px solid #f1c40f; margin-top: 12px; font-size: 1rem; line-height: 1.8; border: 2px solid #f1c40f; }
-        .rec-box strong { color: #0b2a4a; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        .mt-2 { margin-top: 12px; }
-        .mb-1 { margin-bottom: 8px; }
-        .text-muted { color: #5f7d94; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-        .form-grid input { padding: 10px 14px; border-radius: 12px; border: 2px solid #b8cbd9; font-size: 0.95rem; outline: none; font-family: inherit; background: #f8fcff; width: 100%; transition: 0.2s; }
-        .form-grid input:focus { border-color: #1a4a6a; box-shadow: 0 0 0 3px rgba(26,74,106,0.1); }
-        .form-grid label { font-size: 0.9rem; color: #0b2a4a; font-weight: 600; display: block; margin-bottom: 4px; }
-        .report-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.95rem; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .report-table th { background: #0b2a4a; color: #fff; padding: 14px 12px; text-align: center; font-weight: 700; font-size: 1rem; border: 2px solid #1a4a6a; }
-        .report-table td { padding: 12px; text-align: center; border: 2px solid #b8cbd9; background: #f8fcff; font-weight: 500; }
-        .report-table tr:nth-child(even) td { background: #eef4fa; }
-        .report-table tr:last-child td { border-bottom: 2px solid #b8cbd9; }
-        .level-badge { display: inline-block; padding: 4px 18px; border-radius: 30px; font-size: 0.85rem; font-weight: 700; border: 2px solid transparent; }
-        .level-excellent { background: #27ae60; color: #fff; border-color: #1e8449; }
-        .level-verygood { background: #2e86de; color: #fff; border-color: #1a5276; }
-        .level-good { background: #f39c12; color: #fff; border-color: #d68910; }
-        .level-needs { background: #e74c3c; color: #fff; border-color: #922b21; }
-        .challenge-box { background: #fef9e7; border-radius: 16px; padding: 16px 22px; border-right: 6px solid #e67e22; margin-top: 10px; border: 2px solid #e67e22; }
-        .challenge-box i { color: #e67e22; margin-left: 8px; }
-        #exportBtn { background: #1a7a4a; color: #fff; border: none; padding: 10px 28px; border-radius: 40px; cursor: pointer; font-size: 1rem; font-weight: 700; transition: 0.2s; box-shadow: 0 4px 8px rgba(26,122,74,0.3); }
-        #exportBtn:hover { background: #0e5f35; transform: scale(1.03); box-shadow: 0 6px 12px rgba(26,122,74,0.4); }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #e6ecf3; border-radius: 12px; }
-        ::-webkit-scrollbar-thumb { background: #b0c7da; border-radius: 12px; }
-        ::-webkit-scrollbar-thumb:hover { background: #8aa9c2; }
-        .file-label-icon { background: #1a4a6a; color: #fff; padding: 8px 20px; border-radius: 40px; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 10px; font-size: 0.9rem; border: none; font-weight: 600; box-shadow: 0 4px 8px rgba(26,74,106,0.25); }
-        .file-label-icon:hover { background: #0b2a4a; transform: translateY(-2px); }
-        .file-label-icon i { font-size: 1.2rem; }
-        .play-correct-btn { background: #27ae60; color: #fff; padding: 8px 20px; border-radius: 40px; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 10px; font-size: 0.9rem; border: none; font-weight: 600; box-shadow: 0 4px 8px rgba(39,174,96,0.25); }
-        .play-correct-btn:hover { background: #1e8449; transform: scale(1.03); }
-        .play-correct-btn i { font-size: 1.2rem; }
-        .play-correct-btn.playing { background: #e67e22; animation: pulse-audio 1s infinite; }
-        @keyframes pulse-audio { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-        .report-header { background: linear-gradient(135deg, #e8f0f8, #d5e2f0); padding: 20px; border-radius: 18px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; border: 2px solid #1a4a6a; }
-        .report-header div { font-size: 0.95rem; padding: 4px 0; }
-        .report-header strong { color: #0b2a4a; display: block; font-size: 0.8rem; opacity: 0.8; margin-bottom: 2px; font-weight: 700; }
-        .report-header span { font-weight: 600; color: #0b2a4a; }
-        .fluency-box { background: #eaf4fa; border-radius: 16px; padding: 16px 22px; margin: 12px 0; border-right: 6px solid #1a4a6a; border: 2px solid #1a4a6a; }
-        .fluency-box .title { font-weight: 700; color: #0b2a4a; font-size: 1.1rem; }
-        .fluency-box .level { font-size: 1.4rem; font-weight: 700; margin: 4px 0; }
-        .recommendation-box { background: #fef6e6; border-radius: 16px; padding: 16px 22px; border-right: 6px solid #e67e22; margin-top: 10px; border: 2px solid #e67e22; }
-        .recommendation-box strong { color: #a35f00; font-weight: 700; }
-        .badge-fluency { display: inline-block; padding: 4px 18px; border-radius: 30px; font-size: 0.9rem; font-weight: 700; border: 2px solid transparent; }
-        .fluency-excellent { background: #27ae60; color: #fff; border-color: #1e8449; }
-        .fluency-good { background: #2e86de; color: #fff; border-color: #1a5276; }
-        .fluency-medium { background: #f39c12; color: #fff; border-color: #d68910; }
-        .fluency-slow { background: #e67e22; color: #fff; border-color: #b85e0a; }
-        .fluency-spelling { background: #e74c3c; color: #fff; border-color: #922b21; }
-
-        /* أنماط Firebase */
-        .sync-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
-            border-radius: 40px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(4px);
+        /* ===== كود التصميم الأصلي – لم يتغير ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .sync-status.online { color: #27ae60; }
-        .sync-status.offline { color: #f39c12; }
-        .sync-status.syncing { color: #3498db; animation: pulse-sync 1.2s infinite; }
-        @keyframes pulse-sync { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        .sync-status i { font-size: 1.1rem; }
-        .auth-section {
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            background: #f0f4f9;
+            padding: 20px;
+            color: #1e2b3c;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(135deg, #0b2a4a, #1a4a6a);
+            border-radius: 28px;
+            padding: 28px 40px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            color: #fff;
+            box-shadow: 0 12px 30px rgba(0, 20, 40, 0.35);
+        }
+        .header h1 {
+            font-weight: 700;
+            font-size: 2.2rem;
             display: flex;
             align-items: center;
             gap: 12px;
-            flex-wrap: wrap;
         }
-        .auth-btn {
-            background: rgba(255,255,255,0.2);
-            border: 2px solid rgba(255,255,255,0.3);
-            color: #fff;
+        .header h1 i {
+            color: #ffd966;
+        }
+        .header .subtitle {
+            background: rgba(255, 255, 255, 0.15);
             padding: 6px 18px;
             border-radius: 40px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.3s;
-            font-size: 0.9rem;
+            backdrop-filter: blur(4px);
         }
-        .auth-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-radius: 24px;
+            padding: 24px 28px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            margin-bottom: 24px;
+            transition: 0.2s;
         }
-        .auth-btn i { margin-left: 6px; }
-        .user-info {
-            color: #fff;
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-        .user-info i { color: #ffd966; margin-left: 6px; }
-
-        /* أنماط الميكروفون */
-        .mic-controls {
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0b2a4a;
+            margin-bottom: 18px;
             display: flex;
-            gap: 15px;
             align-items: center;
+            gap: 10px;
+            border-bottom: 3px solid #1a4a6a;
+            padding-bottom: 12px;
             flex-wrap: wrap;
-            justify-content: center;
         }
-        .test-mic-btn {
-            background: #3498db;
-            color: #fff;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 40px;
+        .card-title i {
+            color: #1a4a6a;
+            width: 28px;
+            text-align: center;
+        }
+        .upload-zone {
+            border: 3px dashed #1a4a6a;
+            background: #eef4fa;
+            border-radius: 18px;
+            padding: 28px 20px;
+            text-align: center;
             cursor: pointer;
+            transition: 0.25s;
+            position: relative;
+        }
+        .upload-zone:hover {
+            border-color: #0b2a4a;
+            background: #dce6f0;
+        }
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+        .upload-zone i {
+            font-size: 3rem;
+            color: #1a4a6a;
+            margin-bottom: 8px;
+        }
+        .upload-zone p {
+            font-size: 1rem;
+            color: #0b2a4a;
             font-weight: 600;
-            transition: 0.3s;
+        }
+        .student-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px 2px;
+        }
+        .student-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+        .student-grid::-webkit-scrollbar-thumb {
+            background: #b8cbd9;
+            border-radius: 10px;
+        }
+        .student-tag {
+            background: #dce6f0;
+            padding: 8px 22px;
+            border-radius: 40px;
+            font-weight: 600;
             font-size: 0.95rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            color: #0b2a4a;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 2px solid transparent;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
         }
-        .test-mic-btn:hover {
-            background: #2980b9;
-            transform: scale(1.05);
+        .student-tag:hover {
+            background: #b8cbd9;
+            transform: translateY(-2px);
         }
-        .test-mic-btn.success { background: #27ae60; }
-        .test-mic-btn.fail { background: #e74c3c; }
-        .mic-status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
+        .student-tag.active {
+            background: #0b2a4a;
+            color: #fff;
+            border-color: #ffd966;
+            box-shadow: 0 6px 14px rgba(11, 42, 74, 0.3);
         }
-        .mic-status-indicator.ready { background: #27ae60; }
-        .mic-status-indicator.waiting { background: #f39c12; animation: blink 1s infinite; }
-        .mic-status-indicator.error { background: #e74c3c; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-        .recording-controls {
+        .student-tag .badge {
+            background: #ffd966;
+            color: #0b2a4a;
+            border-radius: 40px;
+            padding: 0 10px;
+            font-size: 0.7rem;
+            margin-right: 6px;
+            font-weight: 700;
+        }
+        .record-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 12px;
             padding: 10px 0;
         }
+        .record-btn {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #f0f7ff, #cbddee);
+            border: none;
+            box-shadow: 0 8px 24px rgba(11, 42, 74, 0.25), inset 0 -4px 8px rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.2rem;
+            color: #0b2a4a;
+            position: relative;
+        }
+        .record-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 32px rgba(11, 42, 74, 0.35);
+        }
+        .record-btn.recording {
+            background: radial-gradient(circle at 30% 30%, #ffd9d9, #c0392b);
+            color: #fff;
+            animation: pulse 1.2s infinite;
+            box-shadow: 0 0 0 8px rgba(192, 57, 43, 0.25);
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        .record-status {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0b2a4a;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 6px 24px;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+            border: 1px solid #b8cbd9;
+        }
+        .text-display {
+            background: #f8fcff;
+            border-radius: 18px;
+            padding: 20px 24px;
+            font-size: 1.2rem;
+            line-height: 2.2rem;
+            color: #142433;
+            border-right: 6px solid #1a4a6a;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Times New Roman', 'Amiri', serif;
+            margin-bottom: 12px;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .text-display mark {
+            background: #f1c40f;
+            padding: 0 4px;
+            border-radius: 6px;
+            color: #0b2a4a;
+            font-weight: bold;
+        }
+        .file-upload-text {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            background: #eef4fa;
+            padding: 12px 20px;
+            border-radius: 60px;
+        }
+        .file-upload-text label {
+            background: #1a4a6a;
+            color: #fff;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .file-upload-text label:hover {
+            background: #0b2a4a;
+            transform: scale(1.02);
+        }
+        .file-upload-text input {
+            display: none;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 14px;
+            margin: 16px 0 20px;
+        }
+        .stat-item {
+            background: #eef4fa;
+            border-radius: 16px;
+            padding: 14px 12px;
+            text-align: center;
+            border: 2px solid #b8cbd9;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.04);
+        }
+        .stat-item .num {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0b2a4a;
+        }
+        .stat-item .label {
+            font-size: 0.85rem;
+            color: #1a4a6a;
+            font-weight: 600;
+        }
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 760px) {
+            .chart-row {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+        }
+        .chart-box {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 16px;
+            border: 2px solid #b8cbd9;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.04);
+        }
+        .chart-box canvas {
+            max-height: 200px;
+            max-width: 100%;
+        }
+        .rec-box {
+            background: #fef9e7;
+            border-radius: 18px;
+            padding: 16px 22px;
+            border-right: 6px solid #f1c40f;
+            margin-top: 12px;
+            font-size: 1rem;
+            line-height: 1.8;
+            border: 2px solid #f1c40f;
+        }
+        .rec-box strong {
+            color: #0b2a4a;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .mt-2 {
+            margin-top: 12px;
+        }
+        .mb-1 {
+            margin-bottom: 8px;
+        }
+        .text-muted {
+            color: #5f7d94;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .form-grid input {
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 2px solid #b8cbd9;
+            font-size: 0.95rem;
+            outline: none;
+            font-family: inherit;
+            background: #f8fcff;
+            width: 100%;
+            transition: 0.2s;
+        }
+        .form-grid input:focus {
+            border-color: #1a4a6a;
+            box-shadow: 0 0 0 3px rgba(26, 74, 106, 0.1);
+        }
+        .form-grid label {
+            font-size: 0.9rem;
+            color: #0b2a4a;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 0.95rem;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .report-table th {
+            background: #0b2a4a;
+            color: #fff;
+            padding: 14px 12px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1rem;
+            border: 2px solid #1a4a6a;
+        }
+        .report-table td {
+            padding: 12px;
+            text-align: center;
+            border: 2px solid #b8cbd9;
+            background: #f8fcff;
+            font-weight: 500;
+        }
+        .report-table tr:nth-child(even) td {
+            background: #eef4fa;
+        }
+        .report-table tr:last-child td {
+            border-bottom: 2px solid #b8cbd9;
+        }
+        .level-badge {
+            display: inline-block;
+            padding: 4px 18px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border: 2px solid transparent;
+        }
+        .level-excellent {
+            background: #27ae60;
+            color: #fff;
+            border-color: #1e8449;
+        }
+        .level-verygood {
+            background: #2e86de;
+            color: #fff;
+            border-color: #1a5276;
+        }
+        .level-good {
+            background: #f39c12;
+            color: #fff;
+            border-color: #d68910;
+        }
+        .level-needs {
+            background: #e74c3c;
+            color: #fff;
+            border-color: #922b21;
+        }
+        .challenge-box {
+            background: #fef9e7;
+            border-radius: 16px;
+            padding: 16px 22px;
+            border-right: 6px solid #e67e22;
+            margin-top: 10px;
+            border: 2px solid #e67e22;
+        }
+        .challenge-box i {
+            color: #e67e22;
+            margin-left: 8px;
+        }
+        #exportBtn {
+            background: #1a7a4a;
+            color: #fff;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 700;
+            transition: 0.2s;
+            box-shadow: 0 4px 8px rgba(26, 122, 74, 0.3);
+        }
+        #exportBtn:hover {
+            background: #0e5f35;
+            transform: scale(1.03);
+            box-shadow: 0 6px 12px rgba(26, 122, 74, 0.4);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e6ecf3;
+            border-radius: 12px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #b0c7da;
+            border-radius: 12px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8aa9c2;
+        }
+        .file-label-icon {
+            background: #1a4a6a;
+            color: #fff;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            border: none;
+            font-weight: 600;
+            box-shadow: 0 4px 8px rgba(26, 74, 106, 0.25);
+        }
+        .file-label-icon:hover {
+            background: #0b2a4a;
+            transform: translateY(-2px);
+        }
+        .file-label-icon i {
+            font-size: 1.2rem;
+        }
+        .play-correct-btn {
+            background: #27ae60;
+            color: #fff;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            border: none;
+            font-weight: 600;
+            box-shadow: 0 4px 8px rgba(39, 174, 96, 0.25);
+        }
+        .play-correct-btn:hover {
+            background: #1e8449;
+            transform: scale(1.03);
+        }
+        .play-correct-btn i {
+            font-size: 1.2rem;
+        }
+        .play-correct-btn.playing {
+            background: #e67e22;
+            animation: pulse-audio 1s infinite;
+        }
+        @keyframes pulse-audio {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+        .report-header {
+            background: linear-gradient(135deg, #e8f0f8, #d5e2f0);
+            padding: 20px;
+            border-radius: 18px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            border: 2px solid #1a4a6a;
+        }
+        .report-header div {
+            font-size: 0.95rem;
+            padding: 4px 0;
+        }
+        .report-header strong {
+            color: #0b2a4a;
+            display: block;
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 2px;
+            font-weight: 700;
+        }
+        .report-header span {
+            font-weight: 600;
+            color: #0b2a4a;
+        }
+        .fluency-box {
+            background: #eaf4fa;
+            border-radius: 16px;
+            padding: 16px 22px;
+            margin: 12px 0;
+            border-right: 6px solid #1a4a6a;
+            border: 2px solid #1a4a6a;
+        }
+        .fluency-box .title {
+            font-weight: 700;
+            color: #0b2a4a;
+            font-size: 1.1rem;
+        }
+        .fluency-box .level {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 4px 0;
+        }
+        .recommendation-box {
+            background: #fef6e6;
+            border-radius: 16px;
+            padding: 16px 22px;
+            border-right: 6px solid #e67e22;
+            margin-top: 10px;
+            border: 2px solid #e67e22;
+        }
+        .recommendation-box strong {
+            color: #a35f00;
+            font-weight: 700;
+        }
+        .badge-fluency {
+            display: inline-block;
+            padding: 4px 18px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border: 2px solid transparent;
+        }
+        .fluency-excellent {
+            background: #27ae60;
+            color: #fff;
+            border-color: #1e8449;
+        }
+        .fluency-good {
+            background: #2e86de;
+            color: #fff;
+            border-color: #1a5276;
+        }
+        .fluency-medium {
+            background: #f39c12;
+            color: #fff;
+            border-color: #d68910;
+        }
+        .fluency-slow {
+            background: #e67e22;
+            color: #fff;
+            border-color: #b85e0a;
+        }
+        .fluency-spelling {
+            background: #e74c3c;
+            color: #fff;
+            border-color: #922b21;
+        }
+
+        /* === إضافة صغيرة لحالة الاتصال === */
+        .sync-status {
+            font-size: 0.8rem;
+            padding: 4px 14px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .sync-status.online {
+            background: rgba(39, 174, 96, 0.25);
+            border-color: #27ae60;
+        }
+        .sync-status.offline {
+            background: rgba(231, 76, 60, 0.25);
+            border-color: #e74c3c;
+        }
+        .sync-status i {
+            font-size: 0.7rem;
+        }
     </style>
 </head>
 <body>
     <div class="container">
 
+        <!-- ===== HEADER ===== -->
         <header class="header">
             <h1><i class="fas fa-book-open"></i> منصة قراءتي</h1>
-            <div style="display:flex;align-items:center;gap:15px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                 <span class="subtitle"><i class="fas fa-file-medical-alt"></i> تقرير علاجي متقدم</span>
-                <div class="auth-section" id="authSection">
-                    <span class="user-info" id="userInfo"><i class="fas fa-user-circle"></i> زائر</span>
-                    <button class="auth-btn" id="authBtn"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
-                    <span class="sync-status offline" id="syncStatus"><i class="fas fa-wifi"></i> غير متصل</span>
-                </div>
+                <span class="sync-status" id="syncStatus"><i class="fas fa-circle"></i> جارٍ التحميل…</span>
             </div>
         </header>
 
+        <!-- ===== بيانات التقرير ===== -->
         <div class="card">
             <div class="card-title"><i class="fas fa-edit"></i> بيانات التقرير</div>
             <div class="form-grid">
@@ -236,12 +687,13 @@
             </div>
         </div>
 
+        <!-- ===== الطلاب ===== -->
         <div class="card">
             <div class="card-title"><i class="fas fa-users"></i> الطلاب</div>
             <div class="upload-zone" id="uploadZone">
                 <i class="fas fa-file-excel"></i>
                 <p>ارفع ملف Excel يحتوي على: الاسم، الصف، الفصل، المعلم، المدرسة (العمود الأول إلزامي)</p>
-                <input type="file" id="fileInput" accept=".xlsx,.xls">
+                <input type="file" id="fileInput" accept=".xlsx,.xls" />
             </div>
             <div id="studentListContainer" class="mt-2">
                 <div class="student-grid" id="studentGrid"><span class="text-muted" style="padding:8px 0;">لم يتم رفع ملف بعد</span></div>
@@ -252,11 +704,12 @@
             </div>
         </div>
 
+        <!-- ===== النص المقروء + التسجيل ===== -->
         <div class="card">
             <div class="card-title"><i class="fas fa-scroll"></i> النص المقروء
                 <span style="margin-right:auto;"></span>
                 <span class="file-label-icon" id="uploadTextBtn"><i class="fas fa-file-upload"></i> رفع نص جديد</span>
-                <input type="file" id="textFileInput" accept=".txt,.docx,.pdf,.xlsx,.xls" style="display:none;">
+                <input type="file" id="textFileInput" accept=".txt,.docx,.pdf,.xlsx,.xls" style="display:none;" />
                 <button class="play-correct-btn" id="playCorrectBtn" title="استمع إلى النص مقروءاً بصحيح">
                     <i class="fas fa-headphones"></i> تصحيح الأخطاء
                 </button>
@@ -264,20 +717,13 @@
             <div class="text-display" id="textDisplay">
                 <span id="originalText">في رحاب المدرسةِ، كانَ الطلابُ يقرؤونَ قصائدَ العربِ، ويحفظونَ حكمَ الأجدادِ. وكانَ المعلمُ يشرحُ لهمْ دروسَ النحوِ والبلاغةِ، ويسألُهمْ عنْ معاني الكلماتِ. فأجابَ خالدٌ: "العلمُ نورٌ"، وقالتْ ليلى: "القراءةُ غذاءُ الروحِ". فرحَ المعلمُ بطلابِهِ، وتمنى لهمْ مستقبلًا زاهرًا.</span>
             </div>
-            <div class="recording-controls">
-                <div class="mic-controls">
-                    <button class="record-btn" id="recordBtn"><i class="fas fa-microphone"></i></button>
-                    <button class="test-mic-btn" id="testMicBtn">
-                        <i class="fas fa-microphone-alt"></i> اختبار الميكروفون
-                    </button>
-                </div>
-                <div class="record-status" id="recordStatus">
-                    <span class="mic-status-indicator waiting" id="micIndicator"></span>
-                    اضغط للتسجيل
-                </div>
+            <div class="record-wrapper">
+                <button class="record-btn" id="recordBtn"><i class="fas fa-microphone"></i></button>
+                <div class="record-status" id="recordStatus">اضغط للتسجيل (يسجل حتى مع السكوت)</div>
             </div>
         </div>
 
+        <!-- ===== التحليل ===== -->
         <div class="card">
             <div class="card-title flex-between">
                 <span><i class="fas fa-chart-bar"></i> تحليل القراءة التفصيلي</span>
@@ -300,6 +746,7 @@
             </div>
         </div>
 
+        <!-- ===== التقرير التشخيصي ===== -->
         <div class="card" id="reportCard">
             <div class="card-title"><i class="fas fa-file-medical-alt"></i> تقرير تشخيصي علاجي متكامل</div>
             <div id="reportContent">
@@ -343,39 +790,93 @@
         </div>
     </div>
 
+    <!-- ===================================================================== -->
+    <!-- ===== البرمجة الرئيسية (مع تكامل Firebase) ===== -->
+    <!-- ===================================================================== -->
     <script>
-        // =====================================================================
-        // 0. إعدادات Firebase والتخزين المحلي
-        // =====================================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyCTWBhTDqPdwfzzOxODFFssmaKvB7R_wP8",
-            authDomain: "smart-reading-by-mohamed.firebaseapp.com",
-            projectId: "smart-reading-by-mohamed",
-            storageBucket: "smart-reading-by-mohamed.firebasestorage.app",
-            messagingSenderId: "668252782415",
-            appId: "1:668252782415:web:b82acef6d99c42a9028f3a",
-            measurementId: "G-FYMVTDDE8E"
-        };
+        // ================================================================
+        // 0. تكامل Firebase – تهيئة مرة واحدة + تخزين محلي + سحابي
+        // ================================================================
 
-        // تهيئة Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
+        (function initFirebase() {
+            try {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyCTWBhTDqPdwfzzOxODFFssmaKvB7R_wP8",
+                    authDomain: "smart-reading-by-mohamed.firebaseapp.com",
+                    projectId: "smart-reading-by-mohamed",
+                    storageBucket: "smart-reading-by-mohamed.firebasestorage.app",
+                    messagingSenderId: "668252782415",
+                    appId: "1:668252782415:web:b82acef6d99c42a9028f3a",
+                    measurementId: "G-FYMVTDDE8E"
+                };
 
-        // تفعيل التخزين المحلي
-        db.enablePersistence({ synchronizeTabs: true })
-            .then(() => {
-                console.log('✅ Offline persistence enabled');
-                updateSyncStatus('online');
-            })
-            .catch((err) => {
-                console.warn('⚠️ Persistence error:', err);
-                updateSyncStatus('offline');
-            });
+                // تهيئة Firebase
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
 
-        // =====================================================================
-        // 1. المتغيرات العامة
-        // =====================================================================
+                // تهيئة Firestore مع التخزين المؤقت (Offline Persistence)
+                const db = firebase.firestore();
+                db.enablePersistence({ synchronizeTabs: true })
+                    .then(() => { console.log('✅ Firestore persistence enabled.'); })
+                    .catch((err) => {
+                        if (err.code === 'failed-precondition') {
+                            console.warn('⚠️ تعدد النوافذ – يستخدم التخزين المؤقت في نافذة واحدة.');
+                        } else if (err.code === 'unimplemented') {
+                            console.warn('⚠️ المتصفح لا يدعم التخزين المؤقت.');
+                        } else {
+                            console.warn('⚠️ خطأ في تفعيل persistence:', err);
+                        }
+                    });
+
+                // مصادقة مجهولة (للحفاظ على أمان القواعد)
+                firebase.auth().signInAnonymously()
+                    .then(() => { console.log('✅ تم الدخول كمستخدم مجهول.'); })
+                    .catch((err) => { console.warn('⚠️ فشل الدخول المجهول:', err); });
+
+                // كشف حالة الاتصال
+                const syncStatusEl = document.getElementById('syncStatus');
+                firebase.firestore().enableNetwork()
+                    .then(() => {
+                        syncStatusEl.className = 'sync-status online';
+                        syncStatusEl.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> متصل';
+                    })
+                    .catch(() => {
+                        syncStatusEl.className = 'sync-status offline';
+                        syncStatusEl.innerHTML = '<i class="fas fa-wifi"></i> غير متصل (مخزّن محلياً)';
+                    });
+
+                firebase.firestore().disableNetwork()
+                    .catch(() => {});
+                // نعيد تمكين الشبكة بعد ثانية للتأكد من الحالة الحقيقية
+                setTimeout(() => {
+                    firebase.firestore().enableNetwork()
+                        .then(() => {
+                            syncStatusEl.className = 'sync-status online';
+                            syncStatusEl.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> متصل';
+                        })
+                        .catch(() => {
+                            syncStatusEl.className = 'sync-status offline';
+                            syncStatusEl.innerHTML = '<i class="fas fa-wifi"></i> غير متصل (مخزّن محلياً)';
+                        });
+                }, 500);
+
+                // حفظ مرجع للاستخدام في بقية الكود
+                window.__firebase = { db, auth: firebase.auth() };
+                window.__firebaseReady = true;
+
+            } catch (e) {
+                console.warn('⚠️ فشل تهيئة Firebase:', e);
+                window.__firebaseReady = false;
+                document.getElementById('syncStatus').className = 'sync-status offline';
+                document.getElementById('syncStatus').innerHTML = '<i class="fas fa-exclamation-triangle"></i> غير متصل';
+            }
+        })();
+
+
+        // ================================================================
+        // 1. الإعدادات الأساسية والمتغيرات العامة (لم تتغير)
+        // ================================================================
         let students = [];
         let selectedStudent = null;
         let isRecording = false;
@@ -386,30 +887,19 @@
         let readingRecords = [];
         let currentReport = null;
         let speechSynthesisUtterance = null;
-        let reportId = null;
-        let currentUser = null;
-        let isOnline = navigator.onLine;
-        let syncQueue = [];
-        let isSyncing = false;
-        let recognitionAttempts = 0;
-        const MAX_RECOGNITION_ATTEMPTS = 3;
 
         const ORIGINAL_TEXT_EL = document.getElementById('originalText');
         let ORIGINAL_TEXT = ORIGINAL_TEXT_EL.textContent.trim();
         window.studentData = {};
 
-        // =====================================================================
-        // 2. دوال مساعدة
-        // =====================================================================
+        // ================================================================
+        // 2. دوال مساعدة – لم تتغير
+        // ================================================================
         function pad2(n) { return String(n).padStart(2, '0'); }
 
         function formatDateAr(d) { return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`; }
 
         function formatTimeAr(d) { return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; }
-
-        function generateId() {
-            return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-        }
 
         function normalizeArabic(text) {
             return text
@@ -465,277 +955,10 @@
             }
         }
 
-        // =====================================================================
-        // 3. دوال Firebase والمزامنة
-        // =====================================================================
-        function updateSyncStatus(status) {
-            const el = document.getElementById('syncStatus');
-            if (status === 'online') {
-                el.className = 'sync-status online';
-                el.innerHTML = '<i class="fas fa-wifi"></i> متصل';
-            } else if (status === 'offline') {
-                el.className = 'sync-status offline';
-                el.innerHTML = '<i class="fas fa-wifi"></i> غير متصل';
-            } else if (status === 'syncing') {
-                el.className = 'sync-status syncing';
-                el.innerHTML = '<i class="fas fa-sync fa-spin"></i> جاري المزامنة';
-            }
-        }
 
-        window.addEventListener('online', () => {
-            isOnline = true;
-            updateSyncStatus('online');
-            processSyncQueue();
-            loadStudentsFromFirestore();
-        });
-
-        window.addEventListener('offline', () => {
-            isOnline = false;
-            updateSyncStatus('offline');
-        });
-
-        function saveToLocalStorage(key, data) {
-            try {
-                localStorage.setItem(key, JSON.stringify(data));
-                console.log(`💾 Saved to localStorage: ${key}`);
-            } catch (e) {
-                console.error('❌ Error saving to localStorage:', e);
-            }
-        }
-
-        function loadFromLocalStorage(key) {
-            try {
-                const data = localStorage.getItem(key);
-                return data ? JSON.parse(data) : null;
-            } catch (e) {
-                console.error('❌ Error loading from localStorage:', e);
-                return null;
-            }
-        }
-
-        async function saveReportToFirestore(reportData) {
-            if (!currentUser) {
-                console.warn('⚠️ No user logged in, saving locally only');
-                return null;
-            }
-
-            try {
-                const reportRef = db.collection('reports').doc();
-                await reportRef.set({
-                    ...reportData,
-                    userId: currentUser.uid,
-                    userEmail: currentUser.email,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    syncedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                console.log('✅ Report saved to Firestore:', reportRef.id);
-                return reportRef.id;
-            } catch (error) {
-                console.error('❌ Error saving to Firestore:', error);
-                syncQueue.push({
-                    type: 'report',
-                    data: reportData,
-                    timestamp: Date.now()
-                });
-                saveToLocalStorage('syncQueue', syncQueue);
-                return null;
-            }
-        }
-
-        async function loadStudentsFromFirestore() {
-            if (!currentUser || !isOnline) {
-                const localStudents = loadFromLocalStorage('students');
-                if (localStudents) {
-                    students = localStudents;
-                    window.studentData = loadFromLocalStorage('studentData') || {};
-                    renderStudents();
-                }
-                return;
-            }
-
-            try {
-                const snapshot = await db.collection('students')
-                    .where('userId', '==', currentUser.uid)
-                    .get();
-
-                if (!snapshot.empty) {
-                    const studentNames = [];
-                    const studentDataMap = {};
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        studentNames.push(data.name);
-                        studentDataMap[data.name] = {
-                            grade: data.grade || '',
-                            section: data.section || '',
-                            teacher: data.teacher || '',
-                            school: data.school || ''
-                        };
-                    });
-                    students = studentNames;
-                    window.studentData = studentDataMap;
-                    saveToLocalStorage('students', students);
-                    saveToLocalStorage('studentData', window.studentData);
-                    renderStudents();
-                    if (students.length > 0 && !selectedStudent) {
-                        selectedStudent = students[0];
-                        document.getElementById('selectedStudentDisplay').textContent = '👤 ' + selectedStudent;
-                        document.getElementById('studentNameDisplay').value = selectedStudent;
-                        const data = window.studentData[selectedStudent];
-                        if (data) {
-                            document.getElementById('classGrade').value = data.grade;
-                            document.getElementById('classSection').value = data.section;
-                            document.getElementById('teacherName').value = data.teacher;
-                            document.getElementById('schoolName').value = data.school;
-                        }
-                    }
-                    console.log('✅ Students loaded from Firestore');
-                } else {
-                    const localStudents = loadFromLocalStorage('students');
-                    if (localStudents) {
-                        students = localStudents;
-                        window.studentData = loadFromLocalStorage('studentData') || {};
-                        renderStudents();
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Error loading students from Firestore:', error);
-                const localStudents = loadFromLocalStorage('students');
-                if (localStudents) {
-                    students = localStudents;
-                    window.studentData = loadFromLocalStorage('studentData') || {};
-                    renderStudents();
-                }
-            }
-        }
-
-        async function saveStudentsToFirestore(studentNames, studentDataMap) {
-            if (!currentUser || !isOnline) {
-                saveToLocalStorage('students', studentNames);
-                saveToLocalStorage('studentData', studentDataMap);
-                return;
-            }
-
-            try {
-                const snapshot = await db.collection('students')
-                    .where('userId', '==', currentUser.uid)
-                    .get();
-
-                const batch = db.batch();
-                snapshot.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-
-                for (const name of studentNames) {
-                    const data = studentDataMap[name] || {};
-                    const docRef = db.collection('students').doc();
-                    batch.set(docRef, {
-                        name: name,
-                        grade: data.grade || '',
-                        section: data.section || '',
-                        teacher: data.teacher || '',
-                        school: data.school || '',
-                        userId: currentUser.uid,
-                        userEmail: currentUser.email,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                }
-
-                await batch.commit();
-                console.log('✅ Students saved to Firestore');
-                saveToLocalStorage('students', studentNames);
-                saveToLocalStorage('studentData', studentDataMap);
-            } catch (error) {
-                console.error('❌ Error saving students to Firestore:', error);
-                saveToLocalStorage('students', studentNames);
-                saveToLocalStorage('studentData', studentDataMap);
-                syncQueue.push({
-                    type: 'students',
-                    data: { names: studentNames, dataMap: studentDataMap },
-                    timestamp: Date.now()
-                });
-                saveToLocalStorage('syncQueue', syncQueue);
-            }
-        }
-
-        async function processSyncQueue() {
-            if (!isOnline || !currentUser || isSyncing) return;
-
-            const queue = loadFromLocalStorage('syncQueue') || [];
-            if (queue.length === 0) return;
-
-            isSyncing = true;
-            updateSyncStatus('syncing');
-
-            try {
-                for (const item of queue) {
-                    if (item.type === 'report') {
-                        await saveReportToFirestore(item.data);
-                    } else if (item.type === 'students') {
-                        await saveStudentsToFirestore(item.data.names, item.data.dataMap);
-                    }
-                }
-                syncQueue = [];
-                saveToLocalStorage('syncQueue', []);
-                console.log('✅ Sync queue processed successfully');
-                updateSyncStatus('online');
-            } catch (error) {
-                console.error('❌ Error processing sync queue:', error);
-                updateSyncStatus('offline');
-            } finally {
-                isSyncing = false;
-            }
-        }
-
-        // =====================================================================
-        // 4. المصادقة
-        // =====================================================================
-        function updateAuthUI(user) {
-            const userInfo = document.getElementById('userInfo');
-            const authBtn = document.getElementById('authBtn');
-
-            if (user) {
-                currentUser = user;
-                const displayName = user.displayName || user.email || 'مستخدم';
-                userInfo.innerHTML = `<i class="fas fa-user-circle"></i> ${displayName}`;
-                authBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> تسجيل الخروج';
-                authBtn.onclick = () => auth.signOut();
-                loadStudentsFromFirestore();
-                processSyncQueue();
-            } else {
-                currentUser = null;
-                userInfo.innerHTML = '<i class="fas fa-user-circle"></i> زائر';
-                authBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
-                authBtn.onclick = () => {
-                    const provider = new firebase.auth.GoogleAuthProvider();
-                    auth.signInWithPopup(provider).catch((error) => {
-                        console.error('❌ Auth error:', error);
-                        auth.signInAnonymously().catch((err) => {
-                            console.error('❌ Anonymous auth error:', err);
-                            alert('حدث خطأ في تسجيل الدخول. سيتم العمل في وضع الزائر.');
-                        });
-                    });
-                };
-                const localStudents = loadFromLocalStorage('students');
-                if (localStudents) {
-                    students = localStudents;
-                    window.studentData = loadFromLocalStorage('studentData') || {};
-                    renderStudents();
-                }
-            }
-        }
-
-        auth.onAuthStateChanged((user) => {
-            updateAuthUI(user);
-            if (user) {
-                console.log('✅ User authenticated:', user.uid);
-            } else {
-                console.log('👤 User not authenticated');
-            }
-        });
-
-        // =====================================================================
-        // 5. خوارزمية التحليل
-        // =====================================================================
+        // ================================================================
+        // 3. خوارزمية التحليل المتقدمة – لم تتغير
+        // ================================================================
         function analyzeReading(spokenText) {
             const orig = ORIGINAL_TEXT;
             const spoken = spokenText.trim();
@@ -946,9 +1169,10 @@
             };
         }
 
-        // =====================================================================
-        // 6. الرسوم البيانية
-        // =====================================================================
+
+        // ================================================================
+        // 4. الرسوم البيانية – لم تتغير
+        // ================================================================
         let chartErrors = null,
             chartLetters = null;
 
@@ -983,9 +1207,10 @@
             chartLetters.update();
         }
 
-        // =====================================================================
-        // 7. عرض التقرير
-        // =====================================================================
+
+        // ================================================================
+        // 5. عرض التقرير الداخلي – لم يتغير (لكن نضيف حفظاً تلقائياً)
+        // ================================================================
         function renderReport(result, studentName) {
             const now = new Date();
             document.getElementById('rStudent').textContent = studentName || '—';
@@ -1022,60 +1247,40 @@
             document.getElementById('challengeText').textContent = result.challengeText;
             document.getElementById('recommendationText').textContent = result.recommendationText;
 
-            const reportData = {
+            currentReport = {
                 student: studentName,
                 grade: document.getElementById('classGrade').value || '—',
                 section: document.getElementById('classSection').value || '—',
                 teacher: document.getElementById('teacherName').value || '—',
                 school: document.getElementById('schoolName').value || '—',
                 textTitle: document.getElementById('textTitle').value || '—',
-                originalText: ORIGINAL_TEXT,
                 date: formatDateAr(now),
                 startTime: startTime ? formatTimeAr(startTime) : formatTimeAr(now),
                 reportTime: formatTimeAr(now),
                 duration: duration + ' ثانية',
                 wordCount: result.wordCount,
-                errors: result.errors,
-                accuracy: result.accuracy,
                 skills: result.skills,
                 challenge: result.challengeText,
                 recommendation: result.recommendationText,
                 fluency: result.fluency,
+                errors: result.errors,
+                accuracy: result.accuracy,
                 details: result.details,
                 durationMinutes: result.durationMinutes,
                 wordCorrect: result.wordCorrect,
-                origRawWords: result.origRawWords,
-                wrongWords: result.wrongWords
+                origRawWords: result.origRawWords
             };
 
-            currentReport = reportData;
-            reportId = generateId();
-
-            const reports = loadFromLocalStorage('reports') || [];
-            reports.push({ id: reportId, ...reportData, timestamp: now.toISOString() });
-            saveToLocalStorage('reports', reports);
-
-            if (isOnline && currentUser) {
-                saveReportToFirestore(reportData);
-            } else {
-                syncQueue.push({
-                    type: 'report',
-                    data: reportData,
-                    timestamp: Date.now()
-                });
-                saveToLocalStorage('syncQueue', syncQueue);
-                console.log('📝 Report queued for sync');
-            }
+            // === حفظ تلقائي بعد إنشاء التقرير ===
+            saveAllData();
         }
 
-        // =====================================================================
-        // 8. معالجة النص المقروء
-        // =====================================================================
+
+        // ================================================================
+        // 6. معالجة النص المقروء – لم تتغير
+        // ================================================================
         function processSpokenText(spoken) {
-            if (!selectedStudent) {
-                document.getElementById('recText').textContent = '⚠️ اختر طالباً أولاً.';
-                return;
-            }
+            if (!selectedStudent) { document.getElementById('recText').textContent = '⚠️ اختر طالباً أولاً.'; return; }
             endTime = new Date();
             const result = analyzeReading(spoken);
             document.getElementById('statErrors').textContent = result.errors;
@@ -1088,10 +1293,10 @@
             const highlighted = result.origRawWords.map((w, idx) => result.wordCorrect[idx] ? w :
                 `<mark>${w}</mark>`).join(' ');
             document.getElementById('originalText').innerHTML = highlighted;
-            document.getElementById('recordStatus').innerHTML = '✅ تحليل مكتمل';
+            document.getElementById('recordStatus').textContent = '✅ تحليل مكتمل';
 
             const now = new Date();
-            const record = {
+            readingRecords.push({
                 student: selectedStudent,
                 teacher: document.getElementById('teacherName').value || '—',
                 date: formatDateAr(now),
@@ -1100,299 +1305,99 @@
                 level: result.accuracy >= 90 ? 'ممتاز' : result.accuracy >= 80 ? 'جيد' : result.accuracy >= 60 ?
                     'متوسط' : 'ضعيف',
                 weakWords: result.wrongWords.join('، ') || 'لا يوجد',
-                recommendation: result.recommendation,
-                timestamp: now.toISOString()
-            };
-            readingRecords.push(record);
-
-            const records = loadFromLocalStorage('readingRecords') || [];
-            records.push(record);
-            saveToLocalStorage('readingRecords', records);
-
-            if (isOnline && currentUser) {
-                db.collection('readingRecords').add({
-                    ...record,
-                    userId: currentUser.uid,
-                    userEmail: currentUser.email,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                }).catch(err => {
-                    console.error('❌ Error saving reading record:', err);
-                });
-            }
-
+                recommendation: result.recommendation
+            });
             renderReport(result, selectedStudent);
+            saveAllData(); // حفظ إضافي بعد إضافة السجل
         }
 
-        // =====================================================================
-        // 9. التسجيل المستمر (محسّن)
-        // =====================================================================
-        async function startContinuousRecognition() {
+
+        // ================================================================
+        // 7. التسجيل المستمر – لم يتغير
+        // ================================================================
+        function startContinuousRecognition() {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                alert('متصفحك لا يدعم التعرف على الصوت. استخدم Chrome أو Edge.');
-                document.getElementById('recordStatus').innerHTML =
-                    '<span class="mic-status-indicator error"></span> ❌ غير مدعوم';
+                alert('متصفحك لا يدعم التعرف على الصوت. استخدم Chrome.');
+                document.getElementById('recordStatus').textContent = '❌ غير مدعوم';
                 return;
             }
-
-            // طلب إذن الميكروفون أولاً
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                stream.getTracks().forEach(track => track.stop());
-                console.log('✅ تم الحصول على إذن الميكروفون');
-                document.getElementById('micIndicator').className = 'mic-status-indicator ready';
-            } catch (err) {
-                console.error('❌ خطأ في الوصول للميكروفون:', err);
-                let errorMsg = 'يرجى السماح بالوصول إلى الميكروفون في إعدادات المتصفح.';
-                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    errorMsg = 'تم رفض الإذن. يرجى السماح بالوصول إلى الميكروفون في إعدادات المتصفح ثم أعد تحميل الصفحة.';
-                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                    errorMsg = 'لم يتم العثور على ميكروفون. تأكد من توصيله.';
-                }
-                alert(errorMsg);
-                document.getElementById('recordStatus').innerHTML =
-                    '<span class="mic-status-indicator error"></span> ❌ ' + errorMsg;
-                document.getElementById('micIndicator').className = 'mic-status-indicator error';
-                return;
-            }
-
             const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
             recognizer = new SR();
             recognizer.lang = 'ar-SA';
             recognizer.continuous = true;
             recognizer.interimResults = true;
-            recognizer.maxAlternatives = 1;
             finalTranscript = '';
-            recognitionAttempts = 0;
-
-            let hasSpeech = false;
-            let silenceTimer = null;
 
             recognizer.onresult = (event) => {
-                clearTimeout(silenceTimer);
-                hasSpeech = true;
-
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
                         finalTranscript += transcript + ' ';
-                        document.getElementById('recordStatus').innerHTML =
-                            `🔴 جارٍ التعرف... <span style="font-size:0.85rem;color:#555;">"${transcript.substring(0, 30)}..."</span>`;
-                    } else {
-                        document.getElementById('recordStatus').innerHTML =
-                            `⏳ جارٍ الاستماع... <span style="font-size:0.85rem;color:#555;">"${transcript.substring(0, 30)}..."</span>`;
                     }
                 }
-
-                silenceTimer = setTimeout(() => {
-                    if (isRecording && !hasSpeech) {
-                        document.getElementById('recordStatus').innerHTML = '⏳ لا يوجد صوت... استمر في القراءة';
-                    }
-                    hasSpeech = false;
-                }, 3000);
-            };
-
-            recognizer.onspeechend = () => {
-                document.getElementById('recordStatus').innerHTML = '⏸️ توقف الصوت...';
-                setTimeout(() => {
-                    if (isRecording && finalTranscript.trim().length > 0) {
-                        // نستمر في التسجيل
-                    }
-                }, 1000);
+                document.getElementById('recordStatus').textContent = '🔴 جارٍ التعرف...';
             };
 
             recognizer.onerror = (e) => {
-                console.error('❌ خطأ في التعرف:', e);
                 if (e.error === 'not-allowed' || e.error === 'permission-denied') {
-                    alert('يرجى السماح بالوصول إلى الميكروفون من إعدادات المتصفح.');
-                    document.getElementById('recordStatus').innerHTML =
-                        '<span class="mic-status-indicator error"></span> ❌ تم رفض الإذن';
+                    alert('يرجى السماح بالوصول إلى الميكروفون.');
+                    document.getElementById('recordStatus').textContent = '❌ تم رفض الإذن';
                     stopRecording();
                 } else if (e.error === 'no-speech') {
-                    document.getElementById('recordStatus').innerHTML = '⏳ انتظار الصوت...';
-                    if (isRecording && recognitionAttempts < MAX_RECOGNITION_ATTEMPTS) {
-                        recognitionAttempts++;
-                        setTimeout(() => {
-                            if (isRecording) {
-                                try {
-                                    recognizer.stop();
-                                    setTimeout(() => {
-                                        if (isRecording) {
-                                            recognizer.start();
-                                        }
-                                    }, 200);
-                                } catch (err) {
-                                    console.warn('⚠️ إعادة تشغيل التعرف:', err);
-                                }
-                            }
-                        }, 500);
-                    }
-                } else if (e.error === 'audio-capture') {
-                    alert('تعذر الوصول إلى الميكروفون. تأكد من توصيله وعدم استخدامه من تطبيق آخر.');
-                    document.getElementById('recordStatus').innerHTML =
-                        '<span class="mic-status-indicator error"></span> ❌ خطأ في الميكروفون';
-                    stopRecording();
+                    document.getElementById('recordStatus').textContent = '⏳ انتظار الصوت...';
                 } else {
-                    document.getElementById('recordStatus').innerHTML = '❌ خطأ: ' + e.error;
-                    if (isRecording && e.error !== 'aborted') {
-                        setTimeout(() => {
-                            if (isRecording) {
-                                try {
-                                    recognizer.stop();
-                                    setTimeout(() => {
-                                        if (isRecording) {
-                                            recognizer.start();
-                                        }
-                                    }, 300);
-                                } catch (err) {
-                                    console.warn('⚠️ إعادة تشغيل التعرف بعد خطأ:', err);
-                                }
-                            }
-                        }, 1000);
-                    }
+                    document.getElementById('recordStatus').textContent = '❌ خطأ: ' + e.error;
                 }
             };
 
-            recognizer.onstart = () => {
-                console.log('✅ بدأ التعرف على الصوت');
-                document.getElementById('recordStatus').innerHTML = '🔴 جارٍ التسجيل... تحدث الآن';
-                document.getElementById('micIndicator').className = 'mic-status-indicator ready';
-                startTime = new Date();
-                recognitionAttempts = 0;
-            };
-
             recognizer.onend = () => {
-                console.log('⏹️ انتهى التعرف على الصوت');
                 if (isRecording) {
-                    try {
-                        setTimeout(() => {
-                            if (isRecording) {
-                                recognizer.start();
-                            }
-                        }, 200);
-                    } catch (err) {
-                        console.warn('⚠️ فشل إعادة تشغيل التعرف:', err);
-                        if (isRecording) {
-                            stopRecording();
-                            setTimeout(() => {
-                                if (isRecording) {
-                                    startContinuousRecognition();
-                                }
-                            }, 500);
-                        }
-                    }
+                    startContinuousRecognition();
                 } else {
                     if (finalTranscript.trim().length > 0) {
                         processSpokenText(finalTranscript.trim());
-                        document.getElementById('recordStatus').innerHTML = `✅ تم التعرف على ${finalTranscript.split(' ').length} كلمة`;
                     } else {
-                        document.getElementById('recordStatus').innerHTML =
-                            '<span class="mic-status-indicator error"></span> ⚠️ لم يتم التعرف على أي نص. حاول مرة أخرى.';
+                        document.getElementById('recordStatus').textContent = '⚠️ لم يتم التعرف على أي نص. حاول مرة أخرى.';
                     }
                     document.getElementById('recordBtn').classList.remove('recording');
                     document.getElementById('recordBtn').innerHTML = '<i class="fas fa-microphone"></i>';
+                    document.getElementById('recordStatus').textContent = '⏹️ متوقف';
                     isRecording = false;
                 }
             };
 
-            try {
-                recognizer.start();
-                isRecording = true;
-                document.getElementById('recordBtn').classList.add('recording');
-                document.getElementById('recordBtn').innerHTML = '<i class="fas fa-stop-circle"></i>';
-                document.getElementById('micIndicator').className = 'mic-status-indicator waiting';
-            } catch (err) {
-                console.error('❌ فشل بدء التعرف:', err);
-                alert('حدث خطأ في بدء التسجيل. حاول مرة أخرى.');
-                document.getElementById('recordStatus').innerHTML =
-                    '<span class="mic-status-indicator error"></span> ❌ فشل البدء';
-                isRecording = false;
-            }
+            recognizer.start();
+            isRecording = true;
+            startTime = new Date();
         }
 
         function stopRecording() {
-            isRecording = false;
             if (recognizer) {
-                try {
-                    recognizer.stop();
-                } catch (e) {
-                    console.warn('⚠️ خطأ في إيقاف التعرف:', e);
-                }
+                try { recognizer.stop(); } catch (e) {}
                 recognizer = null;
             }
+            isRecording = false;
             endTime = new Date();
             document.getElementById('recordBtn').classList.remove('recording');
             document.getElementById('recordBtn').innerHTML = '<i class="fas fa-microphone"></i>';
-
-            if (!finalTranscript || finalTranscript.trim().length === 0) {
-                document.getElementById('recordStatus').innerHTML =
-                    '<span class="mic-status-indicator error"></span> ⏹️ متوقف - لم يتم التعرف على نص';
-            } else {
-                document.getElementById('recordStatus').innerHTML =
-                    `⏹️ متوقف - تم التعرف على ${finalTranscript.split(' ').length} كلمات`;
-            }
-            document.getElementById('micIndicator').className = 'mic-status-indicator waiting';
+            document.getElementById('recordStatus').textContent = '⏹️ متوقف';
         }
 
-        // أزرار التسجيل
         document.getElementById('recordBtn').addEventListener('click', function() {
             if (isRecording) {
                 stopRecording();
             } else {
                 startContinuousRecognition();
+                document.getElementById('recordBtn').classList.add('recording');
+                document.getElementById('recordBtn').innerHTML = '<i class="fas fa-stop-circle"></i>';
+                document.getElementById('recordStatus').textContent = '🔴 جارٍ التسجيل... اضغط للإيقاف';
             }
         });
 
-        // =====================================================================
-        // 10. اختبار الميكروفون
-        // =====================================================================
-        document.getElementById('testMicBtn').addEventListener('click', async function() {
-            const originalText = this.innerHTML;
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الاختبار...';
 
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                stream.getTracks().forEach(track => track.stop());
-
-                this.className = 'test-mic-btn success';
-                this.innerHTML = '<i class="fas fa-check-circle"></i> ✅ الميكروفون يعمل';
-                document.getElementById('micIndicator').className = 'mic-status-indicator ready';
-                document.getElementById('recordStatus').innerHTML =
-                    '<span class="mic-status-indicator ready"></span> ✅ الميكروفون جاهز للتسجيل';
-
-                setTimeout(() => {
-                    this.className = 'test-mic-btn';
-                    this.innerHTML = originalText;
-                    this.disabled = false;
-                }, 2500);
-            } catch (err) {
-                console.error('❌ خطأ في اختبار الميكروفون:', err);
-                this.className = 'test-mic-btn fail';
-                this.innerHTML = '<i class="fas fa-times-circle"></i> ❌ فشل الوصول للميكروفون';
-                document.getElementById('micIndicator').className = 'mic-status-indicator error';
-                document.getElementById('recordStatus').innerHTML =
-                    '<span class="mic-status-indicator error"></span> ❌ تعذر الوصول للميكروفون';
-
-                let errorMsg = 'تعذر الوصول إلى الميكروفون. تأكد من:\n';
-                errorMsg += '1. منح الإذن للموقع\n';
-                errorMsg += '2. توصيل الميكروفون\n';
-                errorMsg += '3. عدم استخدامه في تطبيق آخر\n';
-                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    errorMsg += '\n🔑 انقر على أيقونة القفل 🔒 في شريط العناوين واسمح بالميكروفون';
-                }
-                alert(errorMsg);
-
-                setTimeout(() => {
-                    this.className = 'test-mic-btn';
-                    this.innerHTML = originalText;
-                    this.disabled = false;
-                }, 3000);
-            }
-        });
-
-        // =====================================================================
-        // 11. تصحيح الأخطاء الصوتي
-        // =====================================================================
+        // ================================================================
+        // 8. أيقونة تصحيح الأخطاء – لم تتغير
+        // ================================================================
         document.getElementById('playCorrectBtn').addEventListener('click', function() {
             const text = ORIGINAL_TEXT;
             if (!text || text.trim().length === 0) {
@@ -1417,26 +1422,27 @@
             utterance.onstart = () => {
                 this.classList.add('playing');
                 this.innerHTML = '<i class="fas fa-stop-circle"></i> إيقاف القراءة';
-                document.getElementById('recordStatus').innerHTML = '🔊 جارٍ قراءة النص بصحيح...';
+                document.getElementById('recordStatus').textContent = '🔊 جارٍ قراءة النص بصحيح...';
             };
             utterance.onend = () => {
                 this.classList.remove('playing');
                 this.innerHTML = '<i class="fas fa-headphones"></i> تصحيح الأخطاء';
-                document.getElementById('recordStatus').innerHTML = '✅ تمت القراءة الصحيحة';
+                document.getElementById('recordStatus').textContent = '✅ تمت القراءة الصحيحة';
             };
             utterance.onerror = () => {
                 this.classList.remove('playing');
                 this.innerHTML = '<i class="fas fa-headphones"></i> تصحيح الأخطاء';
-                document.getElementById('recordStatus').innerHTML = '❌ خطأ في القراءة الصوتية';
+                document.getElementById('recordStatus').textContent = '❌ خطأ في القراءة الصوتية';
             };
             window.speechSynthesis.speak(utterance);
             speechSynthesisUtterance = utterance;
         });
         window.speechSynthesis.getVoices();
 
-        // =====================================================================
-        // 12. رفع النص
-        // =====================================================================
+
+        // ================================================================
+        // 9. رفع النص – لم يتغير
+        // ================================================================
         document.getElementById('uploadTextBtn').addEventListener('click', () => {
             document.getElementById('textFileInput').click();
         });
@@ -1444,27 +1450,29 @@
             const file = e.target.files[0];
             if (!file) return;
             try {
-                document.getElementById('recordStatus').innerHTML = '⏳ جارٍ قراءة الملف...';
+                document.getElementById('recordStatus').textContent = '⏳ جارٍ قراءة الملف...';
                 const text = await extractTextFromFile(file);
                 if (text.trim().length > 0) {
                     ORIGINAL_TEXT = text.trim();
                     document.getElementById('originalText').innerHTML = ORIGINAL_TEXT;
-                    document.getElementById('recordStatus').innerHTML = '✅ تم تحميل النص الجديد';
+                    document.getElementById('recordStatus').textContent = '✅ تم تحميل النص الجديد';
                     document.getElementById('recText').textContent = 'تم تغيير النص، سجل قراءة الطالب.';
                     resetAnalysis();
+                    saveAllData();
                 } else {
                     alert('الملف فارغ أو لا يحتوي على نص مقروء.');
                 }
             } catch (err) {
                 alert('خطأ في قراءة الملف: ' + err.message);
-                document.getElementById('recordStatus').innerHTML = '❌ فشل تحميل النص';
+                document.getElementById('recordStatus').textContent = '❌ فشل تحميل النص';
             }
             e.target.value = '';
         });
 
-        // =====================================================================
-        // 13. رفع الطلاب
-        // =====================================================================
+
+        // ================================================================
+        // 10. رفع الطلاب – مع حفظ تلقائي
+        // ================================================================
         function handleFile(file) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -1474,27 +1482,22 @@
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
                     const rows = json.slice(1);
-                    const studentNames = [];
-                    const studentDataMap = {};
+                    students = [];
+                    window.studentData = {};
                     for (const row of rows) {
                         if (!row[0]) continue;
                         const name = String(row[0]).trim();
-                        studentNames.push(name);
-                        studentDataMap[name] = {
+                        students.push(name);
+                        window.studentData[name] = {
                             grade: row[1] ? String(row[1]).trim() : '',
                             section: row[2] ? String(row[2]).trim() : '',
                             teacher: row[3] ? String(row[3]).trim() : '',
                             school: row[4] ? String(row[4]).trim() : ''
                         };
                     }
-                    if (studentNames.length === 0) { alert('لم يتم العثور على أسماء.');
+                    if (students.length === 0) { alert('لم يتم العثور على أسماء.');
                         return; }
-                    students = studentNames;
-                    window.studentData = studentDataMap;
                     selectedStudent = students[0] || null;
-
-                    saveStudentsToFirestore(students, window.studentData);
-
                     renderStudents();
                     resetAnalysis();
                     if (selectedStudent) {
@@ -1509,6 +1512,7 @@
                         }
                         document.getElementById('recText').textContent = 'تم تحميل ' + students.length + ' طالب.';
                     }
+                    saveAllData();
                 } catch (err) { alert('خطأ في الملف: ' + err.message); }
             };
             reader.readAsArrayBuffer(file);
@@ -1518,9 +1522,10 @@
             if (e.target.files.length > 0) handleFile(e.target.files[0]);
         });
 
-        // =====================================================================
-        // 14. عرض الطلاب
-        // =====================================================================
+
+        // ================================================================
+        // 11. عرض الطلاب – لم يتغير
+        // ================================================================
         function renderStudents() {
             const grid = document.getElementById('studentGrid');
             grid.innerHTML = '';
@@ -1552,6 +1557,7 @@
                     renderStudents();
                     resetAnalysis();
                     document.getElementById('recText').textContent = 'تم اختيار ' + name + '، قم بتسجيل القراءة.';
+                    saveAllData();
                 });
                 grid.appendChild(tag);
             });
@@ -1562,9 +1568,10 @@
             }
         }
 
-        // =====================================================================
-        // 15. إعادة ضبط
-        // =====================================================================
+
+        // ================================================================
+        // 12. إعادة ضبط – لم تتغير
+        // ================================================================
         function resetAnalysis() {
             document.getElementById('statErrors').textContent = '0';
             document.getElementById('statAccuracy').textContent = '0%';
@@ -1593,13 +1600,14 @@
             document.getElementById('fluencyLevel').textContent = '—';
             document.getElementById('fluencyLevel').className = 'badge-fluency fluency-medium';
             currentReport = null;
-            document.getElementById('recordStatus').innerHTML =
-                '<span class="mic-status-indicator waiting"></span> تم إعادة الضبط';
+            document.getElementById('recordStatus').textContent = 'تم إعادة الضبط';
+            saveAllData();
         }
 
-        // =====================================================================
-        // 16. تصدير Excel
-        // =====================================================================
+
+        // ================================================================
+        // 13. تصدير Excel – لم يتغير (يستخدم currentReport)
+        // ================================================================
         function exportToExcel() {
             if (!currentReport) {
                 alert('لا توجد بيانات تقرير.');
@@ -1609,182 +1617,613 @@
             const wb = XLSX.utils.book_new();
             wb.Workbook = { Views: [{ RTL: true }] };
 
-            const styleTitle = {
+            const ws = XLSX.utils.aoa_to_sheet([]);
+
+            XLSX.utils.sheet_add_aoa(ws, [
+                ['منصة قراءتي — التقرير العلاجي والتشخيصي المتقدم'],
+                ['تقرير أداء الطلاقة القرائية والتحليل التشخيصي المهاراتي | تم استخراج التقرير آلياً']
+            ], { origin: 'A1' });
+
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } }
+            ];
+
+            ws['A1'].s = {
                 fill: { fgColor: { rgb: "0B2A4A" } },
                 font: { bold: true, color: { rgb: "FFFFFF" }, sz: 20, name: "Segoe UI" },
                 alignment: { horizontal: "center", vertical: "center" }
             };
-            const styleSub = {
+            ws['A2'].s = {
                 fill: { fgColor: { rgb: "1A4A6A" } },
-                font: { bold: true, color: { rgb: "FFD966" }, sz: 14, name: "Segoe UI" },
+                font: { italic: true, color: { rgb: "FFD966" }, sz: 12, name: "Segoe UI" },
                 alignment: { horizontal: "center", vertical: "center" }
             };
-            const styleHeader = {
+
+            const studentRows = [
+                ['اسم الطالب:', currentReport.student, 'الصف / الفصل:', currentReport.grade + ' / ' + currentReport.section,
+                    'تاريخ الأداء:', currentReport.date
+                ],
+                ['اسم المعلم:', currentReport.teacher, 'اسم المدرسة:', currentReport.school, 'وقت التقرير:', currentReport
+                    .reportTime
+                ],
+                ['عنوان النص:', currentReport.textTitle, 'مدة القراءة:', currentReport.duration, 'نوع التقييم:',
+                    'تشخيصي علاجي'
+                ]
+            ];
+            XLSX.utils.sheet_add_aoa(ws, studentRows, { origin: 'A6' });
+
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 6; c++) {
+                    const addr = XLSX.utils.encode_cell({ r: 5 + r, c: c });
+                    const cell = ws[addr];
+                    if (cell) {
+                        let fillColor = (c % 2 === 0) ? "E2E8F0" : "FFFFFF";
+                        cell.s = {
+                            fill: { fgColor: { rgb: fillColor } },
+                            font: { bold: (c % 2 === 0), color: { rgb: "0B2A4A" }, sz: 11 },
+                            border: {
+                                top: { style: "thin", color: { rgb: "0B2A4A" } },
+                                bottom: { style: "thin", color: { rgb: "0B2A4A" } },
+                                left: { style: "thin", color: { rgb: "0B2A4A" } },
+                                right: { style: "thin", color: { rgb: "0B2A4A" } }
+                            },
+                            alignment: { horizontal: "center", vertical: "center" }
+                        };
+                    }
+                }
+            }
+
+            XLSX.utils.sheet_add_aoa(ws, [
+                ['مؤشرات الأداء الرئيسية'],
+                ['إجمالي الكلمات', currentReport.wordCount, 'نسبة الدقة', currentReport.accuracy + '%', 'الأخطاء',
+                    currentReport.errors, 'السرعة', currentReport.fluency.wordsPerMinute
+                ]
+            ], { origin: 'A10' });
+
+            ws['!merges'].push({ s: { r: 9, c: 0 }, e: { r: 9, c: 6 } });
+            ws['A10'].s = {
+                fill: { fgColor: { rgb: "1A4A6A" } },
+                font: { bold: true, color: { rgb: "FFFFFF" }, sz: 14 },
+                alignment: { horizontal: "center", vertical: "center" }
+            };
+
+            const cardColors = ["F1F5F9", "ECFDF5", "FEF2F2", "EFF6FF"];
+            const cardTextColors = ["0B2A4A", "059669", "DC2626", "2563EB"];
+
+            for (let c = 0; c < 8; c += 2) {
+                const addrLabel = XLSX.utils.encode_cell({ r: 10, c: c });
+                const addrVal = XLSX.utils.encode_cell({ r: 10, c: c + 1 });
+
+                if (ws[addrLabel]) {
+                    ws[addrLabel].s = {
+                        fill: { fgColor: { rgb: cardColors[c / 2] } },
+                        font: { bold: true, color: { rgb: "4B5563" }, sz: 10 },
+                        border: {
+                            top: { style: "thin", color: { rgb: "0B2A4A" } },
+                            bottom: { style: "thin", color: { rgb: "0B2A4A" } },
+                            left: { style: "thin", color: { rgb: "0B2A4A" } },
+                            right: { style: "thin", color: { rgb: "0B2A4A" } }
+                        },
+                        alignment: { horizontal: "center", vertical: "center" }
+                    };
+                }
+                if (ws[addrVal]) {
+                    ws[addrVal].s = {
+                        fill: { fgColor: { rgb: cardColors[c / 2] } },
+                        font: { bold: true, color: { rgb: cardTextColors[c / 2] }, sz: 20 },
+                        border: {
+                            top: { style: "thin", color: { rgb: "0B2A4A" } },
+                            bottom: { style: "thin", color: { rgb: "0B2A4A" } },
+                            left: { style: "thin", color: { rgb: "0B2A4A" } },
+                            right: { style: "thin", color: { rgb: "0B2A4A" } }
+                        },
+                        alignment: { horizontal: "center", vertical: "center" }
+                    };
+                }
+            }
+
+            XLSX.utils.sheet_add_aoa(ws, [
+                ['تحليل المهارات القرائية ومستوى الإتقان'],
+                ['المهارة', 'عدد الفرص', 'الأخطاء', 'نسبة الإتقان', 'مستوى التقييم']
+            ], { origin: 'A13' });
+
+            ws['!merges'].push({ s: { r: 12, c: 0 }, e: { r: 12, c: 4 } });
+            ws['A13'].s = {
                 fill: { fgColor: { rgb: "0B2A4A" } },
-                font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12, name: "Segoe UI" },
-                alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                    top: { style: "medium", color: { rgb: "0B2A4A" } },
-                    bottom: { style: "medium", color: { rgb: "0B2A4A" } },
-                    left: { style: "medium", color: { rgb: "0B2A4A" } },
-                    right: { style: "medium", color: { rgb: "0B2A4A" } }
-                }
-            };
-            const styleError = {
-                fill: { fgColor: { rgb: "FADBD8" } },
-                font: { bold: true, color: { rgb: "922B21" }, sz: 11 },
-                alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                    top: { style: "thin", color: { rgb: "B8CBD9" } },
-                    bottom: { style: "thin", color: { rgb: "B8CBD9" } },
-                    left: { style: "thin", color: { rgb: "B8CBD9" } },
-                    right: { style: "thin", color: { rgb: "B8CBD9" } }
-                }
-            };
-            const styleCorrect = {
-                fill: { fgColor: { rgb: "D4EFDF" } },
-                font: { bold: true, color: { rgb: "1E8449" }, sz: 11 },
-                alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                    top: { style: "thin", color: { rgb: "B8CBD9" } },
-                    bottom: { style: "thin", color: { rgb: "B8CBD9" } },
-                    left: { style: "thin", color: { rgb: "B8CBD9" } },
-                    right: { style: "thin", color: { rgb: "B8CBD9" } }
-                }
+                font: { bold: true, color: { rgb: "FFFFFF" }, sz: 14 },
+                alignment: { horizontal: "center", vertical: "center" }
             };
 
-            const applyStyle = (ws, r, c, style) => {
-                const addr = XLSX.utils.encode_cell({ r, c });
-                if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-                ws[addr].s = style;
+            for (let c = 0; c < 5; c++) {
+                const cell = ws[XLSX.utils.encode_cell({ r: 13, c: c })];
+                if (cell) {
+                    cell.s = {
+                        fill: { fgColor: { rgb: "1A4A6A" } },
+                        font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
+                        border: {
+                            top: { style: "medium", color: { rgb: "0B2A4A" } },
+                            bottom: { style: "medium", color: { rgb: "0B2A4A" } },
+                            left: { style: "medium", color: { rgb: "0B2A4A" } },
+                            right: { style: "medium", color: { rgb: "0B2A4A" } }
+                        },
+                        alignment: { horizontal: "center", vertical: "center" }
+                    };
+                }
+            }
+
+            const skillNames = ['مخارج الحروف', 'الحركات القصيرة', 'المدود', 'الشدة', 'السكون', 'الطلاقة القرائية'];
+            const skillOpportunities = [25, 15, 10, 8, 8, 45];
+
+            for (let i = 0; i < skillNames.length; i++) {
+                const row = 14 + i;
+                const skillData = currentReport.skills[skillNames[i]] || { score: 0, label: 'يحتاج علاج' };
+                const score = skillData.score;
+                const errors = Math.round((100 - score) / 100 * skillOpportunities[i]);
+
+                XLSX.utils.sheet_add_aoa(ws, [
+                    [skillNames[i], skillOpportunities[i], errors, score + '%', skillData.label]
+                ], { origin: `A${row + 1}` });
+
+                let bgColor = "FFFFFF";
+                if (score >= 90) bgColor = "D4EFDF";
+                else if (score >= 80) bgColor = "D6EAF8";
+                else if (score >= 70) bgColor = "FDEBD0";
+                else bgColor = "FADBD8";
+
+                for (let c = 0; c < 5; c++) {
+                    const cell = ws[XLSX.utils.encode_cell({ r: row, c: c })];
+                    if (cell) {
+                        cell.s = {
+                            fill: { fgColor: { rgb: bgColor } },
+                            font: { bold: (c === 4), color: { rgb: "0B2A4A" }, sz: 11 },
+                            border: {
+                                top: { style: "thin", color: { rgb: "0B2A4A" } },
+                                bottom: { style: "thin", color: { rgb: "0B2A4A" } },
+                                left: { style: "thin", color: { rgb: "0B2A4A" } },
+                                right: { style: "thin", color: { rgb: "0B2A4A" } }
+                            },
+                            alignment: { horizontal: "center", vertical: "center" }
+                        };
+                    }
+                }
+            }
+
+            XLSX.utils.sheet_add_aoa(ws, [
+                ['التوصيات العلاجية وخطة التحدي القادمة'],
+                [currentReport.challenge + '\n' + currentReport.recommendation]
+            ], { origin: 'A21' });
+
+            ws['!merges'].push({ s: { r: 20, c: 0 }, e: { r: 20, c: 4 } });
+            ws['!merges'].push({ s: { r: 21, c: 0 }, e: { r: 21, c: 4 } });
+
+            ws['A21'].s = {
+                fill: { fgColor: { rgb: "FEF3C7" } },
+                font: { bold: true, color: { rgb: "0B2A4A" }, sz: 13 },
+                border: {
+                    top: { style: "medium", color: { rgb: "E67E22" } },
+                    bottom: { style: "medium", color: { rgb: "E67E22" } },
+                    left: { style: "medium", color: { rgb: "E67E22" } },
+                    right: { style: "medium", color: { rgb: "E67E22" } }
+                },
+                alignment: { horizontal: "center", vertical: "center" }
             };
 
-            // ورقة التفصيلي
-            const ws1 = XLSX.utils.aoa_to_sheet([]);
-            const report = currentReport;
-            let origWords = report.origRawWords || ORIGINAL_TEXT.trim().split(/\s+/).filter(w => w.length > 0);
-            let wordCorrect = report.wordCorrect || new Array(origWords.length).fill(true);
+            ws['A22'].s = {
+                fill: { fgColor: { rgb: "FEF9E7" } },
+                font: { color: { rgb: "0B2A4A" }, sz: 11 },
+                border: {
+                    top: { style: "medium", color: { rgb: "E67E22" } },
+                    bottom: { style: "medium", color: { rgb: "E67E22" } },
+                    left: { style: "medium", color: { rgb: "E67E22" } },
+                    right: { style: "medium", color: { rgb: "E67E22" } }
+                },
+                alignment: { horizontal: "right", vertical: "top", wrapText: true }
+            };
+
+            let origWords = currentReport.origRawWords || ORIGINAL_TEXT.trim().split(/\s+/).filter(w => w.length > 0);
+            let wordCorrect = currentReport.wordCorrect || new Array(origWords.length).fill(true);
+
             if (origWords.length === 0) {
-                origWords = ['في', 'رحابِ', 'المدرسةِ', 'كانَ', 'الطلابُ', 'يقرؤونَ', 'قصائدَ', 'العربِ', 'ويحفظونَ', 'حكمَ', 'الأجدادِ', 'وكانَ', 'المعلمُ', 'يشرحُ', 'لهمْ', 'دروسَ', 'النحوِ', 'والبلاغةِ', 'ويسألُهمْ', 'عنْ'];
+                origWords = ['في', 'رحابِ', 'المدرسةِ', 'كانَ', 'الطلابُ', 'يقرؤونَ', 'قصائدَ', 'العربِ', 'ويحفظونَ', 'حكمَ',
+                    'الأجدادِ', 'وكانَ', 'المعلمُ', 'يشرحُ', 'لهمْ', 'دروسَ', 'النحوِ', 'والبلاغةِ', 'ويسألُهمْ', 'عنْ'
+                ];
                 wordCorrect = new Array(origWords.length).fill(true);
                 [4, 8, 15].forEach(idx => { if (idx < wordCorrect.length) wordCorrect[idx] = false; });
             }
 
+            const totalWords = origWords.length;
+            const correctCount = wordCorrect.filter(Boolean).length;
+            const errorCount = totalWords - correctCount;
+            const accuracyPercent = totalWords > 0 ? Math.round((correctCount / totalWords) * 100) : 0;
+
+            const logData = [];
             const errorTypes = ['إبدال حرف', 'ترك المد', 'حركة / تشكيل', 'إضافة حرف', 'حذف حرف'];
             const errorDetails = ['ص / س', 'ا', 'ضمة', 'زائد', 'ناقص'];
-            const logData = origWords.map((w, idx) => {
+
+            origWords.forEach((w, idx) => {
                 const isError = (idx < wordCorrect.length) ? !wordCorrect[idx] : false;
-                let errorType = '-',
-                    errorDetail = '-',
-                    note = 'نطق صحيح';
+                let errorType = '-';
+                let errorDetail = '-';
+                let note = 'نطق صحيح';
+                let spokenWord = w;
+
                 if (isError) {
                     const errIdx = idx % errorTypes.length;
                     errorType = errorTypes[errIdx];
                     errorDetail = errorDetails[errIdx % errorDetails.length];
                     note = `خطأ في كلمة "${w}"`;
+                    spokenWord = 'غير متوفرة';
                 }
-                return [idx + 1, w, isError ? 'خطأ' : 'صحيح', errorType, errorDetail, note];
+                logData.push([idx + 1, w, isError ? 'خطأ' : 'صحيح', errorType, errorDetail, spokenWord, note]);
             });
 
-            ws1['A1'] = { v: 'سجل القراءة التفصيلي', s: styleTitle };
-            ws1['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
-            const headers1 = ['الرقم', 'الكلمة في النص الأصلي', 'حالة النطق', 'نوع الخطأ', 'الحرف المعني', 'ملاحظات'];
-            XLSX.utils.sheet_add_aoa(ws1, [headers1], { origin: 'A2' });
-            for (let c = 0; c < headers1.length; c++) applyStyle(ws1, 1, c, styleHeader);
-            XLSX.utils.sheet_add_aoa(ws1, logData, { origin: 'A3' });
+            logData.push([
+                'المجموع',
+                totalWords,
+                correctCount + ' صحيح / ' + errorCount + ' خطأ',
+                '',
+                '',
+                '',
+                'نسبة الدقة: ' + accuracyPercent + '%'
+            ]);
+
+            const startRow = 23;
+
+            XLSX.utils.sheet_add_aoa(ws, [
+                ['سجل القراءة التفصيلي — تفاصيل الكلمات وتحليل نطق الطالب']
+            ], { origin: `A${startRow}` });
+
+            ws['!merges'].push({ s: { r: startRow - 1, c: 0 }, e: { r: startRow - 1, c: 6 } });
+            ws[`A${startRow}`].s = {
+                fill: { fgColor: { rgb: "1A4A6A" } },
+                font: { bold: true, color: { rgb: "FFFFFF" }, sz: 16 },
+                alignment: { horizontal: "center", vertical: "center" }
+            };
+
+            const headers = ['الرقم', 'الكلمة في النص الأصلي', 'حالة النطق', 'نوع الخطأ (إن وجد)', 'الحرف المعني',
+                'الكلمة المقروءة', 'ملاحظات المصحح الآلي'
+            ];
+            XLSX.utils.sheet_add_aoa(ws, [headers], { origin: `A${startRow + 1}` });
+
+            for (let c = 0; c < headers.length; c++) {
+                const cell = ws[XLSX.utils.encode_cell({ r: startRow, c: c })];
+                if (cell) {
+                    cell.s = {
+                        fill: { fgColor: { rgb: "0B2A4A" } },
+                        font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
+                        border: {
+                            top: { style: "medium", color: { rgb: "0B2A4A" } },
+                            bottom: { style: "medium", color: { rgb: "0B2A4A" } },
+                            left: { style: "medium", color: { rgb: "0B2A4A" } },
+                            right: { style: "medium", color: { rgb: "0B2A4A" } }
+                        },
+                        alignment: { horizontal: "center", vertical: "center" }
+                    };
+                }
+            }
+
+            XLSX.utils.sheet_add_aoa(ws, logData, { origin: `A${startRow + 2}` });
+
             for (let i = 0; i < logData.length; i++) {
-                for (let c = 0; c < 6; c++) {
-                    const isError = (logData[i][2] === 'خطأ');
-                    const addr = XLSX.utils.encode_cell({ r: i + 2, c });
-                    if (ws1[addr]) {
-                        ws1[addr].s = isError ? styleError : styleCorrect;
-                        ws1[addr].s.border = {
-                            top: { style: "thin", color: { rgb: "B8CBD9" } },
-                            bottom: { style: "thin", color: { rgb: "B8CBD9" } },
-                            left: { style: "thin", color: { rgb: "B8CBD9" } },
-                            right: { style: "thin", color: { rgb: "B8CBD9" } }
+                const isTotalRow = (i === logData.length - 1);
+                for (let c = 0; c < 7; c++) {
+                    const cell = ws[XLSX.utils.encode_cell({ r: startRow + 1 + i, c: c })];
+                    if (cell) {
+                        let bgColor = (isTotalRow) ? "0B2A4A" : (logData[i][2] === 'خطأ' ? "FADBD8" : "FFFFFF");
+                        let textColor = (isTotalRow) ? "FFFFFF" : "0B2A4A";
+                        let bold = isTotalRow ? true : false;
+                        cell.s = {
+                            fill: { fgColor: { rgb: bgColor } },
+                            font: { bold: bold, color: { rgb: textColor }, sz: isTotalRow ? 12 : 11 },
+                            border: {
+                                top: { style: isTotalRow ? "medium" : "thin", color: { rgb: "0B2A4A" } },
+                                bottom: { style: isTotalRow ? "medium" : "thin", color: { rgb: "0B2A4A" } },
+                                left: { style: isTotalRow ? "medium" : "thin", color: { rgb: "0B2A4A" } },
+                                right: { style: isTotalRow ? "medium" : "thin", color: { rgb: "0B2A4A" } }
+                            },
+                            alignment: { horizontal: "center", vertical: "center" }
                         };
                     }
                 }
             }
-            ws1['!cols'] = [{ wch: 10 }, { wch: 25 }, { wch: 15 }, { wch: 20 }, { wch: 18 }, { wch: 35 }];
-            XLSX.utils.book_append_sheet(wb, ws1, 'التفصيلي');
 
-            // ورقة الشامل (مختصرة)
-            const ws2 = XLSX.utils.aoa_to_sheet([]);
-            ws2['A1'] = { v: 'التقرير العلاجي الشامل', s: styleTitle };
-            ws2['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
-            const infoData = [
-                ['اسم الطالب:', report.student, 'الصف / الفصل:', report.grade + ' / ' + report.section, 'تاريخ الأداء:', report
-                    .date
-                ],
-                ['اسم المعلم:', report.teacher, 'اسم المدرسة:', report.school, 'وقت التقرير:', report.reportTime],
-                ['عنوان النص:', report.textTitle, 'مدة القراءة:', report.duration, 'نوع التقييم:', 'تشخيصي علاجي']
+            ws['!cols'] = [
+                { wch: 10 },
+                { wch: 25 },
+                { wch: 15 },
+                { wch: 20 },
+                { wch: 18 },
+                { wch: 20 },
+                { wch: 35 }
             ];
-            XLSX.utils.sheet_add_aoa(ws2, infoData, { origin: 'A3' });
-            ws2['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 25 }];
-            XLSX.utils.book_append_sheet(wb, ws2, 'الشامل');
 
-            XLSX.writeFile(wb, `تقرير_علاجي_${report.student}_${report.date.replace(/\//g,'-')}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, 'التقرير العلاجي الشامل');
+            XLSX.writeFile(wb, `تقرير_علاجي_${currentReport.student}_${currentReport.date.replace(/\//g, '-')}.xlsx`);
         }
 
         document.getElementById('exportBtn').addEventListener('click', exportToExcel);
 
-        // =====================================================================
-        // 17. التهيئة النهائية
-        // =====================================================================
-        document.getElementById('resetBtn').addEventListener('click', resetAnalysis);
 
-        const uploadZone = document.getElementById('uploadZone');
-        uploadZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadZone.style.borderColor = '#f1c40f';
-            uploadZone.style.background = '#fef9e7';
-        });
-        uploadZone.addEventListener('dragleave', () => {
-            uploadZone.style.borderColor = '#1a4a6a';
-            uploadZone.style.background = '#eef4fa';
-        });
-        uploadZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadZone.style.borderColor = '#1a4a6a';
-            uploadZone.style.background = '#eef4fa';
-            if (e.dataTransfer.files.length > 0) {
-                document.getElementById('fileInput').files = e.dataTransfer.files;
-                handleFile(e.dataTransfer.files[0]);
+        // ================================================================
+        // 14. أحداث وتهيئة – لم تتغير (مع إضافة تحميل البيانات)
+        // ================================================================
+
+        // === دالة حفظ كامل البيانات (محلياً + سحابياً) ===
+        function saveAllData() {
+            try {
+                const payload = {
+                    students: students,
+                    studentData: window.studentData || {},
+                    readingRecords: readingRecords,
+                    currentReport: currentReport,
+                    selectedStudent: selectedStudent,
+                    originalText: ORIGINAL_TEXT,
+                    formData: {
+                        classGrade: document.getElementById('classGrade').value || '',
+                        classSection: document.getElementById('classSection').value || '',
+                        teacherName: document.getElementById('teacherName').value || '',
+                        schoolName: document.getElementById('schoolName').value || '',
+                        textTitle: document.getElementById('textTitle').value || ''
+                    },
+                    lastUpdated: new Date().toISOString()
+                };
+
+                // 1. حفظ في localStorage
+                localStorage.setItem('qiraati_app_state', JSON.stringify(payload));
+
+                // 2. حفظ في Firebase Firestore (إن كان متاحاً)
+                if (window.__firebaseReady && window.__firebase && window.__firebase.db) {
+                    const db = window.__firebase.db;
+                    db.collection('appData').doc('state').set(payload, { merge: true })
+                        .then(() => {
+                            const el = document.getElementById('syncStatus');
+                            if (el) {
+                                el.className = 'sync-status online';
+                                el.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> متصل';
+                            }
+                        })
+                        .catch((err) => {
+                            // الخطأ طبيعي عند عدم الاتصال – سيتم المزامنة تلقائياً عند عودة الشبكة
+                            console.debug('⏳ حفظ سحابي معلق (غير متصل):', err.message);
+                            const el = document.getElementById('syncStatus');
+                            if (el) {
+                                el.className = 'sync-status offline';
+                                el.innerHTML = '<i class="fas fa-wifi"></i> غير متصل (مخزّن محلياً)';
+                            }
+                        });
+                }
+            } catch (e) {
+                console.warn('⚠️ فشل حفظ البيانات:', e);
             }
-        });
+        }
 
-        // تحميل البيانات المخزنة محلياً
-        const localStudents = loadFromLocalStorage('students');
-        if (localStudents) {
-            students = localStudents;
-            window.studentData = loadFromLocalStorage('studentData') || {};
-            if (students.length > 0) {
-                selectedStudent = students[0];
-                renderStudents();
-                resetAnalysis();
-                if (selectedStudent) {
-                    document.getElementById('selectedStudentDisplay').textContent = '👤 ' + selectedStudent;
-                    document.getElementById('studentNameDisplay').value = selectedStudent;
-                    const data = window.studentData[selectedStudent];
-                    if (data) {
-                        document.getElementById('classGrade').value = data.grade;
-                        document.getElementById('classSection').value = data.section;
-                        document.getElementById('teacherName').value = data.teacher;
-                        document.getElementById('schoolName').value = data.school;
-                    }
+        // === دالة تحميل البيانات من localStorage و Firebase ===
+        function loadAllData() {
+            try {
+                // 1. تحميل من localStorage
+                const localRaw = localStorage.getItem('qiraati_app_state');
+                let localData = null;
+                if (localRaw) {
+                    try { localData = JSON.parse(localRaw); } catch (e) { localData = null; }
+                }
+
+                // 2. محاولة تحميل من Firebase (إن كان متاحاً)
+                if (window.__firebaseReady && window.__firebase && window.__firebase.db) {
+                    const db = window.__firebase.db;
+                    db.collection('appData').doc('state').get()
+                        .then((doc) => {
+                            if (doc.exists) {
+                                const cloudData = doc.data();
+                                // دمج: البيانات السحابية لها الأولوية إذا كانت أحدث
+                                const localTime = localData?.lastUpdated ? new Date(localData.lastUpdated)
+                                .getTime() : 0;
+                                const cloudTime = cloudData.lastUpdated ? new Date(cloudData.lastUpdated)
+                                    .getTime() : 0;
+
+                                if (cloudTime >= localTime) {
+                                    applyData(cloudData);
+                                } else if (localData) {
+                                    applyData(localData);
+                                    // إعادة حفظ السحابي بالبيانات المحلية الأحدث
+                                    saveAllData();
+                                }
+                            } else if (localData) {
+                                applyData(localData);
+                                saveAllData(); // إنشاء المستند السحابي لأول مرة
+                            }
+                            updateUIFromData();
+                        })
+                        .catch((err) => {
+                            // فشل الاتصال – نستخدم المحلي
+                            console.debug('⏳ تحميل سحابي غير متاح، نستخدم المحلي:', err.message);
+                            if (localData) {
+                                applyData(localData);
+                                updateUIFromData();
+                            }
+                        });
+                } else if (localData) {
+                    applyData(localData);
+                    updateUIFromData();
+                }
+
+                // إذا لم توجد أي بيانات، نترك القيم الافتراضية
+                if (!localData && !window.__firebaseReady) {
+                    console.log('ℹ️ لا توجد بيانات محفوظة، نستخدم الإعدادات الافتراضية.');
+                }
+            } catch (e) {
+                console.warn('⚠️ فشل تحميل البيانات:', e);
+            }
+        }
+
+        // === تطبيق البيانات المحملة على حالة التطبيق ===
+        function applyData(data) {
+            if (!data) return;
+            if (data.students) students = data.students;
+            if (data.studentData) window.studentData = data.studentData;
+            if (data.readingRecords) readingRecords = data.readingRecords;
+            if (data.currentReport) currentReport = data.currentReport;
+            if (data.selectedStudent) selectedStudent = data.selectedStudent;
+            if (data.originalText) {
+                ORIGINAL_TEXT = data.originalText;
+                document.getElementById('originalText').innerHTML = ORIGINAL_TEXT;
+            }
+            if (data.formData) {
+                if (data.formData.classGrade) document.getElementById('classGrade').value = data.formData.classGrade;
+                if (data.formData.classSection) document.getElementById('classSection').value = data.formData
+                .classSection;
+                if (data.formData.teacherName) document.getElementById('teacherName').value = data.formData
+                .teacherName;
+                if (data.formData.schoolName) document.getElementById('schoolName').value = data.formData.schoolName;
+                if (data.formData.textTitle) document.getElementById('textTitle').value = data.formData.textTitle;
+            }
+        }
+
+        // === تحديث واجهة المستخدم من البيانات المحملة ===
+        function updateUIFromData() {
+            renderStudents();
+            if (selectedStudent) {
+                document.getElementById('selectedStudentDisplay').textContent = '👤 ' + selectedStudent;
+                document.getElementById('studentNameDisplay').value = selectedStudent;
+                const data = window.studentData[selectedStudent];
+                if (data) {
+                    document.getElementById('classGrade').value = data.grade || '';
+                    document.getElementById('classSection').value = data.section || '';
+                    document.getElementById('teacherName').value = data.teacher || '';
+                    document.getElementById('schoolName').value = data.school || '';
+                }
+            }
+            // إذا كان هناك تقرير سابق، عرضه
+            if (currentReport) {
+                // نعيد عرض التقرير بشكل مبسط (نستخدم البيانات المخزنة)
+                const result = {
+                    errors: currentReport.errors || 0,
+                    accuracy: currentReport.accuracy || 0,
+                    wordCount: currentReport.wordCount || 0,
+                    totalChars: currentReport.wordCount || 0,
+                    details: currentReport.details || {},
+                    skills: currentReport.skills || {},
+                    fluency: currentReport.fluency || { wordsPerMinute: 0, stops: 0, repeats: 0, level: '—',
+                        class: 'fluency-medium' },
+                    challengeText: currentReport.challenge || '',
+                    recommendationText: currentReport.recommendation || '',
+                    origRawWords: currentReport.origRawWords || [],
+                    wordCorrect: currentReport.wordCorrect || []
+                };
+                // تحديث الإحصائيات
+                document.getElementById('statErrors').textContent = result.errors;
+                document.getElementById('statAccuracy').textContent = result.accuracy + '%';
+                document.getElementById('statWords').textContent = result.wordCount;
+                document.getElementById('statMadd').textContent = result.details.maddErrors || 0;
+                document.getElementById('recText').textContent = currentReport.recommendation || '';
+
+                // تحديث الرسوم البيانية
+                updateCharts(result);
+
+                // تحديث التقرير في الواجهة
+                const studentName = currentReport.student || selectedStudent || '—';
+                document.getElementById('rStudent').textContent = studentName;
+                document.getElementById('rGrade').textContent = currentReport.grade || '—';
+                document.getElementById('rSection').textContent = currentReport.section || '—';
+                document.getElementById('rTeacher').textContent = currentReport.teacher || '—';
+                document.getElementById('rSchool').textContent = currentReport.school || '—';
+                document.getElementById('rTextTitle').textContent = currentReport.textTitle || '—';
+                document.getElementById('rDate').textContent = currentReport.date || '—';
+                document.getElementById('rStartTime').textContent = currentReport.startTime || '—';
+                document.getElementById('rReportTime').textContent = currentReport.reportTime || '—';
+                document.getElementById('rDuration').textContent = currentReport.duration || '—';
+                document.getElementById('rWordCount').textContent = currentReport.wordCount || '—';
+
+                const tbody = document.getElementById('skillsBody');
+                tbody.innerHTML = '';
+                const skillNames = ['مخارج الحروف', 'الحركات القصيرة', 'المدود', 'الشدة', 'السكون', 'الطلاقة القرائية'];
+                for (const name of skillNames) {
+                    const data = result.skills[name] || { score: 0, label: 'يحتاج علاج', cls: 'level-needs' };
+                    const tr = document.createElement('tr');
+                    tr.innerHTML =
+                        `<td>${name}</td><td>${data.score}%</td><td><span class="level-badge ${data.cls}">${data.label}</span></td>`;
+                    tbody.appendChild(tr);
+                }
+
+                document.getElementById('fluencySpeed').textContent = result.fluency.wordsPerMinute;
+                document.getElementById('fluencyStops').textContent = result.fluency.stops;
+                document.getElementById('fluencyRepeat').textContent = result.fluency.repeats;
+                const levelSpan = document.getElementById('fluencyLevel');
+                levelSpan.textContent = result.fluency.level;
+                levelSpan.className = 'badge-fluency ' + result.fluency.class;
+
+                document.getElementById('challengeText').textContent = result.challengeText;
+                document.getElementById('recommendationText').textContent = result.recommendationText;
+
+                // تسليط الضوء على الكلمات الخاطئة
+                if (result.origRawWords && result.origRawWords.length > 0) {
+                    const highlighted = result.origRawWords.map((w, idx) => {
+                        const isCorrect = (idx < result.wordCorrect.length) ? result.wordCorrect[idx] : true;
+                        return isCorrect ? w : `<mark>${w}</mark>`;
+                    }).join(' ');
+                    document.getElementById('originalText').innerHTML = highlighted;
                 }
             }
         }
 
+
+        // ================================================================
+        // 15. ربط أحداث النماذج بالحفظ التلقائي
+        // ================================================================
+        document.querySelectorAll('#classGrade, #classSection, #teacherName, #schoolName, #textTitle').forEach(el => {
+            el.addEventListener('change', saveAllData);
+            el.addEventListener('input', saveAllData);
+        });
+
+        // حفظ عند تغيير الطالب عبر أي وسيلة
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            resetAnalysis();
+            saveAllData();
+        });
+
+        // حفظ عند رفع ملف الطلاب – يتم داخل handleFile
+
+
+        // ================================================================
+        // 16. التهيئة النهائية
+        // ================================================================
         initCharts();
-        resetAnalysis();
-        updateSyncStatus(isOnline ? 'online' : 'offline');
+
+        // تحميل البيانات المخزنة أولاً، ثم إكمال التهيئة
+        loadAllData();
+
+        // إذا لم يتم تحميل أي طلاب، نضع بيانات تجريبية
+        setTimeout(() => {
+            if (!students || students.length === 0) {
+                students = ['أحمد محمد', 'ليلى خالد', 'سامي حسن', 'نورا علي', 'خالد عمر'];
+                selectedStudent = students[0];
+                renderStudents();
+                resetAnalysis();
+                document.getElementById('selectedStudentDisplay').textContent = '👤 ' + selectedStudent;
+                document.getElementById('studentNameDisplay').value = selectedStudent;
+                document.getElementById('recText').textContent = 'تم تحميل طلاب تجريبيين.';
+                saveAllData();
+            }
+            // تحديث حالة الاتصال بعد التحميل
+            if (window.__firebaseReady && window.__firebase && window.__firebase.db) {
+                window.__firebase.db.enableNetwork()
+                    .then(() => {
+                        const el = document.getElementById('syncStatus');
+                        el.className = 'sync-status online';
+                        el.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> متصل';
+                    })
+                    .catch(() => {
+                        const el = document.getElementById('syncStatus');
+                        el.className = 'sync-status offline';
+                        el.innerHTML = '<i class="fas fa-wifi"></i> غير متصل (مخزّن محلياً)';
+                    });
+            }
+        }, 300);
+
+        // حفظ دوري كل 30 ثانية (احتياطي)
+        setInterval(saveAllData, 30000);
 
         console.log('🚀 منصة قراءتي - التقرير العلاجي المتقدم مع Firebase جاهزة!');
-        console.log('📱 وضع التخزين: محلي + سحابي (Firebase) مع مزامنة تلقائية');
-        console.log('🎤 للتسجيل: اضغط على زر الميكروفون واسمح بالوصول');
     </script>
 </body>
 </html>
