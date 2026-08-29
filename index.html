@@ -784,11 +784,11 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- البرمجة الرئيسية – تم إعادة هيكلة المزامنة بالكامل -->
+    <!-- البرمجة الرئيسية – نظام التقارير المشتركة في Firebase -->
     <!-- ===================================================================== -->
     <script>
         // ================================================================
-        // 0. تهيئة Firebase – آمنة وموثوقة
+        // 0. تهيئة Firebase
         // ================================================================
         (function initFirebase() {
             try {
@@ -809,7 +809,6 @@
                 const auth = firebase.auth();
                 const db = firebase.firestore();
 
-                // تفعيل التخزين المؤقت
                 db.enablePersistence({ synchronizeTabs: true })
                     .catch((err) => {
                         if (err.code === 'failed-precondition') {
@@ -896,24 +895,23 @@
         // ================================================================
         // 1. المتغيرات العامة
         // ================================================================
-        let students = []; // قائمة بأسماء الطلاب (للعرض السريع)
-        let studentsData = {}; // كائن { studentId: { name, grade, section, teacher, school, readingRecords, currentReport, ... } }
+        let students = [];
+        let studentsData = {}; // { studentId: { name, grade, section, teacher, school, reports: [ ... ] } }
         let selectedStudentId = null;
         let isRecording = false;
         let recognizer = null;
         let finalTranscript = '';
         let startTime = null;
         let endTime = null;
-        let readingRecords = [];
-        let currentReport = null;
+        let currentReport = null; // التقرير الحالي المعروض (للتصدير)
         let speechSynthesisUtterance = null;
 
         const ORIGINAL_TEXT_EL = document.getElementById('originalText');
         let ORIGINAL_TEXT = ORIGINAL_TEXT_EL.textContent.trim();
-        window.studentData = {}; // للتوافق مع الكود القديم
+        window.studentData = {};
 
         // ================================================================
-        // 2. دوال مساعدة – لم تتغير
+        // 2. دوال مساعدة
         // ================================================================
         function pad2(n) { return String(n).padStart(2, '0'); }
 
@@ -975,9 +973,12 @@
             }
         }
 
-        // توليد معرف فريد للطالب
         function generateStudentId() {
             return 'student_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+        }
+
+        function generateReportId() {
+            return 'report_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
         }
 
 
@@ -1234,23 +1235,53 @@
 
 
         // ================================================================
-        // 5. عرض التقرير الداخلي – مع ربطه بالطالب المحدد
+        // 5. عرض التقرير – مع حفظ التقرير في المسار المشترك
         // ================================================================
         function renderReport(result, studentId) {
             const now = new Date();
             const studentName = studentsData[studentId]?.name || selectedStudentId || '—';
-            document.getElementById('rStudent').textContent = studentName || '—';
-            document.getElementById('rGrade').textContent = document.getElementById('classGrade').value || '—';
-            document.getElementById('rSection').textContent = document.getElementById('classSection').value || '—';
-            document.getElementById('rTeacher').textContent = document.getElementById('teacherName').value || '—';
-            document.getElementById('rSchool').textContent = document.getElementById('schoolName').value || '—';
-            document.getElementById('rTextTitle').textContent = document.getElementById('textTitle').value || '—';
-            document.getElementById('rDate').textContent = formatDateAr(now);
-            document.getElementById('rStartTime').textContent = startTime ? formatTimeAr(startTime) : formatTimeAr(now);
-            document.getElementById('rReportTime').textContent = formatTimeAr(now);
-            const duration = startTime && endTime ? Math.round((endTime - startTime) / 1000) : 30;
-            document.getElementById('rDuration').textContent = duration + ' ثانية';
-            document.getElementById('rWordCount').textContent = result.wordCount;
+            const reportId = generateReportId();
+
+            // بناء كائن التقرير الكامل
+            const reportData = {
+                reportId: reportId,
+                studentId: studentId,
+                studentName: studentName,
+                grade: document.getElementById('classGrade').value || '—',
+                section: document.getElementById('classSection').value || '—',
+                teacher: document.getElementById('teacherName').value || '—',
+                school: document.getElementById('schoolName').value || '—',
+                textTitle: document.getElementById('textTitle').value || '—',
+                date: formatDateAr(now),
+                startTime: startTime ? formatTimeAr(startTime) : formatTimeAr(now),
+                reportTime: formatTimeAr(now),
+                duration: startTime && endTime ? Math.round((endTime - startTime) / 1000) + ' ثانية' : '30 ثانية',
+                wordCount: result.wordCount,
+                errors: result.errors,
+                accuracy: result.accuracy,
+                skills: result.skills,
+                fluency: result.fluency,
+                challenge: result.challengeText,
+                recommendation: result.recommendationText,
+                details: result.details,
+                origRawWords: result.origRawWords,
+                wordCorrect: result.wordCorrect,
+                durationMinutes: result.durationMinutes,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // تحديث الواجهة
+            document.getElementById('rStudent').textContent = studentName;
+            document.getElementById('rGrade').textContent = reportData.grade;
+            document.getElementById('rSection').textContent = reportData.section;
+            document.getElementById('rTeacher').textContent = reportData.teacher;
+            document.getElementById('rSchool').textContent = reportData.school;
+            document.getElementById('rTextTitle').textContent = reportData.textTitle;
+            document.getElementById('rDate').textContent = reportData.date;
+            document.getElementById('rStartTime').textContent = reportData.startTime;
+            document.getElementById('rReportTime').textContent = reportData.reportTime;
+            document.getElementById('rDuration').textContent = reportData.duration;
+            document.getElementById('rWordCount').textContent = reportData.wordCount;
 
             const tbody = document.getElementById('skillsBody');
             tbody.innerHTML = '';
@@ -1273,53 +1304,64 @@
             document.getElementById('challengeText').textContent = result.challengeText;
             document.getElementById('recommendationText').textContent = result.recommendationText;
 
-            // تحديث الكائن الحالي للتصدير
-            currentReport = {
-                student: studentName,
-                grade: document.getElementById('classGrade').value || '—',
-                section: document.getElementById('classSection').value || '—',
-                teacher: document.getElementById('teacherName').value || '—',
-                school: document.getElementById('schoolName').value || '—',
-                textTitle: document.getElementById('textTitle').value || '—',
-                date: formatDateAr(now),
-                startTime: startTime ? formatTimeAr(startTime) : formatTimeAr(now),
-                reportTime: formatTimeAr(now),
-                duration: duration + ' ثانية',
-                wordCount: result.wordCount,
-                skills: result.skills,
-                challenge: result.challengeText,
-                recommendation: result.recommendationText,
-                fluency: result.fluency,
-                errors: result.errors,
-                accuracy: result.accuracy,
-                details: result.details,
-                durationMinutes: result.durationMinutes,
-                wordCorrect: result.wordCorrect,
-                origRawWords: result.origRawWords
-            };
+            currentReport = reportData; // للتصدير
 
-            // حفظ التقرير في بيانات الطالب
-            if (selectedStudentId) {
-                if (!studentsData[selectedStudentId]) studentsData[selectedStudentId] = { name: studentName };
-                studentsData[selectedStudentId].currentReport = currentReport;
-                // إضافة سجل القراءة
-                if (!studentsData[selectedStudentId].readingRecords) studentsData[selectedStudentId].readingRecords = [];
-                studentsData[selectedStudentId].readingRecords.push({
-                    date: formatDateAr(now),
-                    time: formatTimeAr(now),
-                    accuracy: result.accuracy,
-                    errors: result.errors,
-                    wordCount: result.wordCount,
-                    fluency: result.fluency.level,
-                    details: result.details
-                });
+            // حفظ التقرير في بيانات الطالب محلياً
+            if (studentId) {
+                if (!studentsData[studentId]) {
+                    studentsData[studentId] = { name: studentName };
+                }
+                if (!studentsData[studentId].reports) {
+                    studentsData[studentId].reports = [];
+                }
+                // نضيف التقرير إلى بداية القائمة (الأحدث أولاً)
+                studentsData[studentId].reports.unshift(reportData);
+                // نحدّث آخر تقرير
+                studentsData[studentId].latestReport = reportData;
+
+                // حفظ محلياً فوراً
                 saveAllData();
+
+                // رفع التقرير إلى Firebase (المسار المشترك)
+                if (window.__firebaseReady && window.__user) {
+                    const db = window.__db;
+                    // حفظ بيانات الطالب الأساسية في students/{studentId}
+                    const studentRef = db.collection('students').doc(studentId);
+                    studentRef.set({
+                        name: studentName,
+                        grade: reportData.grade,
+                        section: reportData.section,
+                        teacher: reportData.teacher,
+                        school: reportData.school,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+
+                    // حفظ التقرير في students/{studentId}/reports/{reportId}
+                    const reportRef = db.collection('students').doc(studentId).collection('reports').doc(reportId);
+                    reportRef.set(reportData)
+                        .then(() => {
+                            console.log('✅ تم حفظ التقرير في Firebase (مسار مشترك)');
+                            const el = document.getElementById('syncStatus');
+                            if (el) {
+                                el.className = 'sync-status online';
+                                el.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> متصل';
+                            }
+                        })
+                        .catch((err) => {
+                            console.warn('⚠️ فشل حفظ التقرير في Firebase:', err);
+                            const el = document.getElementById('syncStatus');
+                            if (el) {
+                                el.className = 'sync-status offline';
+                                el.innerHTML = '<i class="fas fa-wifi"></i> غير متصل (مخزّن محلياً)';
+                            }
+                        });
+                }
             }
         }
 
 
         // ================================================================
-        // 6. معالجة النص المقروء – معدل لاستخدام studentId
+        // 6. معالجة النص المقروء
         // ================================================================
         function processSpokenText(spoken) {
             if (!selectedStudentId) {
@@ -1341,7 +1383,6 @@
             document.getElementById('recordStatus').textContent = '✅ تحليل مكتمل';
 
             renderReport(result, selectedStudentId);
-            saveAllData();
         }
 
 
@@ -1504,7 +1545,7 @@
 
 
         // ================================================================
-        // 10. رفع الطلاب – مع إنشاء studentId ثابت
+        // 10. رفع الطلاب – مع إنشاء studentId وحفظ في المسار المشترك
         // ================================================================
         function handleFile(file) {
             const reader = new FileReader();
@@ -1515,7 +1556,6 @@
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
                     const rows = json.slice(1);
-                    // نمسح البيانات القديمة
                     students = [];
                     studentsData = {};
                     window.studentData = {};
@@ -1531,8 +1571,8 @@
                             section: row[2] ? String(row[2]).trim() : '',
                             teacher: row[3] ? String(row[3]).trim() : '',
                             school: row[4] ? String(row[4]).trim() : '',
-                            readingRecords: [],
-                            currentReport: null
+                            reports: [],
+                            latestReport: null
                         };
                         studentsData[studentId] = studentObj;
                         window.studentData[name] = {
@@ -1540,7 +1580,7 @@
                             section: studentObj.section,
                             teacher: studentObj.teacher,
                             school: studentObj.school,
-                            studentId: studentId // للربط
+                            studentId: studentId
                         };
                     }
 
@@ -1571,7 +1611,7 @@
 
 
         // ================================================================
-        // 11. عرض الطلاب – مع ربط كل طالب بـ studentId
+        // 11. عرض الطلاب
         // ================================================================
         function renderStudents() {
             const grid = document.getElementById('studentGrid');
@@ -1581,11 +1621,9 @@
                 grid.innerHTML = '<span class="text-muted">لا يوجد طلاب، قم برفع ملف Excel</span>';
                 return;
             }
-            // نعيد بناء قائمة students من البيانات
             students = [];
             studentIds.forEach(id => {
-                const name = studentsData[id].name;
-                students.push(name);
+                students.push(studentsData[id].name);
             });
 
             studentIds.forEach((id) => {
@@ -1616,8 +1654,9 @@
             }
         }
 
+
         // ================================================================
-        // 12. اختيار الطالب – جلب البيانات من Firebase أو المحلي
+        // 12. اختيار الطالب – جلب التقارير من المسار المشترك
         // ================================================================
         function selectStudent(studentId) {
             selectedStudentId = studentId;
@@ -1627,7 +1666,7 @@
                 return;
             }
 
-            // تحديث النموذج بالبيانات المحلية (أو السحابية)
+            // تحديث النموذج بالبيانات المحلية
             document.getElementById('selectedStudentDisplay').textContent = '👤 ' + student.name;
             document.getElementById('studentNameDisplay').value = student.name;
             document.getElementById('classGrade').value = student.grade || '';
@@ -1635,96 +1674,126 @@
             document.getElementById('teacherName').value = student.teacher || '';
             document.getElementById('schoolName').value = student.school || '';
 
-            // عرض آخر تقرير إن وجد
-            if (student.currentReport) {
-                const report = student.currentReport;
-                document.getElementById('statErrors').textContent = report.errors || 0;
-                document.getElementById('statAccuracy').textContent = (report.accuracy || 0) + '%';
-                document.getElementById('statWords').textContent = report.wordCount || 0;
-                document.getElementById('statMadd').textContent = report.details?.maddErrors || 0;
-                document.getElementById('recText').textContent = report.recommendation || '';
-
-                // تحديث الرسوم البيانية
-                updateCharts({
-                    errors: report.errors || 0,
-                    totalChars: report.wordCount || 1,
-                    details: report.details || {}
-                });
-
-                // عرض التقرير في قسم التقرير
-                document.getElementById('rStudent').textContent = student.name;
-                document.getElementById('rGrade').textContent = report.grade || '—';
-                document.getElementById('rSection').textContent = report.section || '—';
-                document.getElementById('rTeacher').textContent = report.teacher || '—';
-                document.getElementById('rSchool').textContent = report.school || '—';
-                document.getElementById('rTextTitle').textContent = report.textTitle || '—';
-                document.getElementById('rDate').textContent = report.date || '—';
-                document.getElementById('rStartTime').textContent = report.startTime || '—';
-                document.getElementById('rReportTime').textContent = report.reportTime || '—';
-                document.getElementById('rDuration').textContent = report.duration || '—';
-                document.getElementById('rWordCount').textContent = report.wordCount || '—';
-
-                const tbody = document.getElementById('skillsBody');
-                tbody.innerHTML = '';
-                const skillNames = ['مخارج الحروف', 'الحركات القصيرة', 'المدود', 'الشدة', 'السكون', 'الطلاقة القرائية'];
-                for (const name of skillNames) {
-                    const data = report.skills?.[name] || { score: 0, label: 'يحتاج علاج', cls: 'level-needs' };
-                    const tr = document.createElement('tr');
-                    tr.innerHTML =
-                        `<td>${name}</td><td>${data.score}%</td><td><span class="level-badge ${data.cls}">${data.label}</span></td>`;
-                    tbody.appendChild(tr);
-                }
-
-                document.getElementById('fluencySpeed').textContent = report.fluency?.wordsPerMinute || '—';
-                document.getElementById('fluencyStops').textContent = report.fluency?.stops || '—';
-                document.getElementById('fluencyRepeat').textContent = report.fluency?.repeats || '—';
-                const levelSpan = document.getElementById('fluencyLevel');
-                levelSpan.textContent = report.fluency?.level || '—';
-                levelSpan.className = 'badge-fluency ' + (report.fluency?.class || 'fluency-medium');
-
-                document.getElementById('challengeText').textContent = report.challenge || '';
-                document.getElementById('recommendationText').textContent = report.recommendation || '';
-
-                if (report.origRawWords && report.origRawWords.length > 0) {
-                    const highlighted = report.origRawWords.map((w, idx) => {
-                        const isCorrect = (idx < report.wordCorrect?.length) ? report.wordCorrect[idx] : true;
-                        return isCorrect ? w : `<mark>${w}</mark>`;
-                    }).join(' ');
-                    document.getElementById('originalText').innerHTML = highlighted;
-                }
-
-                currentReport = report;
+            // عرض آخر تقرير محلي إن وجد
+            if (student.latestReport) {
+                displayReport(student.latestReport);
             } else {
-                // لا يوجد تقرير – نضبط القيم الافتراضية
                 resetAnalysis();
             }
 
-            renderStudents(); // تحديث التظليل
+            renderStudents();
             document.getElementById('recText').textContent = 'تم اختيار ' + student.name + '، قم بتسجيل القراءة.';
-            saveAllData(); // حفظ التحديد
+            saveAllData();
 
-            // محاولة جلب أحدث البيانات من Firebase (إن كان متصلاً)
+            // جلب أحدث التقارير من Firebase (المسار المشترك)
             if (window.__firebaseReady && window.__user) {
                 const db = window.__db;
-                db.collection('users').doc(window.__user.uid).collection('students').doc(studentId).get()
+                // جلب بيانات الطالب الأساسية
+                db.collection('students').doc(studentId).get()
                     .then((doc) => {
                         if (doc.exists) {
-                            const cloudData = doc.data();
-                            // دمج البيانات السحابية مع المحلية (تحديث)
-                            studentsData[studentId] = { ...studentsData[studentId], ...cloudData };
-                            // إعادة عرض البيانات المحدثة
-                            selectStudent(studentId); // إعادة التحميل
+                            const data = doc.data();
+                            // تحديث البيانات الأساسية
+                            studentsData[studentId].grade = data.grade || studentsData[studentId].grade;
+                            studentsData[studentId].section = data.section || studentsData[studentId].section;
+                            studentsData[studentId].teacher = data.teacher || studentsData[studentId].teacher;
+                            studentsData[studentId].school = data.school || studentsData[studentId].school;
+                            // تحديث النموذج
+                            document.getElementById('classGrade').value = studentsData[studentId].grade;
+                            document.getElementById('classSection').value = studentsData[studentId].section;
+                            document.getElementById('teacherName').value = studentsData[studentId].teacher;
+                            document.getElementById('schoolName').value = studentsData[studentId].school;
+                        }
+                    })
+                    .catch((err) => console.debug('⏳ فشل جلب بيانات الطالب:', err.message));
+
+                // جلب التقارير (آخر 10 تقارير)
+                db.collection('students').doc(studentId).collection('reports')
+                    .orderBy('createdAt', 'desc')
+                    .limit(10)
+                    .get()
+                    .then((snapshot) => {
+                        const reports = [];
+                        snapshot.forEach(doc => {
+                            reports.push(doc.data());
+                        });
+                        if (reports.length > 0) {
+                            // تحديث البيانات المحلية بالتقارير السحابية
+                            studentsData[studentId].reports = reports;
+                            studentsData[studentId].latestReport = reports[0];
+                            // عرض أحدث تقرير
+                            displayReport(reports[0]);
+                            saveAllData();
                         }
                     })
                     .catch((err) => {
-                        console.debug('⏳ فشل جلب أحدث بيانات الطالب:', err.message);
+                        console.debug('⏳ فشل جلب التقارير:', err.message);
                     });
             }
         }
 
+        // دالة مساعدة لعرض التقرير في الواجهة
+        function displayReport(report) {
+            if (!report) return;
+            document.getElementById('statErrors').textContent = report.errors || 0;
+            document.getElementById('statAccuracy').textContent = (report.accuracy || 0) + '%';
+            document.getElementById('statWords').textContent = report.wordCount || 0;
+            document.getElementById('statMadd').textContent = report.details?.maddErrors || 0;
+            document.getElementById('recText').textContent = report.recommendation || '';
+
+            updateCharts({
+                errors: report.errors || 0,
+                totalChars: report.wordCount || 1,
+                details: report.details || {}
+            });
+
+            document.getElementById('rStudent').textContent = report.studentName || '—';
+            document.getElementById('rGrade').textContent = report.grade || '—';
+            document.getElementById('rSection').textContent = report.section || '—';
+            document.getElementById('rTeacher').textContent = report.teacher || '—';
+            document.getElementById('rSchool').textContent = report.school || '—';
+            document.getElementById('rTextTitle').textContent = report.textTitle || '—';
+            document.getElementById('rDate').textContent = report.date || '—';
+            document.getElementById('rStartTime').textContent = report.startTime || '—';
+            document.getElementById('rReportTime').textContent = report.reportTime || '—';
+            document.getElementById('rDuration').textContent = report.duration || '—';
+            document.getElementById('rWordCount').textContent = report.wordCount || '—';
+
+            const tbody = document.getElementById('skillsBody');
+            tbody.innerHTML = '';
+            const skillNames = ['مخارج الحروف', 'الحركات القصيرة', 'المدود', 'الشدة', 'السكون', 'الطلاقة القرائية'];
+            for (const name of skillNames) {
+                const data = report.skills?.[name] || { score: 0, label: 'يحتاج علاج', cls: 'level-needs' };
+                const tr = document.createElement('tr');
+                tr.innerHTML =
+                    `<td>${name}</td><td>${data.score}%</td><td><span class="level-badge ${data.cls}">${data.label}</span></td>`;
+                tbody.appendChild(tr);
+            }
+
+            document.getElementById('fluencySpeed').textContent = report.fluency?.wordsPerMinute || '—';
+            document.getElementById('fluencyStops').textContent = report.fluency?.stops || '—';
+            document.getElementById('fluencyRepeat').textContent = report.fluency?.repeats || '—';
+            const levelSpan = document.getElementById('fluencyLevel');
+            levelSpan.textContent = report.fluency?.level || '—';
+            levelSpan.className = 'badge-fluency ' + (report.fluency?.class || 'fluency-medium');
+
+            document.getElementById('challengeText').textContent = report.challenge || '';
+            document.getElementById('recommendationText').textContent = report.recommendation || '';
+
+            if (report.origRawWords && report.origRawWords.length > 0) {
+                const highlighted = report.origRawWords.map((w, idx) => {
+                    const isCorrect = (idx < report.wordCorrect?.length) ? report.wordCorrect[idx] : true;
+                    return isCorrect ? w : `<mark>${w}</mark>`;
+                }).join(' ');
+                document.getElementById('originalText').innerHTML = highlighted;
+            }
+
+            currentReport = report;
+        }
+
 
         // ================================================================
-        // 13. إعادة ضبط – لم تتغير
+        // 13. إعادة ضبط
         // ================================================================
         function resetAnalysis() {
             document.getElementById('statErrors').textContent = '0';
@@ -1795,8 +1864,8 @@
             };
 
             const studentRows = [
-                ['اسم الطالب:', currentReport.student, 'الصف / الفصل:', currentReport.grade + ' / ' + currentReport.section,
-                    'تاريخ الأداء:', currentReport.date
+                ['اسم الطالب:', currentReport.studentName, 'الصف / الفصل:', currentReport.grade + ' / ' + currentReport
+                    .section, 'تاريخ الأداء:', currentReport.date
                 ],
                 ['اسم المعلم:', currentReport.teacher, 'اسم المدرسة:', currentReport.school, 'وقت التقرير:', currentReport
                     .reportTime
@@ -2093,19 +2162,19 @@
             ];
 
             XLSX.utils.book_append_sheet(wb, ws, 'التقرير العلاجي الشامل');
-            XLSX.writeFile(wb, `تقرير_علاجي_${currentReport.student}_${currentReport.date.replace(/\//g, '-')}.xlsx`);
+            XLSX.writeFile(wb, `تقرير_علاجي_${currentReport.studentName}_${currentReport.date.replace(/\//g, '-')}.xlsx`);
         }
 
         document.getElementById('exportBtn').addEventListener('click', exportToExcel);
 
 
         // ================================================================
-        // 15. نظام الحفظ المزدوج (المحلي + السحابي) مع مزامنة لكل طالب
+        // 15. نظام الحفظ المزدوج (محلي + سحابي مشترك)
         // ================================================================
 
         function saveAllData() {
             try {
-                // حفظ بيانات الطلاب في localStorage
+                // حفظ في localStorage
                 const payload = {
                     studentsData: studentsData,
                     selectedStudentId: selectedStudentId,
@@ -2121,30 +2190,37 @@
                 };
                 localStorage.setItem('qiraati_app_state', JSON.stringify(payload));
 
-                // حفظ في Firestore (لكل طالب على حدة)
+                // المزامنة مع Firebase (المسار المشترك)
                 if (window.__firebaseReady && window.__user) {
                     const db = window.__db;
-                    const uid = window.__user.uid;
                     const batch = db.batch();
-                    const studentIds = Object.keys(studentsData);
-                    studentIds.forEach(id => {
-                        const studentRef = db.collection('users').doc(uid).collection('students').doc(id);
-                        batch.set(studentRef, studentsData[id], { merge: true });
+
+                    // حفظ بيانات كل طالب في students/{studentId}
+                    Object.keys(studentsData).forEach(id => {
+                        const student = studentsData[id];
+                        const studentRef = db.collection('students').doc(id);
+                        const dataToSave = {
+                            name: student.name,
+                            grade: student.grade || '',
+                            section: student.section || '',
+                            teacher: student.teacher || '',
+                            school: student.school || '',
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        // إذا كان هناك تقارير، نحفظ آخر تقرير كملخص
+                        if (student.latestReport) {
+                            dataToSave.latestReportSummary = {
+                                date: student.latestReport.date,
+                                accuracy: student.latestReport.accuracy,
+                                errors: student.latestReport.errors,
+                                fluency: student.latestReport.fluency?.level || '—'
+                            };
+                        }
+                        batch.set(studentRef, dataToSave, { merge: true });
+
+                        // حفظ التقارير في sub-collection (يتم حفظ كل تقرير بشكل فردي)
+                        // لكننا سنكتفي بحفظ التقارير عبر دالة renderReport التي تحفظ كل تقرير جديد
                     });
-                    // حفظ البيانات العامة (النص، النموذج)
-                    const metaRef = db.collection('users').doc(uid).collection('meta').doc('appState');
-                    batch.set(metaRef, {
-                        selectedStudentId: selectedStudentId,
-                        originalText: ORIGINAL_TEXT,
-                        formData: {
-                            classGrade: document.getElementById('classGrade').value || '',
-                            classSection: document.getElementById('classSection').value || '',
-                            teacherName: document.getElementById('teacherName').value || '',
-                            schoolName: document.getElementById('schoolName').value || '',
-                            textTitle: document.getElementById('textTitle').value || ''
-                        },
-                        lastUpdated: new Date().toISOString()
-                    }, { merge: true });
 
                     batch.commit()
                         .then(() => {
@@ -2179,71 +2255,95 @@
                 try { localData = JSON.parse(localRaw); } catch (e) { localData = null; }
             }
 
-            // 2. محاولة تحميل من Firestore
+            // 2. محاولة تحميل من Firebase (المسار المشترك)
             if (window.__firebaseReady && window.__user) {
                 const db = window.__db;
-                const uid = window.__user.uid;
 
-                // جلب جميع الطلاب
-                db.collection('users').doc(uid).collection('students').get()
+                // جلب جميع الطلاب من المسار المشترك
+                db.collection('students').get()
                     .then((snapshot) => {
                         const cloudStudents = {};
+                        const promises = [];
+
                         snapshot.forEach(doc => {
-                            cloudStudents[doc.id] = doc.data();
+                            const id = doc.id;
+                            const data = doc.data();
+                            cloudStudents[id] = {
+                                name: data.name || id,
+                                grade: data.grade || '',
+                                section: data.section || '',
+                                teacher: data.teacher || '',
+                                school: data.school || '',
+                                reports: [],
+                                latestReport: data.latestReportSummary ? {
+                                    date: data.latestReportSummary.date,
+                                    accuracy: data.latestReportSummary.accuracy,
+                                    errors: data.latestReportSummary.errors,
+                                    fluency: data.latestReportSummary.fluency
+                                } : null
+                            };
+                            // جلب التقارير لكل طالب
+                            const promise = db.collection('students').doc(id).collection('reports')
+                                .orderBy('createdAt', 'desc')
+                                .limit(10)
+                                .get()
+                                .then((reportsSnapshot) => {
+                                    const reports = [];
+                                    reportsSnapshot.forEach(reportDoc => {
+                                        reports.push(reportDoc.data());
+                                    });
+                                    if (reports.length > 0) {
+                                        cloudStudents[id].reports = reports;
+                                        cloudStudents[id].latestReport = reports[0];
+                                    }
+                                })
+                                .catch((err) => console.debug('⏳ فشل جلب تقارير الطالب:', err.message));
+                            promises.push(promise);
                         });
 
-                        // جلب البيانات العامة
-                        db.collection('users').doc(uid).collection('meta').doc('appState').get()
-                            .then((metaDoc) => {
-                                const cloudMeta = metaDoc.exists ? metaDoc.data() : {};
+                        Promise.all(promises).then(() => {
+                            // دمج البيانات: السحابي له الأولوية
+                            let mergedData = {
+                                studentsData: {},
+                                selectedStudentId: null,
+                                originalText: ORIGINAL_TEXT,
+                                formData: {}
+                            };
 
-                                // دمج البيانات: السحابي له الأولوية
-                                let mergedData = { studentsData: {}, selectedStudentId: null,
-                                    originalText: ORIGINAL_TEXT, formData: {} };
-                                let cloudTime = cloudMeta.lastUpdated ? new Date(cloudMeta.lastUpdated)
-                                    .getTime() : 0;
-                                let localTime = localData?.lastUpdated ? new Date(localData.lastUpdated)
-                                    .getTime() : 0;
-
-                                if (cloudTime >= localTime || Object.keys(cloudStudents).length > 0) {
-                                    // السحابي أحدث أو يوجد بيانات سحابية
-                                    mergedData.studentsData = cloudStudents;
-                                    mergedData.selectedStudentId = cloudMeta.selectedStudentId || null;
-                                    if (cloudMeta.originalText) {
-                                        mergedData.originalText = cloudMeta.originalText;
-                                    }
-                                    mergedData.formData = cloudMeta.formData || {};
-                                    // تحديث localStorage بالبيانات السحابية
-                                    localStorage.setItem('qiraati_app_state', JSON.stringify({
-                                        studentsData: cloudStudents,
-                                        selectedStudentId: cloudMeta.selectedStudentId || null,
-                                        originalText: cloudMeta.originalText || ORIGINAL_TEXT,
-                                        formData: cloudMeta.formData || {},
-                                        lastUpdated: cloudMeta.lastUpdated || new Date().toISOString()
-                                    }));
-                                } else if (localData) {
-                                    // المحلي أحدث
-                                    mergedData = localData;
-                                    // رفع المحلي للسحاب
-                                    saveAllData();
+                            // إذا كانت هناك بيانات سحابية، نستخدمها
+                            if (Object.keys(cloudStudents).length > 0) {
+                                mergedData.studentsData = cloudStudents;
+                                // نأخذ selectedStudentId من المحلي إذا كان موجوداً
+                                if (localData?.selectedStudentId && cloudStudents[localData.selectedStudentId]) {
+                                    mergedData.selectedStudentId = localData.selectedStudentId;
+                                } else {
+                                    mergedData.selectedStudentId = Object.keys(cloudStudents)[0] || null;
                                 }
+                                // نأخذ النص من المحلي أو السحابي
+                                mergedData.originalText = localData?.originalText || ORIGINAL_TEXT;
+                                mergedData.formData = localData?.formData || {};
+                                // تحديث localStorage
+                                localStorage.setItem('qiraati_app_state', JSON.stringify({
+                                    studentsData: cloudStudents,
+                                    selectedStudentId: mergedData.selectedStudentId,
+                                    originalText: mergedData.originalText,
+                                    formData: mergedData.formData,
+                                    lastUpdated: new Date().toISOString()
+                                }));
+                            } else if (localData) {
+                                // لا توجد بيانات سحابية، نستخدم المحلي
+                                mergedData = localData;
+                                // رفع المحلي للسحاب
+                                saveAllData();
+                            }
 
-                                // تطبيق البيانات
-                                applyData(mergedData);
-                                window.__dataLoaded = true;
-                                updateUIFromData();
-                            })
-                            .catch((err) => {
-                                console.debug('⏳ فشل تحميل البيانات العامة:', err.message);
-                                if (localData) {
-                                    applyData(localData);
-                                    window.__dataLoaded = true;
-                                    updateUIFromData();
-                                }
-                            });
+                            applyData(mergedData);
+                            window.__dataLoaded = true;
+                            updateUIFromData();
+                        });
                     })
                     .catch((err) => {
-                        console.debug('⏳ فشل تحميل الطلاب:', err.message);
+                        console.debug('⏳ فشل تحميل الطلاب من المسار المشترك:', err.message);
                         if (localData) {
                             applyData(localData);
                             window.__dataLoaded = true;
@@ -2258,7 +2358,7 @@
                 window.__dataLoaded = true;
             }
 
-            // إذا لم توجد بيانات بعد 3 ثوانٍ، نضع بيانات تجريبية
+            // إذا لم توجد بيانات، نضع طالباً تجريبياً
             setTimeout(() => {
                 if (Object.keys(studentsData).length === 0) {
                     const demoId = generateStudentId();
@@ -2268,8 +2368,8 @@
                         section: '2',
                         teacher: 'محمد علي',
                         school: 'مدرسة النور',
-                        readingRecords: [],
-                        currentReport: null
+                        reports: [],
+                        latestReport: null
                     };
                     selectedStudentId = demoId;
                     saveAllData();
@@ -2286,12 +2386,10 @@
             }, 3000);
         }
 
-        // تطبيق البيانات المحملة
         function applyData(data) {
             if (!data) return;
             if (data.studentsData) {
                 studentsData = data.studentsData;
-                // تحديث window.studentData للتوافق
                 window.studentData = {};
                 Object.keys(studentsData).forEach(id => {
                     const s = studentsData[id];
@@ -2320,7 +2418,6 @@
             }
         }
 
-        // تحديث الواجهة
         function updateUIFromData() {
             renderStudents();
             if (selectedStudentId && studentsData[selectedStudentId]) {
@@ -2352,9 +2449,9 @@
         loadAllData();
         setInterval(saveAllData, 30000);
 
-        console.log('✅ Smart Reading – تم إصلاح المزامنة بين الأجهزة بنجاح.');
-        console.log('📌 البيانات تُحفظ في Firebase تحت users/{uid}/students/{studentId}');
-        console.log('📌 كل جهاز يشارك نفس البيانات عبر الحساب المجهول.');
+        console.log('✅ Smart Reading – نظام التقارير المشتركة في Firebase يعمل بنجاح.');
+        console.log('📌 المسار المشترك: students/{studentId}/reports/{reportId}');
+        console.log('📌 جميع الأجهزة تشارك نفس التقارير عبر المسار المشترك.');
     </script>
 </body>
 </html>
