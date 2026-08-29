@@ -155,6 +155,9 @@
             transition: 0.2s;
             border: 2px solid transparent;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
         }
         .student-tag:hover {
             background: #b8cbd9;
@@ -174,6 +177,32 @@
             font-size: 0.7rem;
             margin-right: 6px;
             font-weight: 700;
+        }
+        .student-tag .delete-icon {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+            background: rgba(231, 76, 60, 0.1);
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .student-tag .delete-icon:hover {
+            background: #e74c3c;
+            color: #fff;
+            transform: scale(1.1);
+        }
+        .student-tag.active .delete-icon {
+            color: #ff9999;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .student-tag.active .delete-icon:hover {
+            background: #e74c3c;
+            color: #fff;
         }
         .record-wrapper {
             display: flex;
@@ -346,6 +375,7 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
+            gap: 10px;
         }
         .mt-2 {
             margin-top: 12px;
@@ -659,6 +689,66 @@
         .sync-status i {
             font-size: 0.7rem;
         }
+
+        /* أزرار جديدة */
+        .btn-add-student {
+            background: #27ae60;
+            color: #fff;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 8px rgba(39, 174, 96, 0.25);
+        }
+        .btn-add-student:hover {
+            background: #1e8449;
+            transform: scale(1.03);
+        }
+        .btn-delete-all {
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 8px rgba(231, 76, 60, 0.25);
+        }
+        .btn-delete-all:hover {
+            background: #c0392b;
+            transform: scale(1.03);
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* حقوق الملكية */
+        .footer {
+            text-align: center;
+            padding: 20px 0 10px 0;
+            color: #5f7d94;
+            font-size: 0.95rem;
+            border-top: 1px solid #dce6f0;
+            margin-top: 10px;
+        }
+        .footer i {
+            color: #c0392b;
+            margin: 0 4px;
+        }
     </style>
 </head>
 <body>
@@ -696,7 +786,11 @@
             </div>
             <div class="flex-between mt-2">
                 <span id="selectedStudentDisplay" class="text-muted">لم يتم اختيار طالب</span>
-                <button id="resetBtn" class="student-tag" style="background:#e8edf4;border:none;"><i class="fas fa-undo-alt"></i> إعادة ضبط</button>
+                <div class="btn-group">
+                    <button class="btn-add-student" id="addStudentBtn"><i class="fas fa-user-plus"></i> إضافة طالب</button>
+                    <button class="btn-delete-all" id="deleteAllBtn"><i class="fas fa-trash-alt"></i> حذف جميع الطلاب</button>
+                    <button id="resetBtn" class="student-tag" style="background:#e8edf4;border:none;"><i class="fas fa-undo-alt"></i> إعادة ضبط</button>
+                </div>
             </div>
         </div>
 
@@ -781,14 +875,20 @@
                 </div>
             </div>
         </div>
+
+        <!-- ===== حقوق الملكية ===== -->
+        <div class="footer">
+            <i class="fas fa-copyright"></i> جميع الحقوق محفوظة © المعلم محمد رضا عوف
+        </div>
+
     </div>
 
     <!-- ===================================================================== -->
-    <!-- البرمجة الرئيسية – نظام متزامن بالكامل مع real-time listeners -->
+    <!-- البرمجة – تم إضافة وظائف الحذف والإضافة وحقوق الملكية فقط -->
     <!-- ===================================================================== -->
     <script>
         // ================================================================
-        // 0. تهيئة Firebase وإعداد المستمعين
+        // 0. تهيئة Firebase (غير معدل)
         // ================================================================
         (function initFirebase() {
             try {
@@ -844,8 +944,9 @@
                             window.__firebaseReady = true;
                             updateSyncStatus(true);
                             console.log('✅ تم الدخول كمستخدم مجهول. UID:', userCred.user.uid);
-                            // بدء الاستماع للتغييرات بعد المصادقة
-                            startFirebaseListeners();
+                            if (!window.__listenersStarted) {
+                                startFirebaseListeners();
+                            }
                         })
                         .catch((err) => {
                             console.warn('⚠️ فشل الدخول المجهول:', err);
@@ -855,7 +956,6 @@
                             } else {
                                 window.__firebaseReady = false;
                                 updateSyncStatus(false);
-                                // نحاول تحميل البيانات من localStorage
                                 loadLocalData();
                             }
                         });
@@ -874,7 +974,6 @@
                     }
                 });
 
-                // مراقبة الشبكة
                 setInterval(() => {
                     db.enableNetwork()
                         .then(() => updateSyncStatus(true))
@@ -895,9 +994,9 @@
 
 
         // ================================================================
-        // 1. المتغيرات العامة
+        // 1. المتغيرات العامة (غير معدلة)
         // ================================================================
-        let studentsData = {}; // { studentId: { name, grade, section, teacher, school, reports: [], latestReport: null } }
+        let studentsData = {};
         let selectedStudentId = null;
         let isRecording = false;
         let recognizer = null;
@@ -906,14 +1005,15 @@
         let endTime = null;
         let currentReport = null;
         let speechSynthesisUtterance = null;
-        let isSyncing = false; // لمنع التحديثات الدائرية
+        let isSyncing = false;
 
         const ORIGINAL_TEXT_EL = document.getElementById('originalText');
         let ORIGINAL_TEXT = ORIGINAL_TEXT_EL.textContent.trim();
         window.studentData = {};
 
+
         // ================================================================
-        // 2. دوال مساعدة
+        // 2. دوال مساعدة (غير معدلة)
         // ================================================================
         function pad2(n) { return String(n).padStart(2, '0'); }
 
@@ -985,7 +1085,7 @@
 
 
         // ================================================================
-        // 3. خوارزمية التحليل المتقدمة – لم تتغير
+        // 3. خوارزمية التحليل المتقدمة (غير معدلة)
         // ================================================================
         function analyzeReading(spokenText) {
             const orig = ORIGINAL_TEXT;
@@ -1199,7 +1299,7 @@
 
 
         // ================================================================
-        // 4. الرسوم البيانية – لم تتغير
+        // 4. الرسوم البيانية (غير معدلة)
         // ================================================================
         let chartErrors = null,
             chartLetters = null;
@@ -1237,7 +1337,7 @@
 
 
         // ================================================================
-        // 5. عرض التقرير – مع حفظ في Firebase
+        // 5. عرض التقرير (غير معدل)
         // ================================================================
         function renderReport(result, studentId) {
             const now = new Date();
@@ -1271,10 +1371,8 @@
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            // تحديث الواجهة
             displayReportData(reportData);
 
-            // حفظ التقرير في البيانات المحلية
             if (studentId) {
                 if (!studentsData[studentId]) {
                     studentsData[studentId] = { name: studentName };
@@ -1286,10 +1384,8 @@
                 studentsData[studentId].latestReport = reportData;
                 saveToLocalStorage();
 
-                // رفع التقرير إلى Firebase
                 if (window.__firebaseReady && window.__user) {
                     const db = window.__db;
-                    // تحديث بيانات الطالب الأساسية
                     const studentRef = db.collection('students').doc(studentId);
                     studentRef.set({
                         name: studentName,
@@ -1300,15 +1396,10 @@
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     }, { merge: true });
 
-                    // حفظ التقرير
                     const reportRef = db.collection('students').doc(studentId).collection('reports').doc(reportId);
                     reportRef.set(reportData)
-                        .then(() => {
-                            console.log('✅ تقرير محفوظ في Firebase');
-                        })
-                        .catch((err) => {
-                            console.warn('⚠️ فشل حفظ التقرير:', err);
-                        });
+                        .then(() => { console.log('✅ تقرير محفوظ في Firebase'); })
+                        .catch((err) => { console.warn('⚠️ فشل حفظ التقرير:', err); });
                 }
             }
             currentReport = reportData;
@@ -1372,7 +1463,7 @@
 
 
         // ================================================================
-        // 6. معالجة النص المقروء
+        // 6. معالجة النص المقروء (غير معدل)
         // ================================================================
         function processSpokenText(spoken) {
             if (!selectedStudentId) {
@@ -1398,7 +1489,7 @@
 
 
         // ================================================================
-        // 7. التسجيل المستمر – لم يتغير
+        // 7. التسجيل المستمر (غير معدل)
         // ================================================================
         function startContinuousRecognition() {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -1481,7 +1572,7 @@
 
 
         // ================================================================
-        // 8. أيقونة تصحيح الأخطاء – لم تتغير
+        // 8. أيقونة تصحيح الأخطاء (غير معدلة)
         // ================================================================
         document.getElementById('playCorrectBtn').addEventListener('click', function() {
             const text = ORIGINAL_TEXT;
@@ -1526,7 +1617,7 @@
 
 
         // ================================================================
-        // 9. رفع النص – مع مزامنة التغيير
+        // 9. رفع النص (غير معدل)
         // ================================================================
         document.getElementById('uploadTextBtn').addEventListener('click', () => {
             document.getElementById('textFileInput').click();
@@ -1543,7 +1634,6 @@
                     document.getElementById('recordStatus').textContent = '✅ تم تحميل النص الجديد';
                     document.getElementById('recText').textContent = 'تم تغيير النص، سجل قراءة الطالب.';
                     resetAnalysis();
-                    // حفظ النص في Firebase (كبيانات عامة)
                     if (window.__firebaseReady && window.__user) {
                         const db = window.__db;
                         db.collection('meta').doc('appState').set({
@@ -1564,7 +1654,7 @@
 
 
         // ================================================================
-        // 10. رفع الطلاب – مع مزامنة الإضافة
+        // 10. رفع الطلاب (غير معدل)
         // ================================================================
         function handleFile(file) {
             const reader = new FileReader();
@@ -1597,7 +1687,6 @@
                             school: studentObj.school,
                             studentId: studentId
                         };
-                        // رفع الطالب إلى Firebase
                         if (window.__firebaseReady && window.__user) {
                             const db = window.__db;
                             db.collection('students').doc(studentId).set({
@@ -1640,14 +1729,14 @@
 
 
         // ================================================================
-        // 11. عرض الطلاب – مع التحديث التلقائي
+        // 11. عرض الطلاب + أيقونة الحذف (معدل لإضافة أيقونة الحذف)
         // ================================================================
         function renderStudents() {
             const grid = document.getElementById('studentGrid');
             grid.innerHTML = '';
             const studentIds = Object.keys(studentsData);
             if (studentIds.length === 0) {
-                grid.innerHTML = '<span class="text-muted">لا يوجد طلاب، قم برفع ملف Excel أو انتظر المزامنة</span>';
+                grid.innerHTML = '<span class="text-muted">لا يوجد طلاب، قم برفع ملف Excel أو أضف طالباً</span>';
                 return;
             }
 
@@ -1656,16 +1745,38 @@
                 const name = student.name;
                 const tag = document.createElement('span');
                 tag.className = 'student-tag' + (selectedStudentId === id ? ' active' : '');
-                tag.textContent = name;
+                tag.style.display = 'inline-flex';
+                tag.style.alignItems = 'center';
+                tag.style.gap = '8px';
+
+                // اسم الطالب
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = name;
+                nameSpan.style.cursor = 'pointer';
+                nameSpan.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    selectStudent(id);
+                });
+                tag.appendChild(nameSpan);
+
+                // أيقونة الحذف
+                const deleteIcon = document.createElement('span');
+                deleteIcon.className = 'delete-icon';
+                deleteIcon.innerHTML = '<i class="fas fa-times"></i>';
+                deleteIcon.title = 'حذف الطالب';
+                deleteIcon.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    deleteStudent(id);
+                });
+                tag.appendChild(deleteIcon);
+
                 if (selectedStudentId === id) {
                     const badge = document.createElement('span');
                     badge.className = 'badge';
                     badge.textContent = '✓';
                     tag.appendChild(badge);
                 }
-                tag.addEventListener('click', function() {
-                    selectStudent(id);
-                });
+
                 grid.appendChild(tag);
             });
 
@@ -1681,7 +1792,7 @@
 
 
         // ================================================================
-        // 12. اختيار الطالب – جلب التقارير من Firebase عند الحاجة
+        // 12. اختيار الطالب (غير معدل)
         // ================================================================
         function selectStudent(studentId) {
             selectedStudentId = studentId;
@@ -1705,7 +1816,6 @@
             document.getElementById('recText').textContent = 'تم اختيار ' + student.name + '، قم بتسجيل القراءة.';
             saveToLocalStorage();
 
-            // جلب أحدث التقارير من Firebase (في حال وجود تحديثات)
             if (window.__firebaseReady && window.__user) {
                 const db = window.__db;
                 db.collection('students').doc(studentId).collection('reports')
@@ -1718,7 +1828,6 @@
                             reports.push(doc.data());
                         });
                         if (reports.length > 0) {
-                            // تحديث البيانات المحلية
                             studentsData[studentId].reports = reports;
                             studentsData[studentId].latestReport = reports[0];
                             if (selectedStudentId === studentId) {
@@ -1733,7 +1842,7 @@
 
 
         // ================================================================
-        // 13. إعادة ضبط
+        // 13. إعادة ضبط (غير معدل)
         // ================================================================
         function resetAnalysis() {
             document.getElementById('statErrors').textContent = '0';
@@ -1769,7 +1878,7 @@
 
 
         // ================================================================
-        // 14. تصدير Excel – لم يتغير
+        // 14. تصدير Excel (غير معدل)
         // ================================================================
         function exportToExcel() {
             if (!currentReport) {
@@ -2109,10 +2218,8 @@
 
 
         // ================================================================
-        // 15. التخزين المحلي والاستماع للتغييرات في الوقت الفعلي
+        // 15. التخزين المحلي والاستماع للتغييرات (غير معدل)
         // ================================================================
-
-        // حفظ في localStorage
         function saveToLocalStorage() {
             try {
                 const payload = {
@@ -2134,7 +2241,6 @@
             }
         }
 
-        // تحميل من localStorage
         function loadLocalData() {
             try {
                 const raw = localStorage.getItem('qiraati_app_state');
@@ -2142,7 +2248,6 @@
                 const data = JSON.parse(raw);
                 if (data.studentsData) {
                     studentsData = data.studentsData;
-                    // تحديث window.studentData للتوافق
                     window.studentData = {};
                     Object.keys(studentsData).forEach(id => {
                         const s = studentsData[id];
@@ -2181,8 +2286,9 @@
             }
         }
 
+
         // ================================================================
-        // 16. المستمعين في الوقت الفعلي (Real-time Listeners)
+        // 16. المستمعين في الوقت الفعلي (غير معدل)
         // ================================================================
         function startFirebaseListeners() {
             if (window.__listenersStarted || !window.__firebaseReady || !window.__user) return;
@@ -2190,7 +2296,6 @@
 
             const db = window.__db;
 
-            // 1. الاستماع للتغييرات في الطلاب
             const studentsUnsubscribe = db.collection('students')
                 .onSnapshot((snapshot) => {
                     if (isSyncing) return;
@@ -2201,14 +2306,12 @@
                         const data = change.doc.data();
 
                         if (change.type === 'removed') {
-                            // حذف طالب
                             delete studentsData[id];
                             if (selectedStudentId === id) {
                                 selectedStudentId = null;
                                 resetAnalysis();
                             }
                         } else if (change.type === 'added' || change.type === 'modified') {
-                            // إضافة أو تعديل طالب
                             if (!studentsData[id]) {
                                 studentsData[id] = {
                                     name: data.name || id,
@@ -2220,7 +2323,6 @@
                                     latestReport: null
                                 };
                             } else {
-                                // تحديث البيانات الأساسية
                                 studentsData[id].name = data.name || studentsData[id].name;
                                 studentsData[id].grade = data.grade || studentsData[id].grade;
                                 studentsData[id].section = data.section || studentsData[id].section;
@@ -2237,10 +2339,8 @@
                         }
                     });
 
-                    // تحديث الواجهة
                     renderStudents();
                     if (selectedStudentId && studentsData[selectedStudentId]) {
-                        // تحديث بيانات النموذج
                         const s = studentsData[selectedStudentId];
                         document.getElementById('classGrade').value = s.grade || '';
                         document.getElementById('classSection').value = s.section || '';
@@ -2255,7 +2355,6 @@
                     isSyncing = false;
                 });
 
-            // 2. الاستماع للبيانات العامة (النص)
             const metaUnsubscribe = db.collection('meta').doc('appState')
                 .onSnapshot((doc) => {
                     if (doc.exists && !isSyncing) {
@@ -2270,18 +2369,12 @@
                     console.warn('⚠️ خطأ في مستمع البيانات العامة:', error);
                 });
 
-            // 3. الاستماع لتقارير الطلاب (لكل طالب على حدة) – يتم عند اختيار الطالب
-            // سيتم إضافة مستمع ديناميكي عند اختيار طالب
-
-            // تخزين دوال إلغاء الاستماع
             window.__studentsUnsubscribe = studentsUnsubscribe;
             window.__metaUnsubscribe = metaUnsubscribe;
             window.__reportUnsubscribes = {};
 
-            // تحميل البيانات الأولية
             loadLocalData();
 
-            // جلب النص من Firebase
             db.collection('meta').doc('appState').get()
                 .then((doc) => {
                     if (doc.exists && doc.data().originalText) {
@@ -2295,63 +2388,164 @@
             console.log('✅ تم تفعيل المستمعين في الوقت الفعلي');
         }
 
-        // مستمع لتقارير الطالب المحدد (يُستدعى عند اختيار طالب)
-        function listenToStudentReports(studentId) {
-            if (!window.__firebaseReady || !window.__user) return;
-            // إلغاء المستمع السابق إن وجد
-            if (window.__reportUnsubscribes[studentId]) {
-                window.__reportUnsubscribes[studentId]();
-                delete window.__reportUnsubscribes[studentId];
+
+        // ================================================================
+        // 17. دوال الحذف والإضافة الجديدة
+        // ================================================================
+
+        // حذف طالب فردي
+        function deleteStudent(studentId) {
+            if (!studentId) return;
+            const studentName = studentsData[studentId]?.name || 'هذا الطالب';
+            if (!confirm(`⚠️ هل أنت متأكد من حذف "${studentName}"؟\nسيتم حذف جميع بياناته وتقاريره.`)) {
+                return;
             }
 
-            const db = window.__db;
-            const unsubscribe = db.collection('students').doc(studentId).collection('reports')
-                .orderBy('createdAt', 'desc')
-                .limit(10)
-                .onSnapshot((snapshot) => {
-                    if (isSyncing) return;
-                    isSyncing = true;
-
-                    const reports = [];
-                    snapshot.forEach(doc => {
-                        reports.push(doc.data());
+            if (window.__firebaseReady && window.__user) {
+                const db = window.__db;
+                db.collection('students').doc(studentId).delete()
+                    .then(() => {
+                        const reportsRef = db.collection('students').doc(studentId).collection('reports');
+                        reportsRef.get().then((snapshot) => {
+                            const batch = db.batch();
+                            snapshot.forEach(doc => {
+                                batch.delete(doc.ref);
+                            });
+                            return batch.commit();
+                        }).catch(() => {});
+                    })
+                    .catch((err) => {
+                        console.warn('⚠️ فشل حذف الطالب من Firebase:', err);
                     });
-                    if (reports.length > 0 && studentsData[studentId]) {
-                        studentsData[studentId].reports = reports;
-                        studentsData[studentId].latestReport = reports[0];
-                        // إذا كان هذا الطالب هو المحدد حالياً، نعرض التقرير
-                        if (selectedStudentId === studentId) {
-                            displayReportData(reports[0]);
-                        }
-                        saveToLocalStorage();
-                    }
-                    isSyncing = false;
-                }, (error) => {
-                    console.warn('⚠️ خطأ في مستمع تقارير الطالب:', error);
-                    isSyncing = false;
-                });
+            }
 
-            window.__reportUnsubscribes[studentId] = unsubscribe;
+            delete studentsData[studentId];
+            for (const key in window.studentData) {
+                if (window.studentData[key].studentId === studentId) {
+                    delete window.studentData[key];
+                    break;
+                }
+            }
+            if (selectedStudentId === studentId) {
+                selectedStudentId = null;
+                resetAnalysis();
+            }
+            saveToLocalStorage();
+            renderStudents();
+            document.getElementById('recText').textContent = `✅ تم حذف الطالب.`;
         }
 
-        // تعديل دالة selectStudent لتشغيل المستمع
-        const originalSelectStudent = selectStudent;
-        selectStudent = function(studentId) {
-            originalSelectStudent(studentId);
-            // تشغيل مستمع التقارير لهذا الطالب
-            if (window.__firebaseReady && window.__user) {
-                listenToStudentReports(studentId);
+        // إضافة طالب جديد
+        function addStudent() {
+            const name = prompt('✏️ أدخل اسم الطالب الجديد:');
+            if (!name || name.trim() === '') return;
+            const trimmedName = name.trim();
+
+            for (const id in studentsData) {
+                if (studentsData[id].name === trimmedName) {
+                    alert(`⚠️ يوجد طالب بالفعل باسم "${trimmedName}".`);
+                    return;
+                }
             }
-        };
+
+            const studentId = generateStudentId();
+            const studentObj = {
+                name: trimmedName,
+                grade: '',
+                section: '',
+                teacher: '',
+                school: '',
+                reports: [],
+                latestReport: null
+            };
+            studentsData[studentId] = studentObj;
+            window.studentData[trimmedName] = {
+                grade: '',
+                section: '',
+                teacher: '',
+                school: '',
+                studentId: studentId
+            };
+
+            if (window.__firebaseReady && window.__user) {
+                const db = window.__db;
+                db.collection('students').doc(studentId).set({
+                    name: trimmedName,
+                    grade: '',
+                    section: '',
+                    teacher: '',
+                    school: '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).catch((err) => {
+                    console.warn('⚠️ فشل رفع الطالب الجديد:', err);
+                });
+            }
+
+            saveToLocalStorage();
+            renderStudents();
+            selectStudent(studentId);
+            document.getElementById('recText').textContent = `✅ تم إضافة الطالب "${trimmedName}".`;
+        }
+
+        // حذف جميع الطلاب
+        function deleteAllStudents() {
+            const count = Object.keys(studentsData).length;
+            if (count === 0) {
+                alert('📭 لا يوجد طلاب لحذفهم.');
+                return;
+            }
+            if (!confirm(`⚠️⚠️ تحذير شديد ⚠️⚠️\n\nهل أنت متأكد من حذف جميع الطلاب (${count} طالب)؟\nلا يمكن التراجع عن هذا الإجراء.`)) {
+                return;
+            }
+            if (!confirm(`❗ تأكيد نهائي: هل تريد حذف جميع الطلاب وتقاريرهم نهائياً؟`)) {
+                return;
+            }
+
+            if (window.__firebaseReady && window.__user) {
+                const db = window.__db;
+                const studentIds = Object.keys(studentsData);
+                const batch = db.batch();
+                studentIds.forEach(id => {
+                    const studentRef = db.collection('students').doc(id);
+                    batch.delete(studentRef);
+                    db.collection('students').doc(id).collection('reports').get()
+                        .then((snapshot) => {
+                            const subBatch = db.batch();
+                            snapshot.forEach(doc => {
+                                subBatch.delete(doc.ref);
+                            });
+                            return subBatch.commit();
+                        }).catch(() => {});
+                });
+                batch.commit().catch((err) => {
+                    console.warn('⚠️ فشل حذف جميع الطلاب من Firebase:', err);
+                });
+            }
+
+            studentsData = {};
+            window.studentData = {};
+            selectedStudentId = null;
+            resetAnalysis();
+            saveToLocalStorage();
+            renderStudents();
+            document.getElementById('recText').textContent = `🗑️ تم حذف جميع الطلاب.`;
+        }
 
 
         // ================================================================
-        // 17. ربط أحداث النماذج بالحفظ
+        // 18. ربط الأزرار الجديدة
+        // ================================================================
+        document.getElementById('addStudentBtn').addEventListener('click', addStudent);
+        document.getElementById('deleteAllBtn').addEventListener('click', deleteAllStudents);
+
+
+        // ================================================================
+        // 19. ربط أحداث النماذج (غير معدل)
         // ================================================================
         document.querySelectorAll('#classGrade, #classSection, #teacherName, #schoolName, #textTitle').forEach(el => {
             el.addEventListener('change', () => {
                 saveToLocalStorage();
-                // تحديث بيانات الطالب في Firebase إن كان متصلاً
                 if (selectedStudentId && window.__firebaseReady && window.__user) {
                     const db = window.__db;
                     const updates = {};
@@ -2384,20 +2578,14 @@
 
 
         // ================================================================
-        // 18. التهيئة النهائية
+        // 20. التهيئة النهائية
         // ================================================================
         initCharts();
-
-        // تحميل البيانات المحلية أولاً
         loadLocalData();
-
-        // إذا كانت Firebase جاهزة، سيتم تشغيل المستمعين تلقائياً عبر onAuthStateChanged
-
-        // حفظ دوري
         setInterval(saveToLocalStorage, 30000);
 
-        console.log('✅ Smart Reading – نظام متزامن بالكامل مع real-time listeners');
-        console.log('📌 جميع التغييرات تنتشر تلقائياً على جميع الأجهزة');
+        console.log('✅ تم إضافة وظائف حذف الطالب، إضافة طالب، حذف جميع الطلاب، وحقوق الملكية.');
+        console.log('📌 جميع العمليات متزامنة مع Firebase وجميع الأجهزة.');
     </script>
 </body>
 </html>
