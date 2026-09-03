@@ -234,7 +234,6 @@
         .stat-total .stat-number {
             color: #0d6efd;
         }
-        /* تنسيق التوصيات التفصيلية */
         .detailed-recommendations {
             background: #f0f7ff;
             border-radius: 14px;
@@ -279,18 +278,6 @@
             display: inline-block;
             margin-left: 4px;
         }
-        .detailed-recommendations .rec-group-title {
-            font-weight: 700;
-            color: #0d6efd;
-            margin-top: 10px;
-            margin-bottom: 4px;
-            font-size: 0.95rem;
-        }
-        .detailed-recommendations .no-errors {
-            color: #6c757d;
-            font-style: italic;
-            padding: 8px 0;
-        }
         .detailed-recommendations .error-count-badge {
             background: #dc3545;
             color: white;
@@ -301,29 +288,260 @@
             display: inline-block;
             margin-right: 8px;
         }
+        .student-bulb-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 12px 0;
+            justify-content: flex-start;
+        }
+        .student-bulb-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 30px;
+            padding: 6px 18px 6px 12px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #212529;
+            min-width: 100px;
+            justify-content: center;
+            user-select: none;
+        }
+        .student-bulb-item:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+            transform: scale(1.03);
+        }
+        .student-bulb-item.active {
+            border-color: #0d6efd;
+            background: #cfe2ff;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+        }
+        .student-bulb-item .bulb {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 2px solid #ced4da;
+            transition: all 0.3s ease;
+        }
+        .student-bulb-item .bulb.status-read {
+            background: #198754;
+            border-color: #198754;
+            box-shadow: 0 0 8px rgba(25, 135, 84, 0.4);
+        }
+        .student-bulb-item .bulb.status-unread {
+            background: #e9ecef;
+            border-color: #ced4da;
+        }
+        .student-bulb-item .student-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+        .student-bulb-item .read-badge {
+            font-size: 0.65rem;
+            background: #198754;
+            color: white;
+            padding: 1px 8px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        .student-bulb-item .unread-badge {
+            font-size: 0.65rem;
+            background: #6c757d;
+            color: white;
+            padding: 1px 8px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        .bulb-section-title {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .bulb-select-hint {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-right: 8px;
+        }
+        .no-students-msg {
+            color: #adb5bd;
+            padding: 20px 0;
+            text-align: center;
+            font-style: italic;
+        }
+        .import-class-row {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            border: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .import-class-row label {
+            font-weight: 700;
+            color: #1e3d59;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+        .import-class-row select {
+            flex: 1;
+            min-width: 150px;
+            max-width: 280px;
+        }
+        .import-class-row .import-hint {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-right: auto;
+        }
+        .class-management-card {
+            border-right: 4px solid #0d6efd;
+            margin-bottom: 20px;
+        }
+        .class-management-card .class-header {
+            background: #f8f9fa;
+            padding: 12px 18px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .class-management-card .class-header .class-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1e3d59;
+        }
+        .class-management-card .class-students {
+            padding: 10px 18px 14px;
+            background: white;
+            border-radius: 0 0 10px 10px;
+        }
+        .class-management-card .class-students .student-chip {
+            display: inline-block;
+            background: #e9ecef;
+            padding: 4px 14px;
+            border-radius: 20px;
+            margin: 4px 6px 4px 0;
+            font-size: 0.9rem;
+            border: 1px solid #dee2e6;
+        }
+        .class-management-card .class-students .student-chip .chip-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 6px;
+        }
+        .class-management-card .class-students .student-chip .chip-status.read {
+            background: #198754;
+        }
+        .class-management-card .class-students .student-chip .chip-status.unread {
+            background: #ced4da;
+        }
+        .class-management-card .class-students .no-students-chip {
+            color: #adb5bd;
+            font-style: italic;
+            font-size: 0.9rem;
+            padding: 4px 0;
+        }
+        .action-btn-group .btn {
+            margin: 0 2px;
+        }
+        .edit-inline-input {
+            border: 2px solid #0d6efd;
+            border-radius: 8px;
+            padding: 4px 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            background: white;
+            max-width: 200px;
+        }
+        .edit-inline-input:focus {
+            outline: none;
+            border-color: #17b978;
+            box-shadow: 0 0 0 3px rgba(23, 185, 120, 0.25);
+        }
+        .modal-content {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+        .modal-header {
+            background: linear-gradient(135deg, #1e3d59 0%, #17b978 100%);
+            color: white;
+            border-radius: 16px 16px 0 0;
+            border-bottom: none;
+        }
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+        .modal-footer {
+            border-top: none;
+            padding-top: 0;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #1e3d59;
+        }
+        .form-control,
+        .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #17b978;
+            box-shadow: 0 0 0 3px rgba(23, 185, 120, 0.2);
+        }
+        .class-filter-badge {
+            background: #e9ecef;
+            color: #1e3d59;
+            padding: 2px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .class-filter-badge .class-name-display {
+            color: #0d6efd;
+        }
     </style>
 </head>
 <body>
 
     <div class="container-fluid py-3">
         <div class="row">
-            <!-- الشريط الجانبي -->
+            <!-- Sidebar -->
             <div class="col-md-2 sidebar p-3 d-none d-md-block no-print">
                 <h4 class="fw-bold text-center mb-4 pb-2 border-bottom">منصة قراءتي</h4>
                 <nav class="nav flex-column">
                     <a class="nav-link active" href="#" onclick="switchTab('home')">🏠 الرئيسية</a>
                     <a class="nav-link" href="#" onclick="switchTab('students')">👥 الطلاب</a>
                     <a class="nav-link" href="#" onclick="switchTab('classes')">🏫 الفصول</a>
+                    <a class="nav-link" href="#" onclick="switchTab('manage')">📋 إدارة الفصول</a>
                     <a class="nav-link" href="#" onclick="switchTab('texts')">📚 نصوص القراءة</a>
                     <a class="nav-link" href="#" onclick="switchTab('corrector')">🎙️ المصحح الصوتي</a>
                     <a class="nav-link" href="#" onclick="switchTab('reports')">📊 سجلات وتقارير</a>
                     <a class="nav-link" href="#" onclick="switchTab('import_export')">📥 استيراد Word/Excel</a>
                     <a class="nav-link" href="#" onclick="switchTab('settings')">⚙️ الإعدادات</a>
                 </nav>
-                <div class="mt-5 text-center text-white-50 small">إصدار البطاقة الذكية 12.0</div>
+                <div class="mt-5 text-center text-white-50 small">إصدار البطاقة الذكية 15.0</div>
             </div>
 
-            <!-- المحتوى الرئيسي -->
+            <!-- Main Content -->
             <div class="col-md-10 px-4">
                 <header class="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center no-print">
                     <div>
@@ -335,7 +553,7 @@
                     </div>
                 </header>
 
-                <!-- قسم الرئيسية -->
+                <!-- HOME -->
                 <div id="section-home" class="tab-section active">
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
@@ -364,7 +582,7 @@
                     </div>
                 </div>
 
-                <!-- قسم الطلاب -->
+                <!-- STUDENTS -->
                 <div id="section-students" class="tab-section">
                     <div class="card p-4 mb-4 bg-white">
                         <h4 class="fw-bold text-primary mb-3">👥 إدارة الطلاب</h4>
@@ -376,11 +594,11 @@
                             <div class="col-md-3"><button class="btn btn-success w-100 fw-bold" onclick="addNewStudent()">➕ إضافة طالب جديد</button></div>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-2"><span></span><button class="btn btn-danger fw-bold" onclick="deleteAllStudents()">🗑️ حذف جميع الطلاب</button></div>
-                        <div class="table-responsive"><table class="table table-bordered table-striped align-middle text-center"><thead class="table-dark"><tr><th>الكود</th><th>اسم الطالب</th><th>الصف</th><th>الفصل</th><th>الإجراءات</th></tr></thead><tbody id="students-table-body"></tbody></table></div>
+                        <div class="table-responsive"><table class="table table-bordered table-striped align-middle text-center"><thead class="table-dark"><tr><th>الكود</th><th>اسم الطالب</th><th>الصف</th><th>الفصل</th><th>حالة القراءة</th><th>الإجراءات</th></tr></thead><tbody id="students-table-body"></tbody></table></div>
                     </div>
                 </div>
 
-                <!-- قسم الفصول -->
+                <!-- CLASSES -->
                 <div id="section-classes" class="tab-section">
                     <div class="card p-4 mb-4 bg-white">
                         <h4 class="fw-bold text-primary mb-3">🏫 إدارة الفصول الدراسية</h4>
@@ -394,7 +612,20 @@
                     </div>
                 </div>
 
-                <!-- قسم نصوص القراءة -->
+                <!-- MANAGE CLASSES -->
+                <div id="section-manage" class="tab-section">
+                    <div class="card p-4 bg-white">
+                        <h4 class="fw-bold text-primary mb-3">📋 إدارة الفصول والطلاب — تعديل يدوي</h4>
+                        <p class="text-muted small mb-3">من هنا يمكنك تعديل الفصول، تغيير أسمائها، نقل الطلاب بين الفصول، وتعديل بيانات الطلاب.</p>
+                        <div class="d-flex gap-2 mb-3 flex-wrap">
+                            <button class="btn btn-success fw-bold" onclick="openAddClassModal()">➕ إضافة فصل جديد</button>
+                            <button class="btn btn-outline-secondary" onclick="refreshManageView()">🔄 تحديث</button>
+                        </div>
+                        <div id="manage-classes-container"></div>
+                    </div>
+                </div>
+
+                <!-- TEXTS -->
                 <div id="section-texts" class="tab-section">
                     <div class="card p-4 mb-4 bg-white">
                         <h4 class="fw-bold text-primary mb-3">📚 بنك نصوص القراءة</h4>
@@ -409,12 +640,16 @@
                     </div>
                 </div>
 
-                <!-- قسم المصحح الصوتي -->
+                <!-- CORRECTOR -->
                 <div id="section-corrector" class="tab-section">
                     <div class="row g-3 mb-4">
                         <div class="col-md-12">
                             <div class="card p-4 bg-white border-start border-primary border-4 no-print">
                                 <h4 class="fw-bold text-primary mb-3">🎙️ المصحح الصوتي وبدء التقييم القرائي</h4>
+                                <!-- ====== عرض الفصل المختار وعدد الطلاب ====== -->
+                                <div id="class-filter-indicator" class="mb-2" style="display:none;">
+                                    <span class="class-filter-badge">📚 الفصل المختار: <span class="class-name-display" id="selected-class-display">—</span> — <span id="selected-class-count">0</span> طالب</span>
+                                </div>
                                 <div class="row g-3 align-items-center">
                                     <div class="col-md-3">
                                         <label class="form-label text-muted small fw-bold">اختر الصف:</label>
@@ -444,6 +679,18 @@
                                         </select>
                                     </div>
                                 </div>
+
+                                <!-- Student bulbs -->
+                                <div class="row mt-3 no-print" id="student-bulbs-container" style="display:none;">
+                                    <div class="col-12">
+                                        <div class="bulb-section-title">
+                                            <span>👥 طلاب الفصل المختار</span>
+                                            <span class="bulb-select-hint">(انقر على الطالب لاختياره للقراءة)</span>
+                                        </div>
+                                        <div id="student-bulbs-list" class="student-bulb-container"></div>
+                                    </div>
+                                </div>
+
                                 <div class="row g-3 mt-3">
                                     <div class="col-md-12 d-flex flex-wrap gap-3 align-items-center">
                                         <button id="start-btn" class="btn btn-success px-4 py-2 fw-bold" onclick="startReadingSession()">بدء الاستماع 🎙️</button>
@@ -467,6 +714,8 @@
                                             <span class="badge bg-primary ms-2">📐 تحليل دقيق للمدود</span>
                                             <span class="badge bg-success ms-2">⚖️ تقييم عادل لا يظلم الطفل</span>
                                             <span class="badge bg-danger ms-2">🔍 توصيات تفصيلية دقيقة</span>
+                                            <span class="badge bg-dark ms-2">💡 لمبات حالة الطلاب</span>
+                                            <span class="badge bg-primary ms-2">📌 تصفية حسب الفصل</span>
                                         </div>
                                     </div>
                                 </div>
@@ -493,7 +742,7 @@
                     <div id="report-output-container"></div>
                 </div>
 
-                <!-- قسم التقارير -->
+                <!-- REPORTS -->
                 <div id="section-reports" class="tab-section">
                     <div class="card p-4 mb-4 bg-white">
                         <h4 class="fw-bold text-primary mb-3">📊 سجلات القراءات والبطاقات المحفوظة</h4>
@@ -506,8 +755,15 @@
                     </div>
                 </div>
 
-                <!-- قسم الاستيراد والتصدير -->
+                <!-- IMPORT / EXPORT -->
                 <div id="section-import_export" class="tab-section">
+                    <div class="import-class-row no-print">
+                        <label for="import-class-select">📚 الفصل المستهدف:</label>
+                        <select id="import-class-select" class="form-select">
+                            <option value="">— اختر فصل —</option>
+                        </select>
+                        <span class="import-hint">سيتم ربط الطلاب المستوردين بهذا الفصل تلقائياً</span>
+                    </div>
                     <div class="row g-4">
                         <div class="col-md-6">
                             <div class="card p-4 bg-white h-100">
@@ -520,13 +776,13 @@
                             <div class="card p-4 bg-white h-100">
                                 <h4 class="fw-bold text-success mb-3">📊 استيراد بيانات الطلاب من Excel</h4>
                                 <input type="file" id="excel-students-input" class="form-control mb-3" accept=".xlsx, .xls" onchange="importStudentsExcel(event)">
-                                <p class="text-muted small">أعمدة الملف: (اسم الطالب، الصف، الفصل، الكود).</p>
+                                <p class="text-muted small">أعمدة الملف: (اسم الطالب، الصف، الفصل، الكود). الفصل يقرأ تلقائياً من الملف.</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- قسم الإعدادات -->
+                <!-- SETTINGS -->
                 <div id="section-settings" class="tab-section">
                     <div class="card p-4 bg-white">
                         <h4 class="fw-bold text-primary mb-3">⚙️ إعدادات النظام</h4>
@@ -538,8 +794,108 @@
                     </div>
                 </div>
 
-                <!-- تذييل حقوق الملكية -->
                 <div class="copyright-footer">© حقوق الملكية محفوظة — محمد رضا عوف</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div class="modal fade" id="addClassModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">➕ إضافة فصل جديد</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">اسم الفصل</label>
+                        <input type="text" id="modal-class-name" class="form-control" placeholder="مثال: 4A أو 5/ب">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الصف الدراسي</label>
+                        <select id="modal-class-grade" class="form-select">
+                            <option value="الرابع">الرابع</option>
+                            <option value="الخامس">الخامس</option>
+                            <option value="السادس">السادس</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button class="btn btn-success fw-bold" onclick="saveNewClassFromModal()">💾 حفظ الفصل</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editClassModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">✏️ تعديل الفصل</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-class-id">
+                    <div class="mb-3">
+                        <label class="form-label">اسم الفصل الجديد</label>
+                        <input type="text" id="edit-class-name" class="form-control" placeholder="مثال: 4A أو 5/ب">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الصف الدراسي</label>
+                        <select id="edit-class-grade" class="form-select">
+                            <option value="الرابع">الرابع</option>
+                            <option value="الخامس">الخامس</option>
+                            <option value="السادس">السادس</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-info small">
+                        <strong>ملاحظة:</strong> عند تغيير اسم الفصل، سيتم تحديث جميع الطلاب المرتبطين به تلقائياً.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button class="btn btn-primary fw-bold" onclick="saveEditClass()">💾 حفظ التغييرات</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editStudentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">✏️ تعديل بيانات الطالب</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-student-id">
+                    <div class="mb-3">
+                        <label class="form-label">اسم الطالب</label>
+                        <input type="text" id="edit-student-name" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الصف</label>
+                        <select id="edit-student-grade" class="form-select">
+                            <option value="الرابع">الرابع</option>
+                            <option value="الخامس">الخامس</option>
+                            <option value="السادس">السادس</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الفصل</label>
+                        <select id="edit-student-class" class="form-select"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">رقم الكود</label>
+                        <input type="text" id="edit-student-code" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button class="btn btn-primary fw-bold" onclick="saveEditStudent()">💾 حفظ التغييرات</button>
+                </div>
             </div>
         </div>
     </div>
@@ -548,7 +904,7 @@
     </script>
     <script>
         // ========================================================================
-        // البيانات الأساسية للنظام
+        // DATA
         // ========================================================================
         let appData = {
             teacherName: "أ. محمد رضا عوف",
@@ -558,9 +914,9 @@
                 { id: 'c3', name: '5A', grade: 'الخامس' }
             ],
             students: [
-                { id: 's1', name: 'أحمد محمد', grade: 'السادس', className: '6A', code: '101' },
-                { id: 's2', name: 'خالد عبدالله', grade: 'السادس', className: '6B', code: '102' },
-                { id: 's3', name: 'سعيد علي', grade: 'الخامس', className: '5A', code: '103' }
+                { id: 's1', name: 'أحمد محمد', grade: 'السادس', className: '6A', code: '101', hasRead: false },
+                { id: 's2', name: 'خالد عبدالله', grade: 'السادس', className: '6B', code: '102', hasRead: false },
+                { id: 's3', name: 'سعيد علي', grade: 'الخامس', className: '5A', code: '103', hasRead: false }
             ],
             texts: [
                 { id: 't1', title: 'الفلاح المبكر', grade: 'الرابع', skills: 'الطلاقة ومخارج الحروف', body: 'ذهب الفلاح المبكر إلى حقله الأخضر الواسع لكي يحصد القمح الناضج، وكان الطقس جميلاً والعصافير تغرد فوق الأشجار العالية بفرح وسرور عظيم.' },
@@ -569,19 +925,27 @@
             reports: []
         };
 
+        // ========================================================================
+        // CORE FUNCTIONS
+        // ========================================================================
         function loadAppData() {
-            const saved = localStorage.getItem('reading_platform_full_data_v12');
+            const saved = localStorage.getItem('reading_platform_full_data_v15');
             if (saved) { try { appData = JSON.parse(saved); } catch (e) {} }
+            appData.students.forEach(s => { if (s.hasRead === undefined) s.hasRead = false; });
             updateHomeStats();
             renderStudentsTable();
             renderClassesTable();
             renderTextsTable();
             renderAllReportsTable();
             updateClassDropdowns();
+            updateImportClassDropdown();
+            updateEvalClasses();
+            renderBulbsForCurrentClass();
+            renderManageView();
         }
 
         function saveAppData() {
-            localStorage.setItem('reading_platform_full_data_v12', JSON.stringify(appData));
+            localStorage.setItem('reading_platform_full_data_v15', JSON.stringify(appData));
             updateHomeStats();
         }
 
@@ -594,6 +958,7 @@
                 if (link.textContent.trim().includes(tabId === 'home' ? 'الرئيسية' :
                         tabId === 'students' ? 'الطلاب' :
                         tabId === 'classes' ? 'الفصول' :
+                        tabId === 'manage' ? 'إدارة' :
                         tabId === 'texts' ? 'نصوص' :
                         tabId === 'corrector' ? 'المصحح' :
                         tabId === 'reports' ? 'سجلات' :
@@ -602,6 +967,12 @@
                     link.classList.add('active');
                 }
             });
+            if (tabId === 'corrector') {
+                renderBulbsForCurrentClass();
+            }
+            if (tabId === 'manage') {
+                renderManageView();
+            }
         }
 
         function updateHomeStats() {
@@ -612,16 +983,23 @@
         }
 
         // ========================================================================
-        // دوال الفصول والطلاب والنصوص
+        // CLASSES
         // ========================================================================
         function addNewClass() {
             const name = document.getElementById('new-class-name').value.trim();
             const grade = document.getElementById('new-class-grade').value;
             if (!name) { alert('يرجى إدخال اسم الفصل'); return; }
+            if (appData.classes.some(c => c.name === name && c.grade === grade)) {
+                alert('هذا الفصل موجود مسبقاً!');
+                return;
+            }
             appData.classes.push({ id: 'c_' + Date.now(), name, grade });
             saveAppData();
             renderClassesTable();
             updateClassDropdowns();
+            updateImportClassDropdown();
+            updateEvalClasses();
+            renderManageView();
             document.getElementById('new-class-name').value = '';
         }
 
@@ -651,7 +1029,10 @@
             renderClassesTable();
             renderStudentsTable();
             updateClassDropdowns();
+            updateImportClassDropdown();
             updateEvalClasses();
+            renderBulbsForCurrentClass();
+            renderManageView();
         }
 
         function deleteAllClasses() {
@@ -664,28 +1045,50 @@
             renderClassesTable();
             renderStudentsTable();
             updateClassDropdowns();
+            updateImportClassDropdown();
             updateEvalClasses();
+            renderBulbsForCurrentClass();
+            renderManageView();
             alert('تم حذف جميع الفصول والطلاب المرتبطين بهم بنجاح.');
         }
 
+        // ========================================================================
+        // STUDENTS
+        // ========================================================================
         function addNewStudent() {
             const name = document.getElementById('new-student-name').value.trim();
             const grade = document.getElementById('new-student-grade').value;
             const className = document.getElementById('new-student-class').value;
             const code = document.getElementById('new-student-code').value.trim() || '—';
             if (!name) { alert('يرجى إدخال اسم الطالب'); return; }
-            appData.students.push({ id: 's_' + Date.now(), name, grade, className, code });
+            if (!className) { alert('يرجى اختيار الفصل'); return; }
+            appData.students.push({ id: 's_' + Date.now(), name, grade, className, code, hasRead: false });
             saveAppData();
             renderStudentsTable();
+            renderBulbsForCurrentClass();
+            renderManageView();
             document.getElementById('new-student-name').value = '';
             document.getElementById('new-student-code').value = '';
         }
 
         function renderStudentsTable() {
             const tbody = document.getElementById('students-table-body');
-            tbody.innerHTML = appData.students.map(s =>
-                `<tr><td>${s.code}</td><td class="fw-bold">${s.name}</td><td>${s.grade}</td><td><span class="badge bg-secondary">${s.className}</span></td><td><button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">حذف</button></td></tr>`
-            ).join('');
+            tbody.innerHTML = appData.students.map(s => {
+                const readStatus = s.hasRead ?
+                    '<span class="badge bg-success">✅ تمت القراءة</span>' :
+                    '<span class="badge bg-secondary">⏳ لم تقرأ بعد</span>';
+                return `<tr>
+                            <td>${s.code}</td>
+                            <td class="fw-bold">${s.name}</td>
+                            <td>${s.grade}</td>
+                            <td><span class="badge bg-secondary">${s.className}</span></td>
+                            <td>${readStatus}</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="openEditStudentModal('${s.id}')">✏️</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">🗑️</button>
+                            </td>
+                        </tr>`;
+            }).join('');
         }
 
         function deleteStudent(id) {
@@ -693,6 +1096,8 @@
             appData.students = appData.students.filter(s => s.id !== id);
             saveAppData();
             renderStudentsTable();
+            renderBulbsForCurrentClass();
+            renderManageView();
         }
 
         function deleteAllStudents() {
@@ -703,14 +1108,30 @@
             renderStudentsTable();
             renderClassesTable();
             updateEvalClasses();
+            renderBulbsForCurrentClass();
+            renderManageView();
             alert('تم حذف جميع الطلاب بنجاح.');
         }
 
         function updateClassDropdowns() {
             const selectClass = document.getElementById('new-student-class');
-            selectClass.innerHTML = appData.classes.map(c => `<option value="${c.name}">${c.name} (${c.grade})</option>`).join('');
+            selectClass.innerHTML = '<option value="">— اختر الفصل —</option>' +
+                appData.classes.map(c => `<option value="${c.name}">${c.name} (${c.grade})</option>`).join('');
         }
 
+        function updateImportClassDropdown() {
+            const select = document.getElementById('import-class-select');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">— اختر فصل للاستيراد —</option>' +
+                appData.classes.map(c => `<option value="${c.name}">${c.name} (${c.grade})</option>`).join('');
+            if (currentVal && appData.classes.some(c => c.name === currentVal)) {
+                select.value = currentVal;
+            }
+        }
+
+        // ========================================================================
+        // TEXTS
+        // ========================================================================
         function addNewReadingText() {
             const title = document.getElementById('text-title').value.trim();
             const grade = document.getElementById('text-grade').value;
@@ -728,7 +1149,7 @@
         function renderTextsTable() {
             const tbody = document.getElementById('texts-table-body');
             tbody.innerHTML = appData.texts.map(t =>
-                `<tr><td class="fw-bold text-primary">${t.title}</td><td>${t.grade}</td><td>${t.skills || '—'}</td><td class="text-truncate" style="max-width: 250px;">${t.body}</td><td><button class="btn btn-danger btn-sm" onclick="deleteText('${t.id}')">حذف</button></td></tr>`
+                `<tr><td class="fw-bold text-primary">${t.title}</td><td>${t.grade}</td><td>${t.skills || '—'}</td><td class="text-truncate" style="max-width:250px;">${t.body}</td><td><button class="btn btn-danger btn-sm" onclick="deleteText('${t.id}')">حذف</button></td></tr>`
             ).join('');
             updateEvalTextDropdown();
         }
@@ -740,26 +1161,24 @@
         }
 
         // ========================================================================
-        // دوال المصحح الصوتي
+        // AUDIO / RECOGNITION
         // ========================================================================
-
-        let audioContext = null;
-        let analyser = null;
-        let gainNode = null;
-        let source = null;
-        let mediaStream = null;
-        let animationFrame = null;
-        let noiseFloor = 0;
-        let isCalibrated = false;
+        let audioContext = null,
+            analyser = null,
+            gainNode = null,
+            source = null,
+            mediaStream = null,
+            animationFrame = null,
+            noiseFloor = 0,
+            isCalibrated = false;
         const GAIN_BOOST = 2.2;
-
-        let recognition = null;
-        let isRecording = false;
-        let finalTranscript = '';
-        let interimTranscript = '';
-        let hasDetectedSpeech = false;
-        let speechActivityCount = 0;
-        let silentFrames = 0;
+        let recognition = null,
+            isRecording = false,
+            finalTranscript = '',
+            interimTranscript = '',
+            hasDetectedSpeech = false,
+            speechActivityCount = 0,
+            silentFrames = 0;
         const SILENT_THRESHOLD_FRAMES = 30;
 
         function initAudioProcessing() {
@@ -771,9 +1190,7 @@
                 analyser.smoothingTimeConstant = 0.8;
                 gainNode = audioContext.createGain();
                 gainNode.gain.value = GAIN_BOOST;
-            } catch (e) {
-                console.warn('Web Audio not supported', e);
-            }
+            } catch (e) { console.warn('Web Audio not supported', e); }
         }
 
         function calibrateNoiseFloor(stream) {
@@ -783,11 +1200,10 @@
                 const tempAnalyser = tempCtx.createAnalyser();
                 tempAnalyser.fftSize = 256;
                 tempSource.connect(tempAnalyser);
-
                 const dataArray = new Uint8Array(tempAnalyser.fftSize);
-                let samples = [];
-                let count = 0;
-                const maxSamples = 40;
+                let samples = [],
+                    count = 0,
+                    maxSamples = 40;
 
                 function collect() {
                     if (count >= maxSamples) {
@@ -796,9 +1212,7 @@
                         if (samples.length > 0) {
                             const avg = samples.reduce((a, b) => a + b, 0) / samples.length;
                             noiseFloor = avg * 1.1;
-                        } else {
-                            noiseFloor = 5;
-                        }
+                        } else { noiseFloor = 5; }
                         isCalibrated = true;
                         resolve(noiseFloor);
                         return;
@@ -823,32 +1237,24 @@
             mediaStream = stream;
             initAudioProcessing();
             if (!audioContext) return;
-
             calibrateNoiseFloor(stream).then((floor) => {
                 console.log('Noise floor calibrated:', floor);
                 document.getElementById('audio-activity-status').textContent = '✅ معايرة الضوضاء تمت - جاهز للاستماع';
             });
-
             try {
                 source = audioContext.createMediaStreamSource(stream);
                 source.connect(gainNode);
                 gainNode.connect(analyser);
-
                 monitorVolume();
-
                 document.getElementById('mic-status-indicator').textContent = '🎤 جاري الاستماع (مع تضخيم الصوت)';
                 document.getElementById('mic-status-indicator').className = 'badge bg-success mic-status-badge px-3 py-2';
-            } catch (e) {
-                console.error('Error setting up audio monitoring:', e);
-            }
+            } catch (e) { console.error('Error setting up audio monitoring:', e); }
         }
 
         function monitorVolume() {
             if (!analyser || !isRecording) return;
-
             const dataArray = new Uint8Array(analyser.fftSize);
             analyser.getByteTimeDomainData(dataArray);
-
             let sum = 0;
             for (let i = 0; i < dataArray.length; i++) {
                 const val = (dataArray[i] - 128) / 128;
@@ -856,7 +1262,6 @@
             }
             const rms = Math.sqrt(sum / dataArray.length);
             const db = 20 * Math.log10(rms + 0.0001);
-
             let percent = 0;
             if (isCalibrated && noiseFloor > -80) {
                 const range = 50;
@@ -866,15 +1271,12 @@
                 const raw = (db + 60) / 50 * 100;
                 percent = Math.min(100, Math.max(0, raw));
             }
-
             const bar = document.getElementById('volume-bar');
             const label = document.getElementById('volume-percent');
             if (bar) bar.style.width = Math.min(100, Math.max(0, percent)) + '%';
             if (label) label.textContent = Math.round(Math.min(100, Math.max(0, percent))) + '%';
-
             const SPEECH_THRESHOLD = 3.5;
             const isSpeech = percent > SPEECH_THRESHOLD;
-
             if (isSpeech) {
                 speechActivityCount++;
                 silentFrames = 0;
@@ -894,52 +1296,29 @@
                     document.getElementById('audio-activity-status').className = 'text-warning small';
                 }
             }
-
             if (hasDetectedSpeech) {
                 const statusEl = document.getElementById('mic-status-indicator');
-                if (percent > 20) {
-                    statusEl.textContent = '🔊 صوت مرتفع';
-                    statusEl.className = 'badge bg-success mic-status-badge px-3 py-2';
-                } else if (percent > 8) {
-                    statusEl.textContent = '🔉 صوت متوسط';
-                    statusEl.className = 'badge bg-info mic-status-badge px-3 py-2';
-                } else if (percent > 3) {
-                    statusEl.textContent = '🔈 صوت منخفض (مُلتقط)';
-                    statusEl.className = 'badge bg-warning text-dark mic-status-badge px-3 py-2';
-                } else {
-                    statusEl.textContent = '🔇 صوت منخفض جداً (جاري المحاولة)';
-                    statusEl.className = 'badge bg-secondary mic-status-badge px-3 py-2';
-                }
+                if (percent > 20) { statusEl.textContent = '🔊 صوت مرتفع';
+                    statusEl.className = 'badge bg-success mic-status-badge px-3 py-2'; } else if (percent > 8) { statusEl
+                        .textContent = '🔉 صوت متوسط';
+                    statusEl.className = 'badge bg-info mic-status-badge px-3 py-2'; } else if (percent > 3) { statusEl
+                        .textContent = '🔈 صوت منخفض (مُلتقط)';
+                    statusEl.className = 'badge bg-warning text-dark mic-status-badge px-3 py-2'; } else { statusEl
+                        .textContent = '🔇 صوت منخفض جداً (جاري المحاولة)';
+                    statusEl.className = 'badge bg-secondary mic-status-badge px-3 py-2'; }
             }
-
             animationFrame = requestAnimationFrame(monitorVolume);
         }
 
         function stopAudioMonitoring() {
-            if (animationFrame) {
-                cancelAnimationFrame(animationFrame);
-                animationFrame = null;
-            }
-            if (source) {
-                try { source.disconnect(); } catch (e) {}
-                source = null;
-            }
-            if (gainNode) {
-                try { gainNode.disconnect(); } catch (e) {}
-                gainNode = null;
-            }
-            if (analyser) {
-                try { analyser.disconnect(); } catch (e) {}
-                analyser = null;
-            }
-            if (audioContext && audioContext.state !== 'closed') {
-                try { audioContext.close(); } catch (e) {}
-                audioContext = null;
-            }
-            if (mediaStream) {
-                try { mediaStream.getTracks().forEach(t => t.stop()); } catch (e) {}
-                mediaStream = null;
-            }
+            if (animationFrame) { cancelAnimationFrame(animationFrame);
+                animationFrame = null; }
+            if (source) { try { source.disconnect(); } catch (e) {} source = null; }
+            if (gainNode) { try { gainNode.disconnect(); } catch (e) {} gainNode = null; }
+            if (analyser) { try { analyser.disconnect(); } catch (e) {} analyser = null; }
+            if (audioContext && audioContext.state !== 'closed') { try { audioContext.close(); } catch (e) {} audioContext =
+                null; }
+            if (mediaStream) { try { mediaStream.getTracks().forEach(t => t.stop()); } catch (e) {} mediaStream = null; }
             isCalibrated = false;
             hasDetectedSpeech = false;
             speechActivityCount = 0;
@@ -950,27 +1329,18 @@
             document.getElementById('audio-activity-status').className = 'text-muted small';
         }
 
-        // ========================================================================
-        // تهيئة SpeechRecognition
-        // ========================================================================
-
         function initSpeechRecognition() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
                 alert('متصفحك لا يدعم التعرف على الصوت. يُرجى استخدام Chrome أو Edge.');
                 return null;
             }
-            if (recognition) {
-                try { recognition.abort(); } catch (e) {}
-                recognition = null;
-            }
-
+            if (recognition) { try { recognition.abort(); } catch (e) {} recognition = null; }
             const rec = new SpeechRecognition();
             rec.lang = 'ar-SA';
             rec.continuous = true;
             rec.interimResults = true;
             rec.maxAlternatives = 3;
-
             rec.onstart = () => {
                 isRecording = true;
                 finalTranscript = '';
@@ -979,23 +1349,15 @@
                 document.getElementById('mic-status-indicator').textContent = '🎤 جاري التعرف على الصوت';
                 document.getElementById('mic-status-indicator').className = 'badge bg-success mic-status-badge px-3 py-2';
             };
-
             rec.onresult = (event) => {
-                let interim = '';
-                let final = '';
-
+                let interim = '',
+                    final = '';
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        final += transcript + ' ';
-                    } else {
-                        interim += transcript;
-                    }
+                    if (event.results[i].isFinal) { final += transcript + ' '; } else { interim += transcript; }
                 }
-
                 if (final) {
                     finalTranscript += final;
-                    const displayText = finalTranscript + (interim ? ' ' + interim : '');
                     document.getElementById('live-transcript').innerHTML =
                         `<span class="final">${finalTranscript}</span>${interim ? ' <span class="interim">' + interim + '</span>' : ''}`;
                     const box = document.getElementById('live-transcript');
@@ -1004,14 +1366,12 @@
                     document.getElementById('live-transcript').innerHTML =
                         `${finalTranscript ? '<span class="final">' + finalTranscript + '</span> ' : ''}<span class="interim">${interim}</span>`;
                 }
-
                 if (final || interim.length > 2) {
                     hasDetectedSpeech = true;
                     document.getElementById('audio-activity-status').textContent = '🗣️ قراءة قيد الالتقاط';
                     document.getElementById('audio-activity-status').className = 'text-success small';
                 }
             };
-
             rec.onerror = (event) => {
                 if (event.error === 'not-allowed') {
                     alert('الرجاء السماح باستخدام الميكروفون.');
@@ -1020,30 +1380,20 @@
                         document.getElementById('audio-activity-status').textContent = '⏳ لم يتم اكتشاف صوت، حاول التحدث';
                         document.getElementById('audio-activity-status').className = 'text-warning small';
                     }
-                } else {
-                    console.warn('SpeechRecognition error:', event.error);
-                }
+                } else { console.warn('SpeechRecognition error:', event.error); }
             };
-
             rec.onend = () => {
                 if (isRecording) {
                     try { rec.start(); } catch (e) {
                         setTimeout(() => {
-                            if (isRecording) {
-                                try { rec.start(); } catch (e2) {}
-                            }
+                            if (isRecording) { try { rec.start(); } catch (e2) {} }
                         }, 200);
                     }
                 }
             };
-
             recognition = rec;
             return rec;
         }
-
-        // ========================================================================
-        // دوال بدء وإيقاف جلسة القراءة
-        // ========================================================================
 
         async function startReadingSession() {
             const studentId = document.getElementById('eval-student-select').value;
@@ -1052,54 +1402,38 @@
                 alert('يرجى اختيار الطالب والنص المستهدف أولاً');
                 return;
             }
-
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        echoCancellation: false,
-                        noiseSuppression: false,
-                        autoGainControl: false,
-                        sampleRate: 44100,
-                        channelCount: 1
-                    }
+                    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false,
+                        sampleRate: 44100, channelCount: 1 }
                 });
-
                 startAudioMonitoring(stream);
-
                 const rec = initSpeechRecognition();
-                if (!rec) {
-                    stopAudioMonitoring();
-                    return;
-                }
-
+                if (!rec) { stopAudioMonitoring(); return; }
                 finalTranscript = '';
                 interimTranscript = '';
                 hasDetectedSpeech = false;
                 speechActivityCount = 0;
                 silentFrames = 0;
-
                 document.getElementById('start-btn').disabled = true;
                 document.getElementById('stop-btn').disabled = false;
                 document.getElementById('live-transcript').innerHTML = '<span class="interim">⏳ جاري التهيئة...</span>';
                 document.getElementById('audio-activity-status').textContent = '🔄 جاري معايرة الصوت...';
                 document.getElementById('audio-activity-status').className = 'text-muted small';
-
                 setTimeout(() => {
                     try {
                         rec.start();
                         isRecording = true;
                         document.getElementById('mic-status-indicator').textContent = '🎤 جاري الاستماع والتقييم';
-                        document.getElementById('mic-status-indicator').className = 'badge bg-success mic-status-badge px-3 py-2';
+                        document.getElementById('mic-status-indicator').className =
+                        'badge bg-success mic-status-badge px-3 py-2';
                         document.getElementById('audio-activity-status').textContent = '🎙️ استمع الآن... تحدث بوضوح';
                         document.getElementById('audio-activity-status').className = 'text-primary small';
                     } catch (e) {
                         console.warn('Start error:', e);
-                        setTimeout(() => {
-                            try { rec.start(); } catch (e2) {}
-                        }, 300);
+                        setTimeout(() => { try { rec.start(); } catch (e2) {} }, 300);
                     }
                 }, 500);
-
             } catch (err) {
                 console.error('Microphone error:', err);
                 alert('تعذر الوصول إلى الميكروفون. يرجى السماح بالوصول والمحاولة مرة أخرى.');
@@ -1108,60 +1442,33 @@
 
         function stopReadingSession() {
             isRecording = false;
-
-            if (recognition) {
-                try {
-                    recognition.stop();
-                    recognition = null;
-                } catch (e) {}
-            }
-
+            if (recognition) { try { recognition.stop();
+                    recognition = null; } catch (e) {} }
             stopAudioMonitoring();
-
             document.getElementById('start-btn').disabled = false;
             document.getElementById('stop-btn').disabled = true;
             document.getElementById('mic-status-indicator').textContent = '⏹️ تم الإيقاف';
             document.getElementById('mic-status-indicator').className = 'badge bg-secondary mic-status-badge px-3 py-2';
-
             processAndGenerateReport();
         }
 
         // ========================================================================
-        //  المحلل اللغوي — تقييم عادل لا يظلم الطفل
+        // ANALYSIS ENGINE
         // ========================================================================
-
         function extractActualWordFeatures(word) {
             let features = [];
 
-            function hasFathaBefore(char) {
-                for (let i = 1; i < word.length; i++) {
-                    if (word[i] === char && word[i - 1] === 'َ') return true;
-                }
-                return false;
-            }
+            function hasFathaBefore(char) { for (let i = 1; i < word.length; i++) { if (word[i] === char && word[i - 1] ===
+                        'َ') return true; } return false; }
 
-            function hasDammahBefore(char) {
-                for (let i = 1; i < word.length; i++) {
-                    if (word[i] === char && word[i - 1] === 'ُ') return true;
-                }
-                return false;
-            }
+            function hasDammahBefore(char) { for (let i = 1; i < word.length; i++) { if (word[i] === char && word[i - 1] ===
+                        'ُ') return true; } return false; }
 
-            function hasKasrahBefore(char) {
-                for (let i = 1; i < word.length; i++) {
-                    if (word[i] === char && word[i - 1] === 'ِ') return true;
-                }
-                return false;
-            }
+            function hasKasrahBefore(char) { for (let i = 1; i < word.length; i++) { if (word[i] === char && word[i - 1] ===
+                        'ِ') return true; } return false; }
 
-            function hasSukunAfter(char) {
-                for (let i = 0; i < word.length - 1; i++) {
-                    if (word[i] === char && word[i + 1] === 'ْ') return true;
-                }
-                return false;
-            }
-
-            // المد بالألف: فتحة + ا
+            function hasSukunAfter(char) { for (let i = 0; i < word.length - 1; i++) { if (word[i] === char && word[i + 1] ===
+                        'ْ') return true; } return false; }
             let hasAlefMadd = false;
             for (let i = 0; i < word.length; i++) {
                 if (word[i] === 'ا' && i > 0) {
@@ -1173,42 +1480,30 @@
                 }
             }
             if (hasAlefMadd) features.push('المد بالألف');
-
-            // المد بالواو: ضمة + وْ
             let hasWawMadd = false;
             for (let i = 0; i < word.length; i++) {
                 if (word[i] === 'و' && i > 0) {
                     if (i === 0) continue;
                     if (word.includes('ؤ')) continue;
-                    if (hasDammahBefore('و') && (hasSukunAfter('و') || i === word.length - 1)) {
-                        hasWawMadd = true;
-                        break;
-                    }
+                    if (hasDammahBefore('و') && (hasSukunAfter('و') || i === word.length - 1)) { hasWawMadd = true; break; }
                     const common = ['نور', 'سوق', 'قول', 'رسول', 'صوم', 'كون'];
                     let w = word.replace(/[ًٌٍَُِّْ]/g, '');
                     if (common.some(c => w.includes(c) || w === c)) { hasWawMadd = true; break; }
                 }
             }
             if (hasWawMadd) features.push('المد بالواو');
-
-            // المد بالياء: كسرة + يْ
             let hasYaMadd = false;
             for (let i = 0; i < word.length; i++) {
                 if (word[i] === 'ي' && i > 0) {
                     if (i === 0) continue;
                     if (word.includes('ئ')) continue;
-                    if (hasKasrahBefore('ي') && (hasSukunAfter('ي') || i === word.length - 1)) {
-                        hasYaMadd = true;
-                        break;
-                    }
+                    if (hasKasrahBefore('ي') && (hasSukunAfter('ي') || i === word.length - 1)) { hasYaMadd = true; break; }
                     const common = ['فيل', 'كبير', 'جميل', 'طبيب', 'حليب', 'سعيد'];
                     let w = word.replace(/[ًٌٍَُِّْ]/g, '');
                     if (common.some(c => w.includes(c) || w === c)) { hasYaMadd = true; break; }
                 }
             }
             if (hasYaMadd) features.push('المد بالياء');
-
-            // مهارات أخرى
             if (word.includes('ّ')) features.push('الشدة');
             if (word.includes('ً') || word.includes('ٌ') || word.includes('ٍ')) features.push('التنوين');
             if (word.includes('ْ')) features.push('السكون');
@@ -1219,68 +1514,39 @@
             if (word.endsWith('ه') && !word.endsWith('ة')) features.push('الهاء');
             if (word.includes('َ') || word.includes('ُ') || word.includes('ِ')) features.push('الحركات القصيرة');
             if (word.startsWith('ال') && word.length > 2) features.push('اللام الشمسية والقمرية');
-
             return [...new Set(features)];
         }
 
-        // ========================================================================
-        // دالة توليد التوصيات التفصيلية من الأخطاء الفعلية
-        // ========================================================================
-
         function generateDetailedRecommendations(analysisDetails) {
-            // تصفية الأخطاء الواضحة فقط
             const errors = analysisDetails.filter(item =>
                 item.status === 'خطأ واضح' || item.status.includes('خطأ')
             );
-
             if (errors.length === 0) {
                 return { hasErrors: false, recommendations: [], grouped: {} };
             }
-
-            // تجميع الأخطاء حسب المهارة أو النوع
             const grouped = {};
-
             errors.forEach(item => {
                 let skill = item.skill || '';
                 let word = item.word || '';
                 let spoken = item.spoken || '';
-
-                // تنظيف المهارة
-                if (skill === '—' || skill === 'دقة القراءة' || skill === 'التعرف الصوتي') {
-                    skill = '';
-                }
-
-                // إذا كانت المهارة فارغة، نحاول استخراجها من السمات
+                if (skill === '—' || skill === 'دقة القراءة' || skill === 'التعرف الصوتي') { skill = ''; }
                 if (!skill && item.features && item.features.length > 0) {
-                    // نأخذ أول مهارة من السمات (باستثناء المهارات العامة)
-                    const prioritySkills = ['المد بالألف', 'المد بالواو', 'المد بالياء', 'الشدة', 'التنوين', 'السكون', 'الهمزة',
+                    const prioritySkills = ['المد بالألف', 'المد بالواو', 'المد بالياء', 'الشدة', 'التنوين', 'السكون',
+                        'الهمزة',
                         'التاء المربوطة', 'التاء المفتوحة', 'الهاء', 'الحركات القصيرة', 'اللام الشمسية والقمرية'
                     ];
                     for (let p of prioritySkills) {
-                        if (item.features.includes(p)) {
-                            skill = p;
-                            break;
-                        }
+                        if (item.features.includes(p)) { skill = p; break; }
                     }
-                    if (!skill && item.features.length > 0) {
-                        skill = item.features[0];
-                    }
+                    if (!skill && item.features.length > 0) { skill = item.features[0]; }
                 }
-
-                // إذا كانت المهارة لا تزال فارغة، نحاول تحليل الحروف
                 if (!skill) {
-                    // محاولة تحديد حرف الخطأ من المقارنة بين الكلمة والقراءة
                     const letterError = findLetterError(word, spoken);
                     if (letterError) {
                         const key = 'حرف_' + letterError.expected;
                         if (!grouped[key]) {
-                            grouped[key] = {
-                                type: 'letter',
-                                letter: letterError.expected,
-                                words: [],
-                                positions: [],
-                                skill: 'حرف ' + letterError.expected
-                            };
+                            grouped[key] = { type: 'letter', letter: letterError.expected, words: [], positions: [],
+                                skill: 'حرف ' + letterError.expected };
                         }
                         if (!grouped[key].words.includes(word)) {
                             grouped[key].words.push(word);
@@ -1288,106 +1554,67 @@
                         }
                         return;
                     }
-                    // إذا لم نتمكن من تحديد حرف، نصنف كخطأ عام في الكلمة
                     const key = 'خطأ في القراءة';
                     if (!grouped[key]) {
-                        grouped[key] = {
-                            type: 'general',
-                            words: [],
-                            skill: 'قراءة الكلمة'
-                        };
+                        grouped[key] = { type: 'general', words: [], skill: 'قراءة الكلمة' };
                     }
                     if (!grouped[key].words.includes(word)) {
                         grouped[key].words.push(word);
                     }
                     return;
                 }
-
-                // تجميع حسب المهارة
                 const key = skill;
                 if (!grouped[key]) {
-                    grouped[key] = {
-                        type: 'skill',
-                        skill: skill,
-                        words: [],
-                        errors: []
-                    };
+                    grouped[key] = { type: 'skill', skill: skill, words: [], errors: [] };
                 }
                 if (!grouped[key].words.includes(word)) {
                     grouped[key].words.push(word);
                 }
             });
-
-            // توليد نصوص التوصيات
             const recommendations = [];
             const recItems = [];
-
             for (const [key, data] of Object.entries(grouped)) {
                 if (data.type === 'skill') {
                     const wordsList = data.words;
                     if (wordsList.length === 1) {
-                        const rec = {
-                            type: 'skill',
-                            skill: data.skill,
-                            words: wordsList,
-                            text: `تعزيز **${data.skill}** في كلمة **${wordsList[0]}**`
-                        };
+                        const rec = { type: 'skill', skill: data.skill, words: wordsList,
+                            text: `تعزيز **${data.skill}** في كلمة **${wordsList[0]}**` };
                         recItems.push(rec);
                         recommendations.push(rec.text);
                     } else {
-                        const rec = {
-                            type: 'skill',
-                            skill: data.skill,
-                            words: wordsList,
-                            text: `تعزيز **${data.skill}** في الكلمات: **${wordsList.join('، ')}**`
-                        };
+                        const rec = { type: 'skill', skill: data.skill, words: wordsList,
+                            text: `تعزيز **${data.skill}** في الكلمات: **${wordsList.join('، ')}**` };
                         recItems.push(rec);
                         recommendations.push(rec.text);
                     }
                 } else if (data.type === 'letter') {
                     const wordsList = data.words;
                     if (wordsList.length === 1) {
-                        const rec = {
-                            type: 'letter',
-                            letter: data.letter,
-                            words: wordsList,
-                            text: `أخطأ في حرف **${data.letter}** في كلمة **${wordsList[0]}**`
-                        };
+                        const rec = { type: 'letter', letter: data.letter, words: wordsList,
+                            text: `أخطأ في حرف **${data.letter}** في كلمة **${wordsList[0]}**` };
                         recItems.push(rec);
                         recommendations.push(rec.text);
                     } else {
-                        const rec = {
-                            type: 'letter',
-                            letter: data.letter,
-                            words: wordsList,
-                            text: `تكررت صعوبة نطق حرف **${data.letter}** في الكلمات: **${wordsList.join('، ')}**`
-                        };
+                        const rec = { type: 'letter', letter: data.letter, words: wordsList,
+                            text: `تكررت صعوبة نطق حرف **${data.letter}** في الكلمات: **${wordsList.join('، ')}**` };
                         recItems.push(rec);
                         recommendations.push(rec.text);
                     }
                 } else {
-                    // عام
                     const wordsList = data.words;
                     if (wordsList.length === 1) {
-                        const rec = {
-                            type: 'general',
-                            words: wordsList,
-                            text: `تحتاج قراءة كلمة **${wordsList[0]}** إلى ممارسة إضافية`
-                        };
+                        const rec = { type: 'general', words: wordsList,
+                            text: `تحتاج قراءة كلمة **${wordsList[0]}** إلى ممارسة إضافية` };
                         recItems.push(rec);
                         recommendations.push(rec.text);
                     } else {
-                        const rec = {
-                            type: 'general',
-                            words: wordsList,
-                            text: `تحتاج قراءة الكلمات: **${wordsList.join('، ')}** إلى ممارسة إضافية`
-                        };
+                        const rec = { type: 'general', words: wordsList,
+                            text: `تحتاج قراءة الكلمات: **${wordsList.join('، ')}** إلى ممارسة إضافية` };
                         recItems.push(rec);
                         recommendations.push(rec.text);
                     }
                 }
             }
-
             return {
                 hasErrors: errors.length > 0,
                 recommendations: recommendations,
@@ -1397,66 +1624,38 @@
             };
         }
 
-        // دالة مساعدة للعثور على حرف الخطأ بمقارنة الكلمة والقراءة
         function findLetterError(targetWord, spokenWord) {
             if (!targetWord || !spokenWord || targetWord.length === 0 || spokenWord.length === 0) return null;
-
-            // نزيل التشكيل للمقارنة
             const t = targetWord.replace(/[ًٌٍَُِّْ]/g, '');
             const s = spokenWord.replace(/[ًٌٍَُِّْ]/g, '');
-
             if (t.length === 0 || s.length === 0) return null;
-
-            // إذا كان النصان متطابقين، لا يوجد خطأ
             if (t === s) return null;
-
-            // نبحث عن أول اختلاف
             for (let i = 0; i < Math.min(t.length, s.length); i++) {
                 if (t[i] !== s[i]) {
-                    // نتحقق من أن الحرف في الكلمة الأصلية ليس من الحروف التي قد تختلف بسبب التشكيل
-                    // نرجع الحرف المتوقع من الكلمة الأصلية
                     return { expected: t[i], actual: s[i] || '—', position: i };
                 }
             }
-
-            // إذا كان الطول مختلفاً
             if (t.length !== s.length) {
                 if (t.length > s.length) {
-                    // حذف في قراءة الطالب
                     const idx = s.length;
-                    if (idx < t.length) {
-                        return { expected: t[idx], actual: '—', position: idx };
-                    }
+                    if (idx < t.length) { return { expected: t[idx], actual: '—', position: idx }; }
                 } else {
-                    // إضافة في قراءة الطالب
                     const idx = t.length;
-                    if (idx < s.length) {
-                        return { expected: '—', actual: s[idx], position: idx };
-                    }
+                    if (idx < s.length) { return { expected: '—', actual: s[idx], position: idx }; }
                 }
             }
-
             return null;
         }
-
-        // ========================================================================
-        // تحليل القراءة — تقييم عادل قائم على الأدلة
-        // ========================================================================
 
         function analyzeReadingPerformance(targetText, spokenText) {
             if (!targetText || targetText.trim() === '') targetText = 'نص اختبار قصير للقراءة';
             const targetWords = targetText.trim().split(/\s+/).filter(w => w.length > 0);
-
             if (!spokenText || spokenText.trim().length < 1) {
                 return buildEmptyResult(targetText, targetWords);
             }
-
             const spokenWords = spokenText.trim().split(/\s+/).filter(w => w.length > 0);
 
-            function normalizeForCompare(s) {
-                return s.replace(/[ًٌٍَُِّْ]/g, '').trim();
-            }
-
+            function normalizeForCompare(s) { return s.replace(/[ًٌٍَُِّْ]/g, '').trim(); }
             const closePairs = [
                 ['س', 'ص'],
                 ['ت', 'ط'],
@@ -1511,56 +1710,44 @@
             }
 
             let analysisDetails = [];
-            let correctCount = 0;
-            let errorCount = 0;
-            let uncertainCount = 0;
+            let correctCount = 0,
+                errorCount = 0,
+                uncertainCount = 0;
             let skillErrorMap = {};
 
             targetWords.forEach((tWord, idx) => {
                 let sWord = spokenWords[idx] || "";
                 let cleanT = normalizeForCompare(tWord);
                 let cleanS = normalizeForCompare(sWord);
-
-                let status = '';
-                let note = '';
-                let badgeClass = '';
-                let skill = '';
-                let errorType = '';
-                let confidence = 0;
-                let evidence = [];
+                let status = '',
+                    note = '',
+                    badgeClass = '',
+                    skill = '',
+                    errorType = '',
+                    confidence = 0,
+                    evidence = [];
                 let features = extractActualWordFeatures(tWord);
-
                 let isTaMarbutaPause = false;
                 if (tWord.endsWith('ة') && sWord.endsWith('ه')) {
                     let baseT = tWord.slice(0, -1);
                     let baseS = sWord.slice(0, -1);
-                    if (normalizeForCompare(baseT) === normalizeForCompare(baseS)) {
-                        isTaMarbutaPause = true;
-                    }
+                    if (normalizeForCompare(baseT) === normalizeForCompare(baseS)) { isTaMarbutaPause = true; }
                 }
-
                 let exactMatch = (cleanS === cleanT);
                 let simScore = similarityScore(cleanS, cleanT);
                 let isPhonetic = false;
                 if (cleanS && cleanT && simScore >= 0.6) {
-                    let diffPos = -1;
-                    let diffCharS = '',
+                    let diffPos = -1,
+                        diffCharS = '',
                         diffCharT = '';
                     for (let i = 0; i < Math.min(cleanS.length, cleanT.length); i++) {
-                        if (cleanS[i] !== cleanT[i]) {
-                            diffPos = i;
+                        if (cleanS[i] !== cleanT[i]) { diffPos = i;
                             diffCharS = cleanS[i] || '';
-                            diffCharT = cleanT[i] || '';
-                            break;
-                        }
+                            diffCharT = cleanT[i] || ''; break; }
                     }
-                    if (diffPos !== -1) {
-                        isPhonetic = isPhoneticallySimilar(diffCharS, diffCharT);
-                    } else if (simScore >= 0.85) {
-                        isPhonetic = true;
-                    }
+                    if (diffPos !== -1) { isPhonetic = isPhoneticallySimilar(diffCharS, diffCharT); } else if (simScore >=
+                        0.85) { isPhonetic = true; }
                 }
-
                 if (exactMatch || isTaMarbutaPause) {
                     status = 'صحيحة';
                     note = '✔ قراءة صحيحة مطابقة للنص';
@@ -1606,17 +1793,12 @@
                     errorCount++;
                     confidence = 0.85;
                     evidence.push(`تشابه منخفض جداً (${Math.round(simScore*100)}%) — خطأ واضح`);
-                    // نحدد المهارة المتأثرة إن وجدت
                     let affectedSkill = '';
-                    // نبحث عن مهارة في السمات
                     const priority = ['المد بالألف', 'المد بالواو', 'المد بالياء', 'الشدة', 'التنوين', 'السكون', 'الهمزة',
                         'التاء المربوطة'
                     ];
                     for (let p of priority) {
-                        if (features.includes(p)) {
-                            affectedSkill = p;
-                            break;
-                        }
+                        if (features.includes(p)) { affectedSkill = p; break; }
                     }
                     if (affectedSkill) {
                         skill = affectedSkill;
@@ -1645,9 +1827,7 @@
                     confidence = 0.3;
                     evidence.push('لم يتمكن النظام من الجزم بالحكم');
                 }
-
                 let featuresDisplay = features.join('، ') || 'لا توجد مهارات';
-
                 analysisDetails.push({
                     word: tWord,
                     spoken: sWord || '—',
@@ -1663,19 +1843,14 @@
                 });
             });
 
-            // حساب المهارات
             let allPresentSkills = new Set();
-            analysisDetails.forEach(d => {
-                d.features.forEach(f => allPresentSkills.add(f));
-            });
-
+            analysisDetails.forEach(d => { d.features.forEach(f => allPresentSkills.add(f)); });
             const allSkillNames = [
                 'المد بالألف', 'المد بالواو', 'المد بالياء',
                 'الشدة', 'التنوين', 'السكون', 'الهمزة',
                 'التاء المربوطة', 'التاء المفتوحة', 'الهاء',
                 'الحركات القصيرة', 'اللام الشمسية والقمرية'
             ];
-
             let skills = [];
             allSkillNames.forEach(skillName => {
                 let present = allPresentSkills.has(skillName);
@@ -1686,7 +1861,6 @@
                 let level = '',
                     diagnosis = '',
                     note = '';
-
                 if (!present) {
                     level = 'غير مستهدفة';
                     diagnosis = 'غير موجودة في النص';
@@ -1723,7 +1897,6 @@
                     present: present
                 });
             });
-
             skills.sort((a, b) => {
                 if (a.present && !b.present) return -1;
                 if (!a.present && b.present) return 1;
@@ -1733,9 +1906,7 @@
             const totalWords = targetWords.length;
             const totalKnown = correctCount + errorCount;
             let finalScore = totalKnown > 0 ? Math.round((correctCount / totalKnown) * 100) : 0;
-            if (totalKnown === 0 && uncertainCount > 0) {
-                finalScore = 50;
-            }
+            if (totalKnown === 0 && uncertainCount > 0) { finalScore = 50; }
             finalScore = Math.min(100, Math.max(0, finalScore));
 
             let ratingCategory = '',
@@ -1753,7 +1924,6 @@
             let presentSkills = skills.filter(s => s.present && s.total > 0);
             let masteredSkills = presentSkills.filter(s => s.score >= 85);
             let weakSkills = presentSkills.filter(s => s.score < 70 && s.score !== null);
-
             if (finalScore >= 80) strengths.push("أداء قرائي جيد");
             else improvements.push("تحسين دقة القراءة");
             if (errorCount <= 1) strengths.push("قلة الأخطاء الواضحة");
@@ -1762,7 +1932,6 @@
             if (weakSkills.length > 0) improvements.push(`تحسين ${weakSkills.map(s => s.name).join('، ')}`);
             if (strengths.length === 0) strengths.push("يظهر الطالب جهداً في القراءة");
             if (improvements.length === 0) improvements.push("الاستمرار في الممارسة");
-
             recommendations = [
                 "قراءة يومية بصوت مرتفع",
                 "التدرب على الكلمات التي تحتوي على مدود وشدة وتنوين"
@@ -1828,7 +1997,6 @@
                 features: extractActualWordFeatures(w),
                 featuresDisplay: 'لم يتم التقاط قراءة'
             }));
-
             let emptySkills = [
                 'المد بالألف', 'المد بالواو', 'المد بالياء',
                 'الشدة', 'التنوين', 'السكون', 'الهمزة',
@@ -1845,7 +2013,6 @@
                 errors: [],
                 present: false
             }));
-
             return {
                 targetText: targetText,
                 spokenText: '',
@@ -1869,9 +2036,8 @@
         }
 
         // ========================================================================
-        // دوال عرض البطاقة والتقارير
+        // REPORT RENDERING
         // ========================================================================
-
         function processAndGenerateReport() {
             try {
                 const studentId = document.getElementById('eval-student-select').value;
@@ -1880,20 +2046,23 @@
                     className: '6B', code: '101' };
                 const textObj = appData.texts.find(t => t.id === textId) || { title: 'النص الافتراضي', body: document
                         .getElementById('target-reading-text').innerText || 'نص تجريبي للقراءة' };
-
                 let spokenForAnalysis = finalTranscript;
                 if (!spokenForAnalysis || spokenForAnalysis.trim().length < 2) {
                     if (hasDetectedSpeech) {
                         spokenForAnalysis = 'تم التقاط صوت ولكن لم يتم التعرف عليه';
-                    } else {
-                        spokenForAnalysis = '';
-                    }
+                    } else { spokenForAnalysis = ''; }
                 }
-
                 const result = analyzeReadingPerformance(textObj.body, spokenForAnalysis);
                 if (!result.skills) result.skills = [];
                 if (!result.analysisDetails) result.analysisDetails = [];
-
+                const targetStudent = appData.students.find(s => s.id === studentId);
+                if (targetStudent) {
+                    targetStudent.hasRead = true;
+                    saveAppData();
+                    renderStudentsTable();
+                    renderBulbsForCurrentClass();
+                    renderManageView();
+                }
                 const reportRecord = {
                     id: 'rep_' + Date.now(),
                     date: new Date().toLocaleDateString('ar-SA'),
@@ -1901,7 +2070,6 @@
                     textTitle: textObj.title,
                     result
                 };
-
                 appData.reports.unshift(reportRecord);
                 saveAppData();
                 renderAllReportsTable();
@@ -1923,10 +2091,7 @@
                         '<div class="alert alert-warning">البيانات غير مكتملة لتوليد البطاقة. تأكد من أن الطالب قد قرأ النص.</div>';
                     return;
                 }
-
-                // توليد التوصيات التفصيلية من الأخطاء الفعلية
                 const detailedRecs = generateDetailedRecommendations(result.analysisDetails);
-
                 const total = result.targetWordsCount || 0;
                 const correct = result.correctCount || 0;
                 const errors = result.errorCount || 0;
@@ -1936,18 +2101,18 @@
                 let tableRows = result.analysisDetails.map((item, idx) => {
                     let evidenceStr = (item.evidence || []).map(e => `• ${e}`).join('<br>');
                     return `
-                        <tr>
-                            <td>${idx + 1}</td>
-                            <td class="fw-bold">${item.word || ''}</td>
-                            <td>${item.spoken || ''}</td>
-                            <td><span class="badge ${item.badgeClass || 'status-uncertain'}">${item.status || 'غير مؤكدة'}</span></td>
-                            <td>${item.skill || '—'}</td>
-                            <td>${item.errorType || '—'}</td>
-                            <td>${item.note || ''}</td>
-                            <td class="text-start small"><div class="evidence-chain">${evidenceStr}</div></td>
-                            <td class="text-start small"><span class="badge bg-light text-dark">${item.featuresDisplay || 'لا توجد'}</span></td>
-                        </tr>
-                    `;
+                            <tr>
+                                <td>${idx + 1}</td>
+                                <td class="fw-bold">${item.word || ''}</td>
+                                <td>${item.spoken || ''}</td>
+                                <td><span class="badge ${item.badgeClass || 'status-uncertain'}">${item.status || 'غير مؤكدة'}</span></td>
+                                <td>${item.skill || '—'}</td>
+                                <td>${item.errorType || '—'}</td>
+                                <td>${item.note || ''}</td>
+                                <td class="text-start small"><div class="evidence-chain">${evidenceStr}</div></td>
+                                <td class="text-start small"><span class="badge bg-light text-dark">${item.featuresDisplay || 'لا توجد'}</span></td>
+                            </tr>
+                        `;
                 }).join('');
 
                 let skillsRows = '';
@@ -1969,18 +2134,18 @@
                         let errorsDisplay = (skill.errors && skill.errors.length > 0) ?
                             skill.errors.join('، ') : '—';
                         return `
-                            <tr class="${bgClass}">
-                                <td>${idx + 1}</td>
-                                <td>${skill.name || ''}</td>
-                                <td>${presentBadge}</td>
-                                <td>${skill.total > 0 ? skill.correct + ' / ' + skill.total : '—'}</td>
-                                <td>${scoreDisplay}</td>
-                                <td>${levelBadge}</td>
-                                <td>${skill.diagnosis || ''}</td>
-                                <td>${skill.note || ''}</td>
-                                <td>${errorsDisplay}</td>
-                            </tr>
-                        `;
+                                <tr class="${bgClass}">
+                                    <td>${idx + 1}</td>
+                                    <td>${skill.name || ''}</td>
+                                    <td>${presentBadge}</td>
+                                    <td>${skill.total > 0 ? skill.correct + ' / ' + skill.total : '—'}</td>
+                                    <td>${scoreDisplay}</td>
+                                    <td>${levelBadge}</td>
+                                    <td>${skill.diagnosis || ''}</td>
+                                    <td>${skill.note || ''}</td>
+                                    <td>${errorsDisplay}</td>
+                                </tr>
+                            `;
                     }).join('');
                 } else {
                     skillsRows = '<tr><td colspan="9" class="text-muted">لا توجد مهارات مستهدفة في هذا النص.</td></tr>';
@@ -1990,15 +2155,15 @@
                 const prevReports = appData.reports.filter(r => r.student.name === student.name);
                 if (prevReports.length > 0) {
                     historyRows = prevReports.map((r, idx) => `
-                        <tr>
-                            <td>القراءة ${idx + 1}</td>
-                            <td>${r.date || ''}</td>
-                            <td>${r.result.accuracyRate || 0}%</td>
-                            <td>${r.result.ratingCategory || ''}</td>
-                            <td>${r.result.readingSpeedWPM || 0} ك/د</td>
-                            <td><span class="badge bg-primary">${r.result.finalScore || 0} / 100</span></td>
-                        </tr>
-                    `).join('');
+                            <tr>
+                                <td>القراءة ${idx + 1}</td>
+                                <td>${r.date || ''}</td>
+                                <td>${r.result.accuracyRate || 0}%</td>
+                                <td>${r.result.ratingCategory || ''}</td>
+                                <td>${r.result.readingSpeedWPM || 0} ك/د</td>
+                                <td><span class="badge bg-primary">${r.result.finalScore || 0} / 100</span></td>
+                            </tr>
+                        `).join('');
                 } else {
                     historyRows = '<tr><td colspan="6" class="text-muted">هذه هي القراءة الأولى المسجلة للطالب.</td></tr>';
                 }
@@ -2008,7 +2173,6 @@
                 else if (score >= 70) scoreColor = 'text-primary';
                 else if (score >= 55) scoreColor = 'text-warning';
 
-                // بناء قسم التوصيات التفصيلية
                 let detailedRecsHTML = '';
                 if (detailedRecs.hasErrors && detailedRecs.recItems.length > 0) {
                     let itemsHTML = detailedRecs.recItems.map((item, idx) => {
@@ -2022,197 +2186,193 @@
                         }
                         let wordsHtml = item.words.map(w => `<span class="badge-word">${w}</span>`).join(' ');
                         return `
-                            <div class="rec-item">
-                                ${badgeHtml}
-                                ${wordsHtml}
-                                <span style="margin-right:8px;">→</span>
-                                <span>${item.text.replace(/\*\*/g, '')}</span>
-                            </div>
-                        `;
+                                <div class="rec-item">
+                                    ${badgeHtml}
+                                    ${wordsHtml}
+                                    <span style="margin-right:8px;">→</span>
+                                    <span>${item.text.replace(/\*\*/g, '')}</span>
+                                </div>
+                            `;
                     }).join('');
 
                     detailedRecsHTML = `
-                        <div class="detailed-recommendations mt-4">
-                            <h6 class="fw-bold text-primary mb-2">
-                                🔍 توصيات تفصيلية مخصصة 
-                                <span class="error-count-badge">${detailedRecs.errorCount} خطأ</span>
-                            </h6>
-                            <p class="text-muted small mb-2">التوصيات مبنية على الأخطاء الفعلية التي تم رصدها في قراءة الطالب:</p>
-                            ${itemsHTML}
-                            <div class="mt-2 text-muted small" style="border-top:1px dashed #dee2e6; padding-top:8px;">
-                                <span class="badge bg-info text-dark">💡 كل توصية مرتبطة بكلمة محددة</span>
-                                <span class="badge bg-secondary ms-1">📌 لا توجد أخطاء مصطنعة</span>
+                            <div class="detailed-recommendations mt-4">
+                                <h6 class="fw-bold text-primary mb-2">
+                                    🔍 توصيات تفصيلية مخصصة 
+                                    <span class="error-count-badge">${detailedRecs.errorCount} خطأ</span>
+                                </h6>
+                                <p class="text-muted small mb-2">التوصيات مبنية على الأخطاء الفعلية التي تم رصدها في قراءة الطالب:</p>
+                                ${itemsHTML}
+                                <div class="mt-2 text-muted small" style="border-top:1px dashed #dee2e6; padding-top:8px;">
+                                    <span class="badge bg-info text-dark">💡 كل توصية مرتبطة بكلمة محددة</span>
+                                    <span class="badge bg-secondary ms-1">📌 لا توجد أخطاء مصطنعة</span>
+                                </div>
                             </div>
-                        </div>
-                    `;
+                        `;
                 } else if (detailedRecs.hasErrors === false && errors === 0) {
                     detailedRecsHTML = `
-                        <div class="detailed-recommendations mt-4" style="background:#e8f5e9; border-right-color:#198754;">
-                            <h6 class="fw-bold text-success mb-2">🌟 قراءة ممتازة</h6>
-                            <p class="text-muted small">لم يتم رصد أي أخطاء واضحة في قراءة الطالب. استمر على هذا الأداء المتميز!</p>
-                        </div>
-                    `;
+                            <div class="detailed-recommendations mt-4" style="background:#e8f5e9; border-right-color:#198754;">
+                                <h6 class="fw-bold text-success mb-2">🌟 قراءة ممتازة</h6>
+                                <p class="text-muted small">لم يتم رصد أي أخطاء واضحة في قراءة الطالب. استمر على هذا الأداء المتميز!</p>
+                            </div>
+                        `;
                 } else {
                     detailedRecsHTML = `
-                        <div class="detailed-recommendations mt-4" style="background:#fff3cd; border-right-color:#ffc107;">
-                            <h6 class="fw-bold text-warning mb-2">⚠️ لم يتم رصد أخطاء واضحة</h6>
-                            <p class="text-muted small">لم يتمكن النظام من رصد أخطاء واضحة في هذه القراءة. قد تكون القراءة جيدة أو أن الصوت كان منخفضاً جداً.</p>
-                        </div>
-                    `;
+                            <div class="detailed-recommendations mt-4" style="background:#fff3cd; border-right-color:#ffc107;">
+                                <h6 class="fw-bold text-warning mb-2">⚠️ لم يتم رصد أخطاء واضحة</h6>
+                                <p class="text-muted small">لم يتمكن النظام من رصد أخطاء واضحة في هذه القراءة. قد تكون القراءة جيدة أو أن الصوت كان منخفضاً جداً.</p>
+                            </div>
+                        `;
                 }
 
-                // بناء التقرير الكامل مع إضافة التوصيات التفصيلية
                 container.innerHTML = `
-                    <div class="reading-card-container">
-                        <div class="report-main-title">
-                            <h2 class="fw-bold mb-1">بطاقة التقييم القرائي الشاملة</h2>
-                            <p class="mb-0 text-white-50">تحليل عادل قائم على الأدلة — مع توصيات تفصيلية مخصصة</p>
-                        </div>
+                        <div class="reading-card-container">
+                            <div class="report-main-title">
+                                <h2 class="fw-bold mb-1">بطاقة التقييم القرائي الشاملة</h2>
+                                <p class="mb-0 text-white-50">تحليل عادل قائم على الأدلة — مع توصيات تفصيلية مخصصة</p>
+                            </div>
 
-                        <div class="row g-3 mb-4 bg-light p-3 rounded border">
-                            <div class="col-md-3"><strong>اسم الطالب:</strong> ${student.name || ''}</div>
-                            <div class="col-md-3"><strong>الصف:</strong> ${student.grade || ''}</div>
-                            <div class="col-md-3"><strong>الفصل:</strong> ${student.className || ''}</div>
-                            <div class="col-md-3"><strong>التاريخ:</strong> ${new Date().toLocaleDateString('ar-SA')}</div>
-                            <div class="col-md-3"><strong>المعلم:</strong> ${appData.teacherName || ''}</div>
-                            <div class="col-md-4"><strong>عنوان نص القراءة:</strong> ${textTitle || ''}</div>
-                            <div class="col-md-2"><strong>عدد الكلمات:</strong> ${total}</div>
-                            <div class="col-md-3"><strong>مدة القراءة:</strong> ${result.durationSeconds || '00:00'}</div>
-                        </div>
+                            <div class="row g-3 mb-4 bg-light p-3 rounded border">
+                                <div class="col-md-3"><strong>اسم الطالب:</strong> ${student.name || ''}</div>
+                                <div class="col-md-3"><strong>الصف:</strong> ${student.grade || ''}</div>
+                                <div class="col-md-3"><strong>الفصل:</strong> ${student.className || ''}</div>
+                                <div class="col-md-3"><strong>التاريخ:</strong> ${new Date().toLocaleDateString('ar-SA')}</div>
+                                <div class="col-md-3"><strong>المعلم:</strong> ${appData.teacherName || ''}</div>
+                                <div class="col-md-4"><strong>عنوان نص القراءة:</strong> ${textTitle || ''}</div>
+                                <div class="col-md-2"><strong>عدد الكلمات:</strong> ${total}</div>
+                                <div class="col-md-3"><strong>مدة القراءة:</strong> ${result.durationSeconds || '00:00'}</div>
+                            </div>
 
-                        <!-- إحصائيات سريعة -->
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-3">
-                                <div class="summary-stats stat-total text-center">
-                                    <div class="stat-number">${total}</div>
-                                    <div class="stat-label">📚 إجمالي الكلمات</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-3">
+                                    <div class="summary-stats stat-total text-center">
+                                        <div class="stat-number">${total}</div>
+                                        <div class="stat-label">📚 إجمالي الكلمات</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="summary-stats stat-correct text-center">
+                                        <div class="stat-number">${correct}</div>
+                                        <div class="stat-label">✅ صحيحة</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="summary-stats stat-error text-center">
+                                        <div class="stat-number">${errors}</div>
+                                        <div class="stat-label">❌ أخطاء واضحة</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="summary-stats stat-uncertain text-center">
+                                        <div class="stat-number">${uncertain}</div>
+                                        <div class="stat-label">🟡 غير مؤكدة</div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="summary-stats stat-correct text-center">
-                                    <div class="stat-number">${correct}</div>
-                                    <div class="stat-label">✅ صحيحة</div>
+
+                            <div class="row justify-content-center mb-4">
+                                <div class="col-md-6">
+                                    <div class="score-hero-card">
+                                        <span class="text-muted fw-bold">الدرجة النهائية</span>
+                                        <h1 class="display-4 fw-bold ${scoreColor} my-2">${score} / 100</h1>
+                                        <h5 class="fw-bold text-dark mb-0">مستوى الأداء: <span class="text-primary">${result.ratingCategory || ''}</span></h5>
+                                        <p class="text-muted small mt-2">${result.generalLevel || ''}</p>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="summary-stats stat-error text-center">
-                                    <div class="stat-number">${errors}</div>
-                                    <div class="stat-label">❌ أخطاء واضحة</div>
+
+                            <div class="row g-3 mb-4 text-center">
+                                <div class="col-md-3">
+                                    <div class="indicator-badge-card border-start border-success border-4">
+                                        <span class="text-muted small">🎯 دقة القراءة</span>
+                                        <h3 class="text-success fw-bold mt-1">${result.accuracyRate || 0}%</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="indicator-badge-card border-start border-primary border-4">
+                                        <span class="text-muted small">🗣️ الطلاقة</span>
+                                        <h3 class="text-primary fw-bold mt-1">${result.ratingCategory || ''}</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="indicator-badge-card border-start border-info border-4">
+                                        <span class="text-muted small">⚡ سرعة القراءة</span>
+                                        <h3 class="text-info fw-bold mt-1">${result.readingSpeedWPM || 0} ك/د</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="indicator-badge-card border-start border-danger border-4">
+                                        <span class="text-muted small">⚠️ الأخطاء الواضحة</span>
+                                        <h3 class="text-danger fw-bold mt-1">${errors}</h3>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="summary-stats stat-uncertain text-center">
-                                    <div class="stat-number">${uncertain}</div>
-                                    <div class="stat-label">🟡 غير مؤكدة</div>
+
+                            <h5 class="fw-bold mb-3 text-primary">📋 تقييم مهارات القراءة (حسب النص الفعلي)</h5>
+                            <div class="table-responsive mb-4">
+                                <table class="table table-bordered align-middle text-center">
+                                    <thead class="table-dark">
+                                        <tr><th>م</th><th>المهارة</th><th>في النص</th><th>الصحيح / الكلي</th><th>النسبة</th><th>المستوى</th><th>التشخيص</th><th>الملاحظة</th><th>المواضع المخطئة</th></tr>
+                                    </thead>
+                                    <tbody>${skillsRows}</tbody>
+                                </table>
+                            </div>
+
+                            <h5 class="fw-bold mb-3 text-primary">🔍 التحليل التفصيلي للكلمات</h5>
+                            <div class="table-responsive mb-4">
+                                <table class="table table-bordered align-middle text-center">
+                                    <thead class="table-dark">
+                                        <tr><th>م</th><th>الكلمة الأصلية</th><th>قراءة الطالب</th><th>الحالة</th><th>المهارة المتأثرة</th><th>نوع الخطأ</th><th>الملاحظة</th><th>سلسلة الإثبات</th><th>السمات المستخرجة</th></tr>
+                                    </thead>
+                                    <tbody>${tableRows}</tbody>
+                                </table>
+                            </div>
+
+                            <div class="card p-4 bg-light mb-4 border-start border-primary border-4">
+                                <h5 class="fw-bold text-primary mb-2">📝 التشخيص القرائي</h5>
+                                <p class="mb-0 text-secondary lh-lg">${result.smartNote || ''}</p>
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <div class="card p-3 h-100 bg-white border-start border-success border-4">
+                                        <h6 class="fw-bold text-success mb-2">⭐ نقاط القوة</h6>
+                                        <ul class="mb-0 ps-3">${(result.strengths || []).map(s => `<li>${s}</li>`).join('')}</ul>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card p-3 h-100 bg-white border-start border-warning border-4">
+                                        <h6 class="fw-bold text-warning mb-2">🎯 جوانب تحتاج إلى تحسين</h6>
+                                        <ul class="mb-0 ps-3">${(result.improvements || []).map(i => `<li>${i}</li>`).join('')}</ul>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="row justify-content-center mb-4">
-                            <div class="col-md-6">
-                                <div class="score-hero-card">
-                                    <span class="text-muted fw-bold">الدرجة النهائية</span>
-                                    <h1 class="display-4 fw-bold ${scoreColor} my-2">${score} / 100</h1>
-                                    <h5 class="fw-bold text-dark mb-0">مستوى الأداء: <span class="text-primary">${result.ratingCategory || ''}</span></h5>
-                                    <p class="text-muted small mt-2">${result.generalLevel || ''}</p>
-                                </div>
+                            <div class="card p-3 bg-white mb-4 border-start border-info border-4">
+                                <h6 class="fw-bold text-info mb-2">💡 التوصيات العامة</h6>
+                                <ul class="mb-0 ps-3">${(result.recommendations || []).map(r => `<li>${r}</li>`).join('')}</ul>
+                            </div>
+
+                            ${detailedRecsHTML}
+
+                            <h5 class="fw-bold mb-3 text-primary">📈 تطور الطالب عبر القراءات السابقة</h5>
+                            <div class="table-responsive mb-4">
+                                <table class="table table-bordered align-middle text-center">
+                                    <thead class="table-secondary">
+                                        <tr><th>القراءة</th><th>التاريخ</th><th>الدقة</th><th>الطلاقة</th><th>السرعة</th><th>الدرجة</th></tr>
+                                    </thead>
+                                    <tbody>${historyRows}</tbody>
+                                </table>
+                            </div>
+
+                            <div class="copyright-footer mt-4">© حقوق الملكية محفوظة — محمد رضا عوف</div>
+
+                            <div class="text-center mt-4 no-print">
+                                <button class="btn btn-success px-5 py-2 fw-bold shadow-sm" onclick="exportExcelCustomCard()">📊 تصدير بطاقة التقييم إلى Excel</button>
+                                <button class="btn btn-info px-5 py-2 fw-bold shadow-sm" onclick="exportAllStudentsReport()" style="margin-right: 10px;">📊 تصدير تقرير جميع الطلاب</button>
                             </div>
                         </div>
-
-                        <div class="row g-3 mb-4 text-center">
-                            <div class="col-md-3">
-                                <div class="indicator-badge-card border-start border-success border-4">
-                                    <span class="text-muted small">🎯 دقة القراءة</span>
-                                    <h3 class="text-success fw-bold mt-1">${result.accuracyRate || 0}%</h3>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="indicator-badge-card border-start border-primary border-4">
-                                    <span class="text-muted small">🗣️ الطلاقة</span>
-                                    <h3 class="text-primary fw-bold mt-1">${result.ratingCategory || ''}</h3>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="indicator-badge-card border-start border-info border-4">
-                                    <span class="text-muted small">⚡ سرعة القراءة</span>
-                                    <h3 class="text-info fw-bold mt-1">${result.readingSpeedWPM || 0} ك/د</h3>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="indicator-badge-card border-start border-danger border-4">
-                                    <span class="text-muted small">⚠️ الأخطاء الواضحة</span>
-                                    <h3 class="text-danger fw-bold mt-1">${errors}</h3>
-                                </div>
-                            </div>
-                        </div>
-
-                        <h5 class="fw-bold mb-3 text-primary">📋 تقييم مهارات القراءة (حسب النص الفعلي)</h5>
-                        <div class="table-responsive mb-4">
-                            <table class="table table-bordered align-middle text-center">
-                                <thead class="table-dark">
-                                    <tr><th>م</th><th>المهارة</th><th>في النص</th><th>الصحيح / الكلي</th><th>النسبة</th><th>المستوى</th><th>التشخيص</th><th>الملاحظة</th><th>المواضع المخطئة</th></tr>
-                                </thead>
-                                <tbody>${skillsRows}</tbody>
-                            </table>
-                        </div>
-
-                        <h5 class="fw-bold mb-3 text-primary">🔍 التحليل التفصيلي للكلمات</h5>
-                        <div class="table-responsive mb-4">
-                            <table class="table table-bordered align-middle text-center">
-                                <thead class="table-dark">
-                                    <tr><th>م</th><th>الكلمة الأصلية</th><th>قراءة الطالب</th><th>الحالة</th><th>المهارة المتأثرة</th><th>نوع الخطأ</th><th>الملاحظة</th><th>سلسلة الإثبات</th><th>السمات المستخرجة</th></tr>
-                                </thead>
-                                <tbody>${tableRows}</tbody>
-                            </table>
-                        </div>
-
-                        <div class="card p-4 bg-light mb-4 border-start border-primary border-4">
-                            <h5 class="fw-bold text-primary mb-2">📝 التشخيص القرائي</h5>
-                            <p class="mb-0 text-secondary lh-lg">${result.smartNote || ''}</p>
-                        </div>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <div class="card p-3 h-100 bg-white border-start border-success border-4">
-                                    <h6 class="fw-bold text-success mb-2">⭐ نقاط القوة</h6>
-                                    <ul class="mb-0 ps-3">${(result.strengths || []).map(s => `<li>${s}</li>`).join('')}</ul>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card p-3 h-100 bg-white border-start border-warning border-4">
-                                    <h6 class="fw-bold text-warning mb-2">🎯 جوانب تحتاج إلى تحسين</h6>
-                                    <ul class="mb-0 ps-3">${(result.improvements || []).map(i => `<li>${i}</li>`).join('')}</ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- التوصيات الحالية (الأصلية) -->
-                        <div class="card p-3 bg-white mb-4 border-start border-info border-4">
-                            <h6 class="fw-bold text-info mb-2">💡 التوصيات العامة</h6>
-                            <ul class="mb-0 ps-3">${(result.recommendations || []).map(r => `<li>${r}</li>`).join('')}</ul>
-                        </div>
-
-                        <!-- ====== التوصيات التفصيلية المضافة ====== -->
-                        ${detailedRecsHTML}
-
-                        <h5 class="fw-bold mb-3 text-primary">📈 تطور الطالب عبر القراءات السابقة</h5>
-                        <div class="table-responsive mb-4">
-                            <table class="table table-bordered align-middle text-center">
-                                <thead class="table-secondary">
-                                    <tr><th>القراءة</th><th>التاريخ</th><th>الدقة</th><th>الطلاقة</th><th>السرعة</th><th>الدرجة</th></tr>
-                                </thead>
-                                <tbody>${historyRows}</tbody>
-                            </table>
-                        </div>
-
-                        <div class="copyright-footer mt-4">© حقوق الملكية محفوظة — محمد رضا عوف</div>
-
-                        <div class="text-center mt-4 no-print">
-                            <button class="btn btn-success px-5 py-2 fw-bold shadow-sm" onclick="exportExcelCustomCard()">📊 تصدير بطاقة التقييم إلى Excel</button>
-                            <button class="btn btn-info px-5 py-2 fw-bold shadow-sm" onclick="exportAllStudentsReport()" style="margin-right: 10px;">📊 تصدير تقرير جميع الطلاب</button>
-                        </div>
-                    </div>
-                `;
+                    `;
                 window.lastGeneratedReportData = { student, textTitle, result };
             } catch (error) {
                 console.error('خطأ في renderReadingAssessmentCard:', error);
@@ -2224,16 +2384,16 @@
         function renderAllReportsTable() {
             const tbody = document.getElementById('all-reports-table-body');
             tbody.innerHTML = appData.reports.map(r => `
-                <tr>
-                    <td>${r.date || ''}</td>
-                    <td class="fw-bold">${r.student.name || ''}</td>
-                    <td>${r.textTitle || ''}</td>
-                    <td><span class="badge bg-primary">${r.result.finalScore || 0} / 100</span></td>
-                    <td><span class="text-success fw-bold">${r.result.accuracyRate || 0}%</span></td>
-                    <td>${r.result.readingSpeedWPM || 0} ك/د</td>
-                    <td><button class="btn btn-info btn-sm text-white" onclick="viewReportDetails('${r.id}')">عرض البطاقة</button></td>
-                </tr>
-            `).join('');
+                    <tr>
+                        <td>${r.date || ''}</td>
+                        <td class="fw-bold">${r.student.name || ''}</td>
+                        <td>${r.textTitle || ''}</td>
+                        <td><span class="badge bg-primary">${r.result.finalScore || 0} / 100</span></td>
+                        <td><span class="text-success fw-bold">${r.result.accuracyRate || 0}%</span></td>
+                        <td>${r.result.readingSpeedWPM || 0} ك/د</td>
+                        <td><button class="btn btn-info btn-sm text-white" onclick="viewReportDetails('${r.id}')">عرض البطاقة</button></td>
+                    </tr>
+                `).join('');
         }
 
         function viewReportDetails(repId) {
@@ -2244,9 +2404,8 @@
         }
 
         // ========================================================================
-        // دوال تصدير Excel
+        // EXPORT
         // ========================================================================
-
         function exportExcelCustomCard() {
             try {
                 const data = window.lastGeneratedReportData;
@@ -2304,7 +2463,6 @@
                 rows.push(["التوصيات"]);
                 res.recommendations.forEach(r => rows.push(["•", r]));
 
-                // إضافة التوصيات التفصيلية
                 const detailedRecs = generateDetailedRecommendations(res.analysisDetails);
                 if (detailedRecs.hasErrors && detailedRecs.recItems.length > 0) {
                     rows.push([]);
@@ -2376,9 +2534,8 @@
         }
 
         // ========================================================================
-        // دوال الاستيراد والإعدادات
+        // IMPORT
         // ========================================================================
-
         function importWordFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -2405,21 +2562,54 @@
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
                 let count = 0;
+                const selectedClass = document.getElementById('import-class-select').value;
+
                 rows.slice(1).forEach(row => {
                     if (row[0]) {
-                        appData.students.push({
-                            id: 's_' + Math.random(),
-                            name: row[0],
-                            grade: row[1] || 'السادس',
-                            className: row[2] || '6A',
-                            code: row[3] || '—'
-                        });
-                        count++;
+                        const name = row[0] ? row[0].toString().trim() : '';
+                        const grade = row[1] ? row[1].toString().trim() : 'السادس';
+                        let className = '';
+                        if (row[2] && row[2].toString().trim() !== '') {
+                            className = row[2].toString().trim();
+                        } else if (selectedClass) {
+                            className = selectedClass;
+                        } else {
+                            className = '6A';
+                        }
+                        const code = row[3] ? row[3].toString().trim() : '—';
+
+                        let classExists = appData.classes.some(c => c.name === className);
+                        if (!classExists && className && className !== '') {
+                            const classGrade = row[1] ? row[1].toString().trim() : 'السادس';
+                            appData.classes.push({ id: 'c_' + Date.now(), name: className, grade: classGrade });
+                            saveAppData();
+                            renderClassesTable();
+                            updateClassDropdowns();
+                            updateImportClassDropdown();
+                            updateEvalClasses();
+                            renderManageView();
+                        }
+
+                        const existing = appData.students.some(s => s.name === name && s.className === className);
+                        if (!existing && name) {
+                            appData.students.push({
+                                id: 's_' + Math.random(),
+                                name: name,
+                                grade: grade,
+                                className: className,
+                                code: code,
+                                hasRead: false
+                            });
+                            count++;
+                        }
                     }
                 });
+
                 saveAppData();
                 renderStudentsTable();
-                alert(`تم استيراد ${count} طالب بنجاح!`);
+                renderBulbsForCurrentClass();
+                renderManageView();
+                alert(`تم استيراد ${count} طالب بنجاح من إكسل!`);
             };
             reader.readAsArrayBuffer(file);
         }
@@ -2430,22 +2620,118 @@
             alert('تم حفظ الإعدادات بنجاح');
         }
 
+        // ========================================================================
+        // EVAL UI — CLASS FILTERING (هذا هو الربط المطلوب)
+        // ========================================================================
         function updateEvalClasses() {
             const grade = document.getElementById('eval-grade-select').value;
             const classSelect = document.getElementById('eval-class-select');
             const filtered = appData.classes.filter(c => c.grade === grade);
             classSelect.innerHTML = '<option value="">اختر الفصل</option>' + filtered.map(c =>
                 `<option value="${c.name}">${c.name}</option>`).join('');
+            // إعادة تعيين قائمة الطلاب
             document.getElementById('eval-student-select').innerHTML = '<option value="">اختر الطالب أولاً</option>';
             updateEvalTextDropdown();
+            // تحديث اللمبات وإخفاء المؤشر
+            renderBulbsForCurrentClass();
+            updateClassFilterIndicator();
         }
 
+        // ====== الدالة الأساسية: تصفية الطلاب حسب الفصل المختار ======
         function updateEvalStudents() {
             const className = document.getElementById('eval-class-select').value;
             const studentSelect = document.getElementById('eval-student-select');
+
+            // تصفية الطلاب حسب الفصل المختار فقط
             const filtered = appData.students.filter(s => s.className === className);
-            studentSelect.innerHTML = '<option value="">اختر الطالب</option>' + filtered.map(s =>
-                `<option value="${s.id}">${s.name} (كود: ${s.code})</option>`).join('');
+
+            // تحديث القائمة المنسدلة للطلاب
+            studentSelect.innerHTML = '<option value="">اختر الطالب</option>' +
+                filtered.map(s =>
+                    `<option value="${s.id}">${s.name} (كود: ${s.code})</option>`
+                ).join('');
+
+            // تحديث اللمبات
+            renderBulbsForCurrentClass();
+
+            // تحديث مؤشر الفصل
+            updateClassFilterIndicator();
+
+            // إذا كان هناك طالب واحد فقط، نختاره تلقائياً
+            if (filtered.length === 1) {
+                studentSelect.value = filtered[0].id;
+                loadStudentHistoryAndReadings();
+            }
+        }
+
+        // ====== مؤشر الفصل المختار ======
+        function updateClassFilterIndicator() {
+            const className = document.getElementById('eval-class-select').value;
+            const indicator = document.getElementById('class-filter-indicator');
+            const display = document.getElementById('selected-class-display');
+            const countEl = document.getElementById('selected-class-count');
+
+            if (!className || className === '') {
+                indicator.style.display = 'none';
+                return;
+            }
+
+            const students = appData.students.filter(s => s.className === className);
+            display.textContent = className;
+            countEl.textContent = students.length;
+            indicator.style.display = 'inline-block';
+        }
+
+        // ========================================================================
+        // STUDENT BULBS (also filtered by class)
+        // ========================================================================
+        function renderBulbsForCurrentClass() {
+            const className = document.getElementById('eval-class-select').value;
+            const container = document.getElementById('student-bulbs-container');
+            const list = document.getElementById('student-bulbs-list');
+
+            if (!className || className === '') {
+                container.style.display = 'none';
+                return;
+            }
+
+            // تصفية الطلاب حسب الفصل المختار فقط
+            const students = appData.students.filter(s => s.className === className);
+
+            if (students.length === 0) {
+                container.style.display = 'block';
+                list.innerHTML = `<div class="no-students-msg">📭 لا يوجد طلاب مسجلون في هذا الفصل بعد.</div>`;
+                return;
+            }
+
+            container.style.display = 'block';
+            const selectedId = document.getElementById('eval-student-select').value;
+
+            let html = '';
+            students.forEach(s => {
+                const isActive = (s.id === selectedId);
+                const readClass = s.hasRead ? 'status-read' : 'status-unread';
+                const statusText = s.hasRead ? '✅ تمت القراءة' : '⏳ لم تقرأ بعد';
+                html += `
+                        <div class="student-bulb-item ${isActive ? 'active' : ''}" 
+                             onclick="selectStudentFromBulb('${s.id}')"
+                             title="${s.name} — ${statusText}">
+                            <span class="bulb ${readClass}"></span>
+                            <span class="student-name">${s.name}</span>
+                            <span class="${s.hasRead ? 'read-badge' : 'unread-badge'}">${s.hasRead ? '✓' : '○'}</span>
+                        </div>
+                    `;
+            });
+
+            list.innerHTML = html;
+        }
+
+        function selectStudentFromBulb(studentId) {
+            const select = document.getElementById('eval-student-select');
+            select.value = studentId;
+            renderBulbsForCurrentClass();
+            loadStudentHistoryAndReadings();
+            loadSelectedTextForEval();
         }
 
         function updateEvalTextDropdown() {
@@ -2463,9 +2749,212 @@
                 'اختر نصاً من القائمة أعلاه لعرضه هنا...';
         }
 
-        function loadStudentHistoryAndReadings() {}
+        function loadStudentHistoryAndReadings() {
+            renderBulbsForCurrentClass();
+        }
 
-        window.onload = function() { loadAppData(); };
+        // ========================================================================
+        // MANAGE CLASSES VIEW
+        // ========================================================================
+        function renderManageView() {
+            const container = document.getElementById('manage-classes-container');
+            if (!container) return;
+
+            if (appData.classes.length === 0) {
+                container.innerHTML = `
+                        <div class="alert alert-info text-center">
+                            <h5 class="mb-2">📭 لا توجد فصول مسجلة بعد</h5>
+                            <p class="text-muted small">يمكنك إضافة فصل جديد باستخدام الزر أعلاه.</p>
+                        </div>
+                    `;
+                return;
+            }
+
+            let html = '';
+            appData.classes.forEach(cls => {
+                const students = appData.students.filter(s => s.className === cls.name);
+                const studentCount = students.length;
+
+                let studentsHtml = '';
+                if (students.length === 0) {
+                    studentsHtml = `<div class="no-students-chip">لا يوجد طلاب في هذا الفصل</div>`;
+                } else {
+                    students.forEach(s => {
+                        const statusClass = s.hasRead ? 'read' : 'unread';
+                        const statusLabel = s.hasRead ? '✅' : '⏳';
+                        studentsHtml += `
+                                <span class="student-chip">
+                                    <span class="chip-status ${statusClass}"></span>
+                                    ${s.name} 
+                                    <span class="text-muted small">(${s.code || '—'})</span>
+                                    ${statusLabel}
+                                </span>
+                            `;
+                    });
+                }
+
+                html += `
+                        <div class="class-management-card card p-0 mb-3">
+                            <div class="class-header">
+                                <span class="class-name">📚 ${cls.name} <span class="text-muted small">(${cls.grade})</span></span>
+                                <span class="badge bg-primary">${studentCount} طالب</span>
+                                <div class="action-btn-group">
+                                    <button class="btn btn-warning btn-sm fw-bold" onclick="openEditClassModal('${cls.id}')">✏️ تعديل</button>
+                                    <button class="btn btn-danger btn-sm" onclick="deleteClass('${cls.id}')">🗑️ حذف</button>
+                                </div>
+                            </div>
+                            <div class="class-students">
+                                <div class="d-flex flex-wrap align-items-center gap-1">
+                                    ${studentsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function refreshManageView() {
+            renderManageView();
+        }
+
+        // ========================================================================
+        // MODALS: Add Class
+        // ========================================================================
+        function openAddClassModal() {
+            document.getElementById('modal-class-name').value = '';
+            document.getElementById('modal-class-grade').value = 'الرابع';
+            const modal = new bootstrap.Modal(document.getElementById('addClassModal'));
+            modal.show();
+        }
+
+        function saveNewClassFromModal() {
+            const name = document.getElementById('modal-class-name').value.trim();
+            const grade = document.getElementById('modal-class-grade').value;
+            if (!name) { alert('يرجى إدخال اسم الفصل'); return; }
+            if (appData.classes.some(c => c.name === name && c.grade === grade)) {
+                alert('هذا الفصل موجود مسبقاً!');
+                return;
+            }
+            appData.classes.push({ id: 'c_' + Date.now(), name, grade });
+            saveAppData();
+            renderClassesTable();
+            updateClassDropdowns();
+            updateImportClassDropdown();
+            updateEvalClasses();
+            renderManageView();
+            bootstrap.Modal.getInstance(document.getElementById('addClassModal')).hide();
+            alert('✅ تم إضافة الفصل بنجاح!');
+        }
+
+        // ========================================================================
+        // MODALS: Edit Class
+        // ========================================================================
+        function openEditClassModal(classId) {
+            const cls = appData.classes.find(c => c.id === classId);
+            if (!cls) return;
+            document.getElementById('edit-class-id').value = classId;
+            document.getElementById('edit-class-name').value = cls.name;
+            document.getElementById('edit-class-grade').value = cls.grade;
+            const modal = new bootstrap.Modal(document.getElementById('editClassModal'));
+            modal.show();
+        }
+
+        function saveEditClass() {
+            const classId = document.getElementById('edit-class-id').value;
+            const newName = document.getElementById('edit-class-name').value.trim();
+            const newGrade = document.getElementById('edit-class-grade').value;
+            const cls = appData.classes.find(c => c.id === classId);
+            if (!cls) { alert('الفصل غير موجود'); return; }
+            if (!newName) { alert('يرجى إدخال اسم الفصل'); return; }
+
+            const duplicate = appData.classes.some(c => c.id !== classId && c.name === newName && c.grade === newGrade);
+            if (duplicate) {
+                alert('يوجد فصل آخر بنفس الاسم والصف!');
+                return;
+            }
+
+            const oldName = cls.name;
+            cls.name = newName;
+            cls.grade = newGrade;
+
+            appData.students.forEach(s => {
+                if (s.className === oldName) {
+                    s.className = newName;
+                }
+            });
+
+            saveAppData();
+            renderClassesTable();
+            renderStudentsTable();
+            updateClassDropdowns();
+            updateImportClassDropdown();
+            updateEvalClasses();
+            renderBulbsForCurrentClass();
+            renderManageView();
+            bootstrap.Modal.getInstance(document.getElementById('editClassModal')).hide();
+            alert('✅ تم تعديل الفصل وتحديث جميع الطلاب المرتبطين به!');
+        }
+
+        // ========================================================================
+        // MODALS: Edit Student
+        // ========================================================================
+        function openEditStudentModal(studentId) {
+            const student = appData.students.find(s => s.id === studentId);
+            if (!student) return;
+
+            document.getElementById('edit-student-id').value = studentId;
+            document.getElementById('edit-student-name').value = student.name;
+            document.getElementById('edit-student-grade').value = student.grade;
+            document.getElementById('edit-student-code').value = student.code || '';
+
+            const select = document.getElementById('edit-student-class');
+            select.innerHTML = appData.classes.map(c =>
+                `<option value="${c.name}" ${c.name === student.className ? 'selected' : ''}>${c.name} (${c.grade})</option>`
+            ).join('');
+
+            const modal = new bootstrap.Modal(document.getElementById('editStudentModal'));
+            modal.show();
+        }
+
+        function saveEditStudent() {
+            const studentId = document.getElementById('edit-student-id').value;
+            const student = appData.students.find(s => s.id === studentId);
+            if (!student) { alert('الطالب غير موجود'); return; }
+
+            const newName = document.getElementById('edit-student-name').value.trim();
+            const newGrade = document.getElementById('edit-student-grade').value;
+            const newClass = document.getElementById('edit-student-class').value;
+            const newCode = document.getElementById('edit-student-code').value.trim() || '—';
+
+            if (!newName) { alert('يرجى إدخال اسم الطالب'); return; }
+            if (!newClass) { alert('يرجى اختيار الفصل'); return; }
+
+            student.name = newName;
+            student.grade = newGrade;
+            student.className = newClass;
+            student.code = newCode;
+
+            saveAppData();
+            renderStudentsTable();
+            renderBulbsForCurrentClass();
+            renderManageView();
+            bootstrap.Modal.getInstance(document.getElementById('editStudentModal')).hide();
+            alert('✅ تم تحديث بيانات الطالب بنجاح!');
+        }
+
+        // ========================================================================
+        // INIT
+        // ========================================================================
+        window.onload = function() {
+            loadAppData();
+            setTimeout(() => {
+                renderBulbsForCurrentClass();
+                renderManageView();
+                updateClassFilterIndicator();
+            }, 200);
+        };
     </script>
 </body>
 </html>
