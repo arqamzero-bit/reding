@@ -1891,7 +1891,7 @@
         }
 
         // ================================================================
-        // 11. ⭐⭐ الميكروفون — إصلاح شامل للجوال ⭐⭐
+        // 11. ⭐⭐ الميكروفون — إصلاح شامل للجوال وعلاج التكرار ⭐⭐
         // ================================================================
         let recognition = null;
         let mediaStream = null;
@@ -1912,6 +1912,11 @@
         let speechRecognitionSupported = false;
         let isFirstStart = true;
         let startAttempts = 0;
+        // ===== متغيرات جديدة لمنع التكرار =====
+        let lastFinalText = '';
+        let lastInterimText = '';
+        let finalTextAccumulator = '';
+        let processedFinalChunks = new Set();
 
         // ===== التحقق من دعم التعرف الصوتي =====
         function checkSpeechRecognitionSupport() {
@@ -2055,6 +2060,77 @@
             alert(message);
         }
 
+        // ===== دالة تنظيف النص من التكرار =====
+        function cleanRepeatedText(text) {
+            if (!text || text.trim().length === 0) return '';
+            
+            // تقسيم النص إلى كلمات
+            let words = text.split(/\s+/).filter(w => w.length > 0);
+            if (words.length === 0) return '';
+            
+            // خوارزمية إزالة التكرار: نمر على الكلمات ونبني قائمة جديدة
+            let cleanedWords = [];
+            let lastWord = '';
+            let repeatCount = 0;
+            
+            for (let i = 0; i < words.length; i++) {
+                const currentWord = words[i];
+                // إذا كانت الكلمة مختلفة عن السابقة، نضيفها
+                if (currentWord !== lastWord) {
+                    if (cleanedWords.length === 0 || cleanedWords[cleanedWords.length - 1] !== currentWord) {
+                        cleanedWords.push(currentWord);
+                    }
+                    lastWord = currentWord;
+                    repeatCount = 0;
+                } else {
+                    // تكرار متتالي، نتجاوزه
+                    repeatCount++;
+                }
+            }
+            
+            // حالة خاصة: إذا كان هناك تكرار ضمني، مثلاً "ذهبذهب" -> "ذهب"
+            // نبحث عن الكلمات التي تحتوي على تكرار داخلي
+            let finalWords = [];
+            for (let word of cleanedWords) {
+                // إذا كانت الكلمة تحتوي على تكرار داخلي واضح
+                let cleanWord = word;
+                // كشف التكرار الداخلي مثل "ذهبذهب" -> "ذهب"
+                if (word.length >= 4) {
+                    // نحاول تقسيم الكلمة إلى نصفين متساويين
+                    if (word.length % 2 === 0) {
+                        const half = word.length / 2;
+                        const firstHalf = word.substring(0, half);
+                        const secondHalf = word.substring(half);
+                        if (firstHalf === secondHalf) {
+                            cleanWord = firstHalf;
+                        }
+                    }
+                    // كشف تكرار ثلاثي أو أكثر
+                    for (let j = 2; j < word.length; j++) {
+                        if (word.length % j === 0) {
+                            const part = word.substring(0, j);
+                            let isRepeated = true;
+                            for (let k = 0; k < word.length; k += j) {
+                                if (word.substring(k, k + j) !== part) {
+                                    isRepeated = false;
+                                    break;
+                                }
+                            }
+                            if (isRepeated) {
+                                cleanWord = part;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (finalWords.length === 0 || finalWords[finalWords.length - 1] !== cleanWord) {
+                    finalWords.push(cleanWord);
+                }
+            }
+            
+            return finalWords.join(' ');
+        }
+
         // ===== دالة startReadingSession المعدلة بالكامل =====
         async function startReadingSession() {
             // التحقق من اختيار الطالب والنص
@@ -2075,6 +2151,11 @@
             hasDetectedSpeech = false;
             isStopping = false;
             sessionActive = false;
+            // إعادة ضبط متغيرات منع التكرار
+            lastFinalText = '';
+            lastInterimText = '';
+            finalTextAccumulator = '';
+            processedFinalChunks = new Set();
             
             // تحديث واجهة المستخدم
             const transcriptEl = document.getElementById('live-transcript');
@@ -2251,6 +2332,10 @@
                     hasDetectedSpeech = false;
                     finalTranscript = '';
                     interimTranscript = '';
+                    lastFinalText = '';
+                    lastInterimText = '';
+                    finalTextAccumulator = '';
+                    processedFinalChunks = new Set();
                     
                     const transcriptEl2 = document.getElementById('live-transcript');
                     if (transcriptEl2) { 
@@ -2280,54 +2365,80 @@
                     console.log('✅ SpeechRecognition onstart');
                 };
                 
-                // ===== onresult =====
+                // ===== onresult — المعدلة لمنع التكرار =====
                 rec.onresult = (event) => {
                     let interim = '';
                     let final = '';
+                    let hasNewFinal = false;
+                    let finalChunk = '';
+                    
                     for (let i = event.resultIndex; i < event.results.length; ++i) {
                         const transcript = event.results[i][0].transcript;
-                        if (event.results[i].isFinal) { 
-                            final += transcript + ' '; 
-                        } else { 
-                            interim += transcript; 
+                        if (event.results[i].isFinal) {
+                            finalChunk = transcript.trim();
+                            // تجاهل النتائج الفارغة أو القصيرة جداً
+                            if (finalChunk.length > 1) {
+                                // التحقق من عدم تكرار هذا الجزء النهائي
+                                const chunkKey = finalChunk;
+                                if (!processedFinalChunks.has(chunkKey)) {
+                                    processedFinalChunks.add(chunkKey);
+                                    // نضيف إلى المتراكم النهائي مع مسافة
+                                    if (finalTextAccumulator.length > 0 && !finalTextAccumulator.endsWith(' ')) {
+                                        finalTextAccumulator += ' ';
+                                    }
+                                    finalTextAccumulator += finalChunk;
+                                    // تنظيف المتراكم من التكرارات
+                                    finalTextAccumulator = cleanRepeatedText(finalTextAccumulator);
+                                    hasNewFinal = true;
+                                }
+                            }
+                        } else {
+                            interim += transcript;
                         }
                     }
                     
+                    // تحديث العرض
                     const transcriptEl2 = document.getElementById('live-transcript');
                     if (!transcriptEl2) return;
                     
-                    // تصفية النصوص غير الصحيحة (نصوص افتراضية أو عامة)
-                    const filteredFinal = filterInvalidTranscript(final);
-                    const filteredInterim = filterInvalidTranscript(interim);
+                    // تنظيف النص المؤقت
+                    const cleanedInterim = filterInvalidTranscript(interim);
                     
-                    if (filteredFinal && filteredFinal.trim().length > 0) {
-                        finalTranscript += filteredFinal;
-                        transcriptEl2.innerHTML = 
-                            `<span class="final">${finalTranscript}</span>${filteredInterim ? ' <span class="interim">' + filteredInterim + '</span>' : ''}`;
+                    // عرض النص النهائي المتراكم + المؤقت
+                    if (finalTextAccumulator.length > 0) {
+                        const displayText = finalTextAccumulator;
+                        if (cleanedInterim && cleanedInterim.trim().length > 0) {
+                            transcriptEl2.innerHTML = 
+                                `<span class="final">${displayText}</span> <span class="interim">${cleanedInterim}</span>`;
+                        } else {
+                            transcriptEl2.innerHTML = `<span class="final">${displayText}</span>`;
+                        }
                         transcriptEl2.scrollTop = transcriptEl2.scrollHeight;
-                        setDiagText(finalTranscript);
+                        setDiagText(displayText);
+                        hasDetectedSpeech = true;
                         updateDiag('diag-onresult', '🟢 onresult: <span class="diag-ok">تم استقبال النص ✅</span>');
                         updateDiag('diag-state', '📌 الحالة: <span class="diag-ok">يتم التعرف على الكلام</span>');
-                        hasDetectedSpeech = true;
-                    } else if (filteredInterim && filteredInterim.trim().length > 0) {
-                        transcriptEl2.innerHTML = 
-                            `${finalTranscript ? '<span class="final">' + finalTranscript + '</span> ' : ''}<span class="interim">${filteredInterim}</span>`;
+                    } else if (cleanedInterim && cleanedInterim.trim().length > 0) {
+                        // عرض فقط المؤقت إذا لم يكن هناك نهائي
+                        transcriptEl2.innerHTML = `<span class="interim">${cleanedInterim}</span>`;
                         transcriptEl2.scrollTop = transcriptEl2.scrollHeight;
-                        setDiagText(finalTranscript || filteredInterim);
-                        updateDiag('diag-onresult', '🟢 onresult: <span class="diag-ok">يتم الاستقبال (مؤقت)</span>');
-                        if (filteredInterim.length > 2) { 
-                            hasDetectedSpeech = true; 
+                        setDiagText(cleanedInterim);
+                        if (cleanedInterim.length > 2) {
+                            hasDetectedSpeech = true;
                         }
                     }
                     
-                    if (filteredFinal || (filteredInterim && filteredInterim.length > 2)) {
+                    if (finalTextAccumulator.length > 0 || (cleanedInterim && cleanedInterim.length > 2)) {
                         const activityEl2 = document.getElementById('audio-activity-status');
                         if (activityEl2) { 
                             activityEl2.textContent = '🗣️ قراءة قيد الالتقاط';
                             activityEl2.className = 'text-success small'; 
                         }
                     }
-                    console.log('📝 onresult:', filteredFinal || filteredInterim);
+                    
+                    // تحديث finalTranscript للنهاية (للتقييم)
+                    finalTranscript = finalTextAccumulator;
+                    console.log('📝 النص المتراكم النهائي:', finalTranscript);
                 };
                 
                 // ===== onerror =====
@@ -2386,7 +2497,7 @@
                     }
                 };
                 
-                // ===== onend =====
+                // ===== onend — المعدلة =====
                 rec.onend = () => {
                     console.log('🔚 SpeechRecognition onend');
                     
@@ -2420,7 +2531,9 @@
                         if (stopBtn) stopBtn.disabled = true;
                         updateDiag('diag-state', '📌 الحالة: <span class="diag-warn">انتهت الجلسة</span>');
                         
-                        if (finalTranscript && finalTranscript.trim().length > 0) {
+                        // تنظيف النص النهائي قبل التقييم
+                        if (finalTextAccumulator && finalTextAccumulator.trim().length > 0) {
+                            finalTranscript = cleanRepeatedText(finalTextAccumulator);
                             setTimeout(() => { 
                                 if (!isListening && !sessionActive) { 
                                     processAndGenerateReport(); 
@@ -2584,6 +2697,10 @@
             
             updateDiag('diag-state', '📌 الحالة: <span class="diag-info">جاري إنشاء التقرير...</span>');
             setTimeout(() => { 
+                // تنظيف النص النهائي قبل التقييم
+                if (finalTextAccumulator && finalTextAccumulator.trim().length > 0) {
+                    finalTranscript = cleanRepeatedText(finalTextAccumulator);
+                }
                 processAndGenerateReport();
                 isStopping = false; 
                 startAttempts = 0;
@@ -2637,6 +2754,11 @@
             isStopping = false;
             sessionActive = false;
             hasDetectedSpeech = false;
+            // إعادة ضبط متغيرات منع التكرار
+            lastFinalText = '';
+            lastInterimText = '';
+            finalTextAccumulator = '';
+            processedFinalChunks = new Set();
             
             const statusEl = document.getElementById('mic-status-indicator');
             if (statusEl) { 
@@ -3024,8 +3146,10 @@
 
         function analyzeReadingPerformance(targetText, spokenText) {
             if (!targetText) targetText = 'نص اختبار';
+            // تنظيف النص المقروء من التكرارات قبل التحليل
+            const cleanedSpoken = cleanRepeatedText(spokenText || '');
             const units = analyzeTextUnits(targetText);
-            const comparison = compareWithExpected(spokenText, units);
+            const comparison = compareWithExpected(cleanedSpoken, units);
             let words = [];
             let current = '';
             for (let u of units) {
@@ -3089,15 +3213,15 @@
                 '';
             return {
                 targetText: targetText,
-                spokenText: spokenText,
+                spokenText: cleanedSpoken,
                 targetWordsCount: total,
                 correctCount: correct,
                 errorCount: errors,
                 uncertainCount: uncertain,
                 accuracyRate: score,
-                readingSpeedWPM: spokenText ? Math.round(spokenText.split(/\s+/).filter(w => w.length > 0).length /
+                readingSpeedWPM: cleanedSpoken ? Math.round(cleanedSpoken.split(/\s+/).filter(w => w.length > 0).length /
                     0.75) : 0,
-                durationSeconds: '00:' + (spokenText ? Math.min(59, Math.round(spokenText.split(/\s+/).filter(w => w
+                durationSeconds: '00:' + (cleanedSpoken ? Math.min(59, Math.round(cleanedSpoken.split(/\s+/).filter(w => w
                     .length > 0).length / 2)) : '00'),
                 finalScore: score,
                 ratingCategory: category,
@@ -3450,7 +3574,10 @@
                 const textObj = appData.texts.find(t => t.id === textId) || { title: 'نص تجريبي',
                     body: document.getElementById('target-reading-text').innerText ||
                     'ذهب الفلاح المبكر إلى حقله الأخضر الواسع لكي يحصد القمح الناضج.' };
-                let spokenForAnalysis = finalTranscript || '';
+                // استخدام النص المتراكم النهائي
+                let spokenForAnalysis = finalTextAccumulator || finalTranscript || '';
+                // تنظيف إضافي قبل التحليل
+                spokenForAnalysis = cleanRepeatedText(spokenForAnalysis);
                 if (!spokenForAnalysis || spokenForAnalysis.trim().length < 2) {
                     if (hasDetectedSpeech) {
                         spokenForAnalysis = 'تم التقاط صوت ولكن لم يتم التعرف عليه بوضوح';
@@ -3482,6 +3609,8 @@
                 renderAllReportsTable();
                 renderReadingAssessmentCard(student, textObj.title, result);
                 finalTranscript = '';
+                finalTextAccumulator = '';
+                processedFinalChunks = new Set();
                 updateDiag('diag-state', '📌 الحالة: <span class="diag-ok">تم إنشاء التقرير ✅</span>');
             } catch (error) {
                 console.error('خطأ في إنشاء التقرير:', error);
