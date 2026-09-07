@@ -2365,46 +2365,41 @@
                     console.log('✅ SpeechRecognition onstart');
                 };
                 
-                // ===== onresult — المعدلة لمنع التكرار =====
+                // ===== onresult — المعدلة بشكل جذري لمنع التكرار =====
                 rec.onresult = (event) => {
                     let interim = '';
-                    let final = '';
-                    let hasNewFinal = false;
                     let finalChunk = '';
-                    
+
                     for (let i = event.resultIndex; i < event.results.length; ++i) {
-                        const transcript = event.results[i][0].transcript;
+                        const transcript = event.results[i][0].transcript.trim();
                         if (event.results[i].isFinal) {
-                            finalChunk = transcript.trim();
                             // تجاهل النتائج الفارغة أو القصيرة جداً
-                            if (finalChunk.length > 1) {
-                                // التحقق من عدم تكرار هذا الجزء النهائي
-                                const chunkKey = finalChunk;
+                            if (transcript.length > 1) {
+                                // المفتاح: نستخدم النص الكامل كمعرف لتجنب إضافة أي تكرار
+                                const chunkKey = transcript;
                                 if (!processedFinalChunks.has(chunkKey)) {
                                     processedFinalChunks.add(chunkKey);
-                                    // نضيف إلى المتراكم النهائي مع مسافة
+                                    // نضيف النص الجديد إلى المتراكم مع مسافة
                                     if (finalTextAccumulator.length > 0 && !finalTextAccumulator.endsWith(' ')) {
                                         finalTextAccumulator += ' ';
                                     }
-                                    finalTextAccumulator += finalChunk;
-                                    // تنظيف المتراكم من التكرارات
+                                    finalTextAccumulator += transcript;
+                                    // تنظيف المتراكم من التكرارات الداخلية
                                     finalTextAccumulator = cleanRepeatedText(finalTextAccumulator);
-                                    hasNewFinal = true;
                                 }
                             }
                         } else {
                             interim += transcript;
                         }
                     }
-                    
+
                     // تحديث العرض
                     const transcriptEl2 = document.getElementById('live-transcript');
                     if (!transcriptEl2) return;
-                    
-                    // تنظيف النص المؤقت
+
                     const cleanedInterim = filterInvalidTranscript(interim);
-                    
-                    // عرض النص النهائي المتراكم + المؤقت
+
+                    // عرض النص النهائي المتراكم (النظيف) + المؤقت
                     if (finalTextAccumulator.length > 0) {
                         const displayText = finalTextAccumulator;
                         if (cleanedInterim && cleanedInterim.trim().length > 0) {
@@ -2427,18 +2422,10 @@
                             hasDetectedSpeech = true;
                         }
                     }
-                    
-                    if (finalTextAccumulator.length > 0 || (cleanedInterim && cleanedInterim.length > 2)) {
-                        const activityEl2 = document.getElementById('audio-activity-status');
-                        if (activityEl2) { 
-                            activityEl2.textContent = '🗣️ قراءة قيد الالتقاط';
-                            activityEl2.className = 'text-success small'; 
-                        }
-                    }
-                    
+
                     // تحديث finalTranscript للنهاية (للتقييم)
                     finalTranscript = finalTextAccumulator;
-                    console.log('📝 النص المتراكم النهائي:', finalTranscript);
+                    console.log('📝 النص المتراكم النهائي (النظيف):', finalTranscript);
                 };
                 
                 // ===== onerror =====
