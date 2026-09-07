@@ -1891,7 +1891,7 @@
         }
 
         // ================================================================
-        // 11. ⭐⭐ الميكروفون — إصلاح شامل للجوال وعلاج التكرار ⭐⭐
+        // 11. ⭐⭐ الميكروفون — إصلاح شامل للجوال ⭐⭐
         // ================================================================
         let recognition = null;
         let mediaStream = null;
@@ -1912,11 +1912,7 @@
         let speechRecognitionSupported = false;
         let isFirstStart = true;
         let startAttempts = 0;
-        // ===== متغيرات جديدة لمنع التكرار =====
-        let lastFinalText = '';
-        let lastInterimText = '';
-        let finalTextAccumulator = '';
-        let processedFinalChunks = new Set();
+        let lastFinalText = ''; // لتتبع آخر نص نهائي تم إضافته
 
         // ===== التحقق من دعم التعرف الصوتي =====
         function checkSpeechRecognitionSupport() {
@@ -1933,7 +1929,6 @@
         // ===== التحقق من صلاحية الميكروفون المتقدمة =====
         async function checkMicrophonePermission() {
             try {
-                // محاولة الحصول على الميكروفون
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     audio: { 
                         echoCancellation: true, 
@@ -1946,10 +1941,7 @@
                 return { granted: true, status: 'granted' };
             } catch (err) {
                 console.warn('Mic permission check error:', err.name);
-                
-                // تحليل نوع الخطأ
                 if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    // التحقق من حالة الصلاحية عبر Permissions API
                     if (navigator.permissions && navigator.permissions.query) {
                         try {
                             const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
@@ -1986,7 +1978,6 @@
         // ===== عرض رسائل تنبيه محسنة للمستخدم =====
         function showMicrophoneAlert(status, errorMsg = '') {
             let message = '';
-            let title = '⚠️ صلاحية الميكروفون';
             
             if (status === 'permanently denied' || status === 'denied') {
                 message = `🔴 لم يتم منح صلاحية الميكروفون بشكل دائم.
@@ -2064,76 +2055,126 @@
         function cleanRepeatedText(text) {
             if (!text || text.trim().length === 0) return '';
             
-            // تقسيم النص إلى كلمات
             let words = text.split(/\s+/).filter(w => w.length > 0);
             if (words.length === 0) return '';
             
-            // خوارزمية إزالة التكرار: نمر على الكلمات ونبني قائمة جديدة
-            let cleanedWords = [];
-            let lastWord = '';
-            let repeatCount = 0;
-            
+            let uniqueWords = [];
+            let prevWord = '';
             for (let i = 0; i < words.length; i++) {
                 const currentWord = words[i];
-                // إذا كانت الكلمة مختلفة عن السابقة، نضيفها
-                if (currentWord !== lastWord) {
-                    if (cleanedWords.length === 0 || cleanedWords[cleanedWords.length - 1] !== currentWord) {
-                        cleanedWords.push(currentWord);
-                    }
-                    lastWord = currentWord;
-                    repeatCount = 0;
+                if (currentWord !== prevWord) {
+                    uniqueWords.push(currentWord);
+                    prevWord = currentWord;
                 } else {
-                    // تكرار متتالي، نتجاوزه
-                    repeatCount++;
+                    if (i + 1 < words.length && words[i + 1] !== prevWord) {
+                        uniqueWords.push(currentWord);
+                    }
                 }
             }
             
-            // حالة خاصة: إذا كان هناك تكرار ضمني، مثلاً "ذهبذهب" -> "ذهب"
-            // نبحث عن الكلمات التي تحتوي على تكرار داخلي
-            let finalWords = [];
-            for (let word of cleanedWords) {
-                // إذا كانت الكلمة تحتوي على تكرار داخلي واضح
-                let cleanWord = word;
-                // كشف التكرار الداخلي مثل "ذهبذهب" -> "ذهب"
-                if (word.length >= 4) {
-                    // نحاول تقسيم الكلمة إلى نصفين متساويين
-                    if (word.length % 2 === 0) {
-                        const half = word.length / 2;
-                        const firstHalf = word.substring(0, half);
-                        const secondHalf = word.substring(half);
-                        if (firstHalf === secondHalf) {
-                            cleanWord = firstHalf;
-                        }
-                    }
-                    // كشف تكرار ثلاثي أو أكثر
-                    for (let j = 2; j < word.length; j++) {
-                        if (word.length % j === 0) {
-                            const part = word.substring(0, j);
-                            let isRepeated = true;
-                            for (let k = 0; k < word.length; k += j) {
-                                if (word.substring(k, k + j) !== part) {
-                                    isRepeated = false;
-                                    break;
-                                }
-                            }
-                            if (isRepeated) {
-                                cleanWord = part;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (finalWords.length === 0 || finalWords[finalWords.length - 1] !== cleanWord) {
-                    finalWords.push(cleanWord);
-                }
-            }
-            
-            return finalWords.join(' ');
+            return uniqueWords.join(' ');
         }
 
-        // ===== دالة startReadingSession المعدلة بالكامل =====
+        // ===== دالة للتحقق من تكرار النص =====
+        function isDuplicateText(newText, existingText) {
+            if (!newText || !existingText) return false;
+            
+            const cleanNew = newText.trim();
+            const cleanExisting = existingText.trim();
+            
+            if (cleanNew.length === 0 || cleanExisting.length === 0) return false;
+            
+            const lastPart = cleanExisting.slice(-Math.min(cleanExisting.length, 50));
+            
+            if (lastPart.includes(cleanNew) && cleanNew.length < lastPart.length) {
+                return true;
+            }
+            
+            const existingWords = cleanExisting.split(/\s+/);
+            const newWords = cleanNew.split(/\s+/);
+            
+            if (newWords.length === 0 || existingWords.length === 0) return false;
+            
+            const lastWords = existingWords.slice(-newWords.length);
+            if (lastWords.length === newWords.length) {
+                let allMatch = true;
+                for (let i = 0; i < newWords.length; i++) {
+                    if (lastWords[i] !== newWords[i]) {
+                        allMatch = false;
+                        break;
+                    }
+                }
+                if (allMatch) return true;
+            }
+            
+            return false;
+        }
+
+        // ===== دالة التنظيف النهائي قبل إرسال النص للتقييم =====
+        function cleanFinalTranscriptForAnalysis(transcript) {
+            if (!transcript || transcript.trim().length === 0) return '';
+            
+            let cleaned = cleanRepeatedText(transcript);
+            
+            let words = cleaned.split(/\s+/).filter(w => w.length > 0);
+            if (words.length === 0) return '';
+            
+            let finalWords = [];
+            for (let i = 0; i < words.length; i++) {
+                const word = words[i];
+                if (word.length > 3) {
+                    const halfLength = Math.floor(word.length / 2);
+                    const firstHalf = word.substring(0, halfLength);
+                    const secondHalf = word.substring(halfLength);
+                    if (firstHalf === secondHalf && word.length % 2 === 0) {
+                        finalWords.push(firstHalf);
+                        continue;
+                    }
+                }
+                finalWords.push(word);
+            }
+            
+            let uniqueWords = [];
+            let prevWord = '';
+            for (let i = 0; i < finalWords.length; i++) {
+                if (finalWords[i] !== prevWord) {
+                    uniqueWords.push(finalWords[i]);
+                    prevWord = finalWords[i];
+                }
+            }
+            
+            return uniqueWords.join(' ');
+        }
+
+        // ===== تصفية النصوص غير الصحيحة =====
+        function filterInvalidTranscript(text) {
+            if (!text || text.trim().length === 0) return '';
+            
+            const invalidPhrases = [
+                'الحمد', 'توصيات', 'حالة الطلاب', 'الرئيسية', 'طلاب', 'الفصل',
+                'اختر الطالب', 'اختر النص', 'بدء القراءة', 'إيقاف', 'عرض البطاقة',
+                'الميكروفون', 'الصوت', 'التعرف', 'الاستماع', 'تحديث', 'حفظ',
+                'منصة', 'قراءتي', 'الذكية', 'بطاقة', 'التقييم', 'القرائي',
+                'المعلم', 'الطلاب', 'الفصول', 'الإعدادات', 'استيراد', 'تصدير'
+            ];
+            
+            let cleanedText = text;
+            for (let phrase of invalidPhrases) {
+                const regex = new RegExp(phrase, 'gi');
+                cleanedText = cleanedText.replace(regex, '');
+            }
+            
+            cleanedText = cleanedText.replace(/\s+/g, ' ').trim();
+            
+            if (cleanedText.length === 0 && text.length > 3) {
+                return text.trim();
+            }
+            
+            return cleanedText;
+        }
+
+        // ===== دالة startReadingSession المعدلة =====
         async function startReadingSession() {
-            // التحقق من اختيار الطالب والنص
             const studentId = document.getElementById('eval-student-select').value;
             const textId = document.getElementById('eval-text-select').value;
             if (!studentId || !textId) { 
@@ -2141,23 +2182,16 @@
                 return; 
             }
             
-            // زيادة عداد المحاولات
             startAttempts++;
             
-            // تنظيف أي جلسة سابقة
             fullCleanup();
             finalTranscript = '';
             interimTranscript = '';
+            lastFinalText = '';
             hasDetectedSpeech = false;
             isStopping = false;
             sessionActive = false;
-            // إعادة ضبط متغيرات منع التكرار
-            lastFinalText = '';
-            lastInterimText = '';
-            finalTextAccumulator = '';
-            processedFinalChunks = new Set();
             
-            // تحديث واجهة المستخدم
             const transcriptEl = document.getElementById('live-transcript');
             if (transcriptEl) { 
                 transcriptEl.innerHTML = '<span class="interim">⏳ جاري تهيئة الميكروفون...</span>'; 
@@ -2178,41 +2212,34 @@
             updateDiag('diag-state', '📌 الحالة: <span class="diag-warn">جاري التحقق من الصلاحية...</span>');
             updateDiag('diag-recognition', '🔴 التعرف: <span class="diag-warn">جاري التحقق...</span>');
             
-            // ===== الخطوة 1: التحقق من دعم التعرف الصوتي =====
             if (!checkSpeechRecognitionSupport()) {
                 showMicrophoneAlert('not-supported');
                 fullCleanup();
                 return;
             }
             
-            // ===== الخطوة 2: التحقق من HTTPS =====
             if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
                 showMicrophoneAlert('security');
                 fullCleanup();
                 return;
             }
             
-            // ===== الخطوة 3: طلب صلاحية الميكروفون =====
             try {
                 const permCheck = await checkMicrophonePermission();
                 
-                // ===== حالة: الصلاحية ممنوعة بشكل دائم =====
                 if (permCheck.status === 'permanently denied' || permCheck.status === 'denied') {
                     showMicrophoneAlert('permanently denied');
                     fullCleanup();
                     return;
                 }
                 
-                // ===== حالة: الصلاحية في حالة انتظار =====
                 if (permCheck.status === 'prompt') {
-                    // محاولة طلب الصلاحية مرة أخرى مع رسالة توضيحية
                     if (isMobileDevice && isFirstStart) {
                         alert('🎙️ سيطلب المتصفح الإذن لاستخدام الميكروفون.\n\nعند ظهور النافذة، اختر "سماح" (Allow).');
                         isFirstStart = false;
                     }
                     
                     try {
-                        // محاولة الحصول على الميكروفون مع إعدادات محسنة
                         const stream = await navigator.mediaDevices.getUserMedia({ 
                             audio: { 
                                 echoCancellation: true, 
@@ -2237,9 +2264,7 @@
                     }
                 }
                 
-                // ===== حالة: الصلاحية غير معروفة أو خطأ =====
                 if (permCheck.status === 'unknown' || permCheck.status === 'error') {
-                    // محاولة الحصول على الميكروفون مباشرة
                     try {
                         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                         stream.getTracks().forEach(track => track.stop());
@@ -2257,11 +2282,9 @@
                     }
                 }
                 
-                // ===== الصلاحية ممنوحة الآن =====
                 micPermissionStatus = 'granted';
                 updateDiag('diag-permission', '🟢 الإذن: <span class="diag-ok">ممنوح</span>');
                 
-                // ===== الخطوة 4: بدء الميكروفون =====
                 let stream;
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({
@@ -2296,11 +2319,9 @@
                     return;
                 }
                 
-                // بدء مراقبة مستوى الصوت
                 startVolumeMonitoring(stream);
                 updateDiag('diag-mic', '🟢 الميكروفون: <span class="diag-ok">مفتوح</span>');
                 
-                // ===== الخطوة 5: بدء التعرف الصوتي =====
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 if (!SpeechRecognition) {
                     showMicrophoneAlert('not-supported');
@@ -2314,7 +2335,6 @@
                 rec.interimResults = true;
                 rec.maxAlternatives = 2;
                 
-                // ===== تحسينات للجوال =====
                 if (isMobileDevice) {
                     rec.continuous = true;
                     rec.interimResults = true;
@@ -2325,7 +2345,6 @@
                     } catch (e) {}
                 }
                 
-                // ===== onstart =====
                 rec.onstart = () => {
                     isListening = true;
                     sessionActive = true;
@@ -2333,9 +2352,6 @@
                     finalTranscript = '';
                     interimTranscript = '';
                     lastFinalText = '';
-                    lastInterimText = '';
-                    finalTextAccumulator = '';
-                    processedFinalChunks = new Set();
                     
                     const transcriptEl2 = document.getElementById('live-transcript');
                     if (transcriptEl2) { 
@@ -2365,70 +2381,72 @@
                     console.log('✅ SpeechRecognition onstart');
                 };
                 
-                // ===== onresult — المعدلة بشكل جذري لمنع التكرار =====
+                // ===== الجزء المعدل من onresult =====
                 rec.onresult = (event) => {
                     let interim = '';
-                    let finalChunk = '';
-
+                    let final = '';
+                    
                     for (let i = event.resultIndex; i < event.results.length; ++i) {
                         const transcript = event.results[i][0].transcript.trim();
-                        if (event.results[i].isFinal) {
-                            // تجاهل النتائج الفارغة أو القصيرة جداً
-                            if (transcript.length > 1) {
-                                // المفتاح: نستخدم النص الكامل كمعرف لتجنب إضافة أي تكرار
-                                const chunkKey = transcript;
-                                if (!processedFinalChunks.has(chunkKey)) {
-                                    processedFinalChunks.add(chunkKey);
-                                    // نضيف النص الجديد إلى المتراكم مع مسافة
-                                    if (finalTextAccumulator.length > 0 && !finalTextAccumulator.endsWith(' ')) {
-                                        finalTextAccumulator += ' ';
-                                    }
-                                    finalTextAccumulator += transcript;
-                                    // تنظيف المتراكم من التكرارات الداخلية
-                                    finalTextAccumulator = cleanRepeatedText(finalTextAccumulator);
-                                }
-                            }
-                        } else {
-                            interim += transcript;
+                        if (event.results[i].isFinal) { 
+                            final += transcript + ' '; 
+                        } else { 
+                            interim += transcript; 
                         }
                     }
-
-                    // تحديث العرض
+                    
                     const transcriptEl2 = document.getElementById('live-transcript');
                     if (!transcriptEl2) return;
-
-                    const cleanedInterim = filterInvalidTranscript(interim);
-
-                    // عرض النص النهائي المتراكم (النظيف) + المؤقت
-                    if (finalTextAccumulator.length > 0) {
-                        const displayText = finalTextAccumulator;
-                        if (cleanedInterim && cleanedInterim.trim().length > 0) {
-                            transcriptEl2.innerHTML = 
-                                `<span class="final">${displayText}</span> <span class="interim">${cleanedInterim}</span>`;
-                        } else {
-                            transcriptEl2.innerHTML = `<span class="final">${displayText}</span>`;
+                    
+                    const filteredFinal = filterInvalidTranscript(final);
+                    const filteredInterim = filterInvalidTranscript(interim);
+                    
+                    // ===== معالجة النتائج النهائية فقط =====
+                    if (filteredFinal && filteredFinal.trim().length > 0) {
+                        const cleanFinal = cleanRepeatedText(filteredFinal.trim());
+                        
+                        // التحقق من عدم تكرار النص
+                        if (!isDuplicateText(cleanFinal, finalTranscript) && cleanFinal !== lastFinalText) {
+                            if (finalTranscript.length > 0) {
+                                finalTranscript = finalTranscript + ' ' + cleanFinal;
+                            } else {
+                                finalTranscript = cleanFinal;
+                            }
+                            lastFinalText = cleanFinal;
                         }
+                        
+                        finalTranscript = finalTranscript.trim();
+                        
+                        transcriptEl2.innerHTML = 
+                            `<span class="final">${finalTranscript}</span>${filteredInterim ? ' <span class="interim">' + filteredInterim + '</span>' : ''}`;
                         transcriptEl2.scrollTop = transcriptEl2.scrollHeight;
-                        setDiagText(displayText);
-                        hasDetectedSpeech = true;
+                        setDiagText(finalTranscript);
                         updateDiag('diag-onresult', '🟢 onresult: <span class="diag-ok">تم استقبال النص ✅</span>');
                         updateDiag('diag-state', '📌 الحالة: <span class="diag-ok">يتم التعرف على الكلام</span>');
-                    } else if (cleanedInterim && cleanedInterim.trim().length > 0) {
-                        // عرض فقط المؤقت إذا لم يكن هناك نهائي
-                        transcriptEl2.innerHTML = `<span class="interim">${cleanedInterim}</span>`;
+                        hasDetectedSpeech = true;
+                        
+                    } else if (filteredInterim && filteredInterim.trim().length > 0) {
+                        const cleanInterim = cleanRepeatedText(filteredInterim.trim());
+                        transcriptEl2.innerHTML = 
+                            `${finalTranscript ? '<span class="final">' + finalTranscript + '</span> ' : ''}<span class="interim">${cleanInterim}</span>`;
                         transcriptEl2.scrollTop = transcriptEl2.scrollHeight;
-                        setDiagText(cleanedInterim);
-                        if (cleanedInterim.length > 2) {
-                            hasDetectedSpeech = true;
+                        setDiagText(finalTranscript || cleanInterim);
+                        updateDiag('diag-onresult', '🟢 onresult: <span class="diag-ok">يتم الاستقبال (مؤقت)</span>');
+                        if (cleanInterim.length > 2) { 
+                            hasDetectedSpeech = true; 
                         }
                     }
-
-                    // تحديث finalTranscript للنهاية (للتقييم)
-                    finalTranscript = finalTextAccumulator;
-                    console.log('📝 النص المتراكم النهائي (النظيف):', finalTranscript);
+                    
+                    if (filteredFinal || (filteredInterim && filteredInterim.length > 2)) {
+                        const activityEl2 = document.getElementById('audio-activity-status');
+                        if (activityEl2) { 
+                            activityEl2.textContent = '🗣️ قراءة قيد الالتقاط';
+                            activityEl2.className = 'text-success small'; 
+                        }
+                    }
+                    console.log('📝 onresult - final:', filteredFinal, 'interim:', filteredInterim);
                 };
                 
-                // ===== onerror =====
                 rec.onerror = (event) => {
                     console.warn('⚠️ SpeechRecognition error:', event.error);
                     
@@ -2484,7 +2502,6 @@
                     }
                 };
                 
-                // ===== onend — المعدلة =====
                 rec.onend = () => {
                     console.log('🔚 SpeechRecognition onend');
                     
@@ -2518,9 +2535,7 @@
                         if (stopBtn) stopBtn.disabled = true;
                         updateDiag('diag-state', '📌 الحالة: <span class="diag-warn">انتهت الجلسة</span>');
                         
-                        // تنظيف النص النهائي قبل التقييم
-                        if (finalTextAccumulator && finalTextAccumulator.trim().length > 0) {
-                            finalTranscript = cleanRepeatedText(finalTextAccumulator);
+                        if (finalTranscript && finalTranscript.trim().length > 0) {
                             setTimeout(() => { 
                                 if (!isListening && !sessionActive) { 
                                     processAndGenerateReport(); 
@@ -2567,7 +2582,6 @@
                 recognition = rec;
                 updateDiag('diag-recognition', '🟢 التعرف: <span class="diag-ok">تم التهيئة</span>');
                 
-                // ===== بدء التعرف مع تأخير مناسب للجوال =====
                 const delay = isMobileDevice ? 500 : 200;
                 setTimeout(() => { 
                     try { 
@@ -2581,7 +2595,6 @@
                         } else if (e.name === 'NotFoundError') {
                             showMicrophoneAlert('not-available');
                         } else if (e.name === 'InvalidStateError') {
-                            // قد يكون بدأ بالفعل، نحاول مرة أخرى بعد تأخير
                             setTimeout(() => {
                                 try {
                                     rec.start();
@@ -2615,40 +2628,7 @@
             }
         }
 
-        // ===== تصفية النصوص غير الصحيحة =====
-        function filterInvalidTranscript(text) {
-            if (!text || text.trim().length === 0) return '';
-            
-            // الكلمات والعبارات غير الصحيحة التي تظهر قبل بدء التسجيل أو عند عدم وجود صوت واضح
-            const invalidPhrases = [
-                'الحمد', 'توصيات', 'حالة الطلاب', 'الرئيسية', 'طلاب', 'الفصل',
-                'اختر الطالب', 'اختر النص', 'بدء القراءة', 'إيقاف', 'عرض البطاقة',
-                'الميكروفون', 'الصوت', 'التعرف', 'الاستماع', 'تحديث', 'حفظ',
-                'منصة', 'قراءتي', 'الذكية', 'بطاقة', 'التقييم', 'القرائي',
-                'المعلم', 'الطلاب', 'الفصول', 'الإعدادات', 'استيراد', 'تصدير'
-            ];
-            
-            // التحقق من النص الكامل
-            let cleanedText = text;
-            for (let phrase of invalidPhrases) {
-                // استخدام تعبيرات منتظمة للبحث عن العبارات ككلمات كاملة أو جزئية
-                const regex = new RegExp(phrase, 'gi');
-                cleanedText = cleanedText.replace(regex, '');
-            }
-            
-            // إزالة المسافات الزائدة
-            cleanedText = cleanedText.replace(/\s+/g, ' ').trim();
-            
-            // إذا أصبح النص فارغاً بعد التصفية، نعيد النص الأصلي إذا كان طويلاً بما يكفي
-            if (cleanedText.length === 0 && text.length > 3) {
-                // قد يكون النص صحيحاً ولكن يحتوي على كلمات غير صحيحة، نعيده كما هو
-                return text.trim();
-            }
-            
-            return cleanedText;
-        }
-
-        // ===== دالة stopReadingSession (بدون تغيير) =====
+        // ===== دالة stopReadingSession =====
         function stopReadingSession() {
             if (!isListening && !sessionActive) { 
                 alert('⚠️ لا توجد جلسة قراءة نشطة.'); 
@@ -2684,17 +2664,13 @@
             
             updateDiag('diag-state', '📌 الحالة: <span class="diag-info">جاري إنشاء التقرير...</span>');
             setTimeout(() => { 
-                // تنظيف النص النهائي قبل التقييم
-                if (finalTextAccumulator && finalTextAccumulator.trim().length > 0) {
-                    finalTranscript = cleanRepeatedText(finalTextAccumulator);
-                }
                 processAndGenerateReport();
                 isStopping = false; 
                 startAttempts = 0;
             }, 300);
         }
 
-        // ===== دوال مساعدة (محفوظة مع تعديلات بسيطة) =====
+        // ===== دوال مساعدة =====
         function toggleDiagnostic() {
             diagVisible = !diagVisible;
             document.getElementById('diagnostic-panel').style.display = diagVisible ? 'block' : 'none';
@@ -2741,11 +2717,7 @@
             isStopping = false;
             sessionActive = false;
             hasDetectedSpeech = false;
-            // إعادة ضبط متغيرات منع التكرار
             lastFinalText = '';
-            lastInterimText = '';
-            finalTextAccumulator = '';
-            processedFinalChunks = new Set();
             
             const statusEl = document.getElementById('mic-status-indicator');
             if (statusEl) { 
@@ -2903,7 +2875,6 @@
             }
         }
 
-        // ===== تشغيل التحقق عند تحميل الصفحة =====
         setTimeout(() => {
             checkMicOnLoad();
         }, 1000);
@@ -3133,10 +3104,8 @@
 
         function analyzeReadingPerformance(targetText, spokenText) {
             if (!targetText) targetText = 'نص اختبار';
-            // تنظيف النص المقروء من التكرارات قبل التحليل
-            const cleanedSpoken = cleanRepeatedText(spokenText || '');
             const units = analyzeTextUnits(targetText);
-            const comparison = compareWithExpected(cleanedSpoken, units);
+            const comparison = compareWithExpected(spokenText, units);
             let words = [];
             let current = '';
             for (let u of units) {
@@ -3200,15 +3169,15 @@
                 '';
             return {
                 targetText: targetText,
-                spokenText: cleanedSpoken,
+                spokenText: spokenText,
                 targetWordsCount: total,
                 correctCount: correct,
                 errorCount: errors,
                 uncertainCount: uncertain,
                 accuracyRate: score,
-                readingSpeedWPM: cleanedSpoken ? Math.round(cleanedSpoken.split(/\s+/).filter(w => w.length > 0).length /
+                readingSpeedWPM: spokenText ? Math.round(spokenText.split(/\s+/).filter(w => w.length > 0).length /
                     0.75) : 0,
-                durationSeconds: '00:' + (cleanedSpoken ? Math.min(59, Math.round(cleanedSpoken.split(/\s+/).filter(w => w
+                durationSeconds: '00:' + (spokenText ? Math.min(59, Math.round(spokenText.split(/\s+/).filter(w => w
                     .length > 0).length / 2)) : '00'),
                 finalScore: score,
                 ratingCategory: category,
@@ -3561,10 +3530,13 @@
                 const textObj = appData.texts.find(t => t.id === textId) || { title: 'نص تجريبي',
                     body: document.getElementById('target-reading-text').innerText ||
                     'ذهب الفلاح المبكر إلى حقله الأخضر الواسع لكي يحصد القمح الناضج.' };
-                // استخدام النص المتراكم النهائي
-                let spokenForAnalysis = finalTextAccumulator || finalTranscript || '';
-                // تنظيف إضافي قبل التحليل
-                spokenForAnalysis = cleanRepeatedText(spokenForAnalysis);
+                
+                // ===== تنظيف النص النهائي قبل التحليل =====
+                let spokenForAnalysis = finalTranscript || '';
+                if (spokenForAnalysis && spokenForAnalysis.trim().length > 0) {
+                    spokenForAnalysis = cleanFinalTranscriptForAnalysis(spokenForAnalysis);
+                }
+                
                 if (!spokenForAnalysis || spokenForAnalysis.trim().length < 2) {
                     if (hasDetectedSpeech) {
                         spokenForAnalysis = 'تم التقاط صوت ولكن لم يتم التعرف عليه بوضوح';
@@ -3572,9 +3544,17 @@
                         spokenForAnalysis = '';
                     }
                 }
+                
+                // عرض النص المنظف في واجهة المستخدم قبل التقييم
+                const transcriptEl = document.getElementById('live-transcript');
+                if (transcriptEl && spokenForAnalysis && spokenForAnalysis.trim().length > 0) {
+                    transcriptEl.innerHTML = `<span class="final">${spokenForAnalysis}</span>`;
+                }
+                
                 const result = analyzeReadingPerformance(textObj.body, spokenForAnalysis);
                 if (!result.skills) result.skills = [];
                 if (!result.analysisDetails) result.analysisDetails = [];
+                
                 const targetStudent = appData.students.find(s => s.id === studentId);
                 if (targetStudent) {
                     targetStudent.hasRead = true;
@@ -3584,6 +3564,7 @@
                     renderManageView();
                     loadFilteredStudents();
                 }
+                
                 const reportRecord = {
                     id: 'rep_' + Date.now(),
                     date: new Date().toLocaleDateString('ar-SA'),
@@ -3595,9 +3576,13 @@
                 saveAppData();
                 renderAllReportsTable();
                 renderReadingAssessmentCard(student, textObj.title, result);
+                
+                // تنظيف المتغيرات
                 finalTranscript = '';
-                finalTextAccumulator = '';
-                processedFinalChunks = new Set();
+                interimTranscript = '';
+                lastFinalText = '';
+                hasDetectedSpeech = false;
+                
                 updateDiag('diag-state', '📌 الحالة: <span class="diag-ok">تم إنشاء التقرير ✅</span>');
             } catch (error) {
                 console.error('خطأ في إنشاء التقرير:', error);
@@ -3623,13 +3608,12 @@
         }
 
         // ================================================================
-        // 15. EXPORT FULL REPORT — مع إضافة بطاقة التقييم وكشف الدعم
+        // 15. EXPORT FULL REPORT
         // ================================================================
         function exportFullReport() {
             try {
                 if (appData.students.length === 0) { alert('لا يوجد طلاب'); return; }
                 const wb = XLSX.utils.book_new();
-                // ===== 1. تقرير جميع الطلاب (محفوظ) =====
                 const headers = ['اسم الطالب', 'الصف', 'الفصل', 'حالة القراءة', 'الدرجة', 'مستوى القراءة', 'دقة النطق',
                     'الطلاقة', 'ربط الحروف', 'إبدال الحروف', 'مخارج الحروف', 'المدود', 'الحركات', 'الشدة',
                     'الكلمات التي أخطأ فيها', 'الحروف التي تحتاج دعم', 'المهارات التي تحتاج دعم', 'التوصيات',
@@ -3708,7 +3692,6 @@
                 ws1['!freeze'] = { xSplit: 0, ySplit: 1 };
                 XLSX.utils.book_append_sheet(wb, ws1, 'تقرير جميع الطلاب');
 
-                // ===== 2. ملخص أداء الفصل (محفوظ) =====
                 const summary = [
                     ['ملخص أداء الفصل'],
                     [],
@@ -3742,7 +3725,6 @@
                 ws2['!cols'] = [{ wch: 30 }, { wch: 20 }];
                 XLSX.utils.book_append_sheet(wb, ws2, 'ملخص أداء الفصل');
 
-                // ===== 3. تحليل مهارات الفصل (محفوظ) =====
                 const skillRows = [
                     ['تحليل مهارات الفصل'],
                     [],
@@ -3775,7 +3757,6 @@
                 ws3['!cols'] = [{ wch: 30 }, { wch: 30 }];
                 XLSX.utils.book_append_sheet(wb, ws3, 'تحليل مهارات الفصل');
 
-                // ===== 4. كشف طلاب الدعم — أقل من 60% (جديد) =====
                 const supportHeaders = ['اسم الطالب', 'الصف', 'الفصل', 'الدرجة', 'المهارة المتعثرة', 'نسبة المهارة',
                     'الخطأ الفعلي', 'التوصية', 'البرنامج العلاجي'
                 ];
@@ -3807,7 +3788,6 @@
                     XLSX.utils.book_append_sheet(wb, ws4, 'طلاب الدعم أقل من 60%');
                 }
 
-                // ===== 5. بطاقة تقييم القراءة (جديد) =====
                 const evalCardHeaders = ['اسم الطالب', 'الصف', 'الفصل', 'تاريخ التقييم', 'اسم المعلم', 'النص المقروء',
                     'الدرجة النهائية', 'مستوى الطالب', 'هل هو من طلاب الدعم؟', 'المهارات التي تحتاج علاج'
                 ];
@@ -3841,7 +3821,6 @@
                     XLSX.utils.book_append_sheet(wb, ws5, 'بطاقة تقييم القراءة');
                 }
 
-                // ===== 6. تحليل المهارات التفصيلي لكل طالب (جديد) =====
                 const skillDetailHeaders = ['اسم الطالب', 'المهارة', 'الدرجة', 'مستوى الإتقان', 'الخطأ المرصود',
                     'التوصية العلاجية'
                 ];
@@ -3870,7 +3849,6 @@
                     XLSX.utils.book_append_sheet(wb, ws6, 'تحليل المهارات التفصيلي');
                 }
 
-                // ===== 7. (جديد) ورقة "أخطاء القراءة التفصيلية" =====
                 const errorDetailHeaders = [
                     'اسم الطالب', 'الصف', 'الفصل', 'الكلمة المقروءة', 'القراءة الصحيحة',
                     'نوع الخطأ', 'الحرف الذي أخطأ فيه', 'الحركة التي أخطأ فيها',
@@ -3917,7 +3895,6 @@
                         const cleanWord = word.replace(/[ًٌٍَُِّْ]/g, '');
                         const cleanSpoken = spoken.replace(/[ًٌٍَُِّْ]/g, '');
 
-                        // 1. حروف
                         if (cleanWord.length === 1 && cleanWord.match(/[ء-ي]/) && cleanSpoken.length === 1) {
                             if (cleanWord !== cleanSpoken) {
                                 errorCategory = 'إبدال حرف';
@@ -3941,7 +3918,6 @@
                                 skillName = 'قراءة الكلمات'; }
                         }
 
-                        // 2. حركات
                         const diacriticsExpected = word.match(/[ًٌٍَُِّْ]/g) || [];
                         const diacriticsSpoken = spoken.match(/[ًٌٍَُِّْ]/g) || [];
                         if (diacriticsExpected.length > 0 || diacriticsSpoken.length > 0) {
@@ -3960,14 +3936,12 @@
                             }
                         }
 
-                        // 3. سكون
                         if (word.includes('ْ') && !spoken.includes('ْ')) {
                             errorCategory = 'خطأ في السكون';
                             diacriticError = 'سكون ← حركة';
                             skillName = 'السكون';
                         }
 
-                        // 4. تنوين
                         if ((word.includes('ً') || word.includes('ٍ') || word.includes('ٌ')) &&
                             !(spoken.includes('ً') || spoken.includes('ٍ') || spoken.includes('ٌ'))) {
                             errorCategory = 'خطأ في التنوين';
@@ -3975,7 +3949,6 @@
                             skillName = 'التنوين';
                         }
 
-                        // 5. لام شمسية / قمرية
                         if (word.includes('ال') || word.includes('ل')) {
                             const idxL = word.indexOf('ل');
                             if (idxL !== -1 && idxL + 1 < word.length) {
@@ -3997,7 +3970,6 @@
                             }
                         }
 
-                        // 6. مدود
                         if (word.includes('ا') && word.includes('َ')) {
                             maddType = 'مد بالألف';
                             if (!spoken.includes('ا') || !spoken.includes('َ')) {
@@ -4018,7 +3990,6 @@
                             }
                         }
 
-                        // 7. شدة
                         if (word.includes('ّ') && !spoken.includes('ّ')) {
                             errorCategory = 'خطأ في الشدة';
                             letterError = 'عدم نطق الشدة';
@@ -4071,7 +4042,6 @@
                     XLSX.utils.book_append_sheet(wb, ws7, 'أخطاء القراءة التفصيلية');
                 }
 
-                // ===== 8. (جديد) ملخص أخطاء كل طالب =====
                 const summaryHeaders = [
                     'اسم الطالب', 'الصف', 'الفصل',
                     'إجمالي أخطاء الحروف', 'إجمالي أخطاء الحركات', 'أخطاء السكون', 'أخطاء التنوين',
@@ -4132,7 +4102,7 @@
         }
 
         // ================================================================
-        // 16. دوال تحليل المهارات (جديدة)
+        // 16. دوال تحليل المهارات
         // ================================================================
         function getDiacriticLabel(d) {
             if (d === 'َ') return 'فتحة';
@@ -4365,7 +4335,7 @@
         }
 
         // ================================================================
-        // 17. ⭐⭐ كشف طلاب الدعم (الواجهة) — محدث ⭐⭐
+        // 17. ⭐⭐ كشف طلاب الدعم (الواجهة) ⭐⭐
         // ================================================================
         function renderSupportList() {
             const container = document.getElementById('support-list-container');
@@ -4535,7 +4505,7 @@
         }
 
         // ================================================================
-        // 18. IMPORT (Word/Excel) + SETTINGS (محفوظة)
+        // 18. IMPORT (Word/Excel) + SETTINGS
         // ================================================================
         function importWordFile(event) {
             const file = event.target.files[0];
